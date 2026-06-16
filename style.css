@@ -1,0 +1,69 @@
+/* ─── الخطوط ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Cairo', sans-serif;
+}
+
+/* ─── العناوين ───────────────────────────────────────────────────────── */
+.main-title {
+    color: #ED1C24;
+    font-weight: 700;
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 0.2rem;
+}
+
+.sub-title {
+    color: #3a3a3a;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* ─── رسائل المستخدم ─────────────────────────────────────────────────── */
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
+    background-color: #fdecec;
+    border-right: 4px solid #ED1C24;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+}
+
+/* fallback لإصدارات Streamlit الأقدم */
+.stChatMessageUser {
+    background-color: #fdecec;
+    border-right: 4px solid #ED1C24;
+    border-radius: 10px;
+}
+
+/* ─── رسائل المساعد ──────────────────────────────────────────────────── */
+div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
+    background-color: #f4f5f6;
+    border-right: 4px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+}
+
+.stChatMessageAssistant {
+    background-color: #f4f5f6;
+    border-right: 4px solid #3a3a3a;
+    border-radius: 10px;
+}
+
+/* ─── صندوق إدخال السؤال ─────────────────────────────────────────────── */
+div[data-testid="stChatInput"] {
+    border: 1px solid #ED1C24;
+    border-radius: 10px;
+}
+
+/* ─── الأزرار ─────────────────────────────────────────────────────────── */
+button[kind="primary"] {
+    background-color: #ED1C24;
+    border-color: #ED1C24;
+}
+
+button[kind="primary"]:hover {
+    background-color: #c9151b;
+    border-color: #c9151b;
+}
