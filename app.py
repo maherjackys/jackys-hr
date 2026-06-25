@@ -1,6 +1,7 @@
 """
 HR Policy Assistant - Streamlit entry point v4.0
-Multi-source Knowledge | Dark/Light Mode | Language Switcher (AR/EN/RTL)
+Multi-source | Dark/Light Mode | Language Switcher (AR/EN + RTL/LTR)
+All i18n translations run client-side via JavaScript (data-i18n attributes).
 """
 from __future__ import annotations
 import logging
@@ -11,7 +12,6 @@ from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
 from ui.styles import inject_css, inject_theme_toggle, inject_language_switcher
-from ui.i18n import ui, get_ui_lang, AR, EN
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
@@ -29,13 +29,7 @@ inject_css(settings.css_path)
 inject_theme_toggle()
 inject_language_switcher()
 
-# ── UI Language (from session or default EN) ──────────────────────────────────
-if "ui_lang" not in st.session_state:
-    st.session_state.ui_lang = EN
-
-ul = st.session_state.ui_lang  # shorthand for current UI language
-
-# ── Hero Stats Bar — with data-i18n for JS translation ───────────────────────
+# ── Hero Stats Bar — data-i18n keys for client-side JS translation ────────────
 HERO_STATS_HTML = """
 <div class="hr-stats-bar">
   <div class="hr-stat-item">
@@ -102,35 +96,28 @@ st.markdown(
 )
 st.markdown(HERO_STATS_HTML, unsafe_allow_html=True)
 
-# ── Source selection state ────────────────────────────────────────────────────
+# ── Source selection ──────────────────────────────────────────────────────────
 if "knowledge_source" not in st.session_state:
     st.session_state.knowledge_source = "company"
 
 st.markdown(_source_cards_html(st.session_state.knowledge_source), unsafe_allow_html=True)
 
-# Source switch buttons
 col1, col2 = st.columns(2)
 with col1:
-    if st.button(
-        "Company Policy",
-        key="btn_company", use_container_width=True,
-        type="primary" if st.session_state.knowledge_source == "company" else "secondary",
-    ):
+    if st.button("Company Policy", key="btn_company", use_container_width=True,
+                 type="primary" if st.session_state.knowledge_source == "company" else "secondary"):
         if st.session_state.knowledge_source != "company":
             st.session_state.knowledge_source = "company"
             st.session_state.messages = [{"role": "assistant", "content":
                 "Welcome! Place your HR policy PDFs in the hr_documents folder, then ask me anything."}]
             st.rerun()
 with col2:
-    if st.button(
-        "Dubai HR Policy",
-        key="btn_dubai", use_container_width=True,
-        type="primary" if st.session_state.knowledge_source == "dubai_hr" else "secondary",
-    ):
+    if st.button("Dubai HR Policy", key="btn_dubai", use_container_width=True,
+                 type="primary" if st.session_state.knowledge_source == "dubai_hr" else "secondary"):
         if st.session_state.knowledge_source != "dubai_hr":
             st.session_state.knowledge_source = "dubai_hr"
             st.session_state.messages = [{"role": "assistant", "content":
-                "Welcome to the Dubai HR Policy Assistant! Place your PDFs in dubai_hr_documents folder."}]
+                "Welcome to Dubai HR Policy Assistant! Place PDFs in dubai_hr_documents folder."}]
             st.rerun()
 
 # ── Directories ───────────────────────────────────────────────────────────────
@@ -142,10 +129,7 @@ settings.dubai_db_dir.mkdir(parents=True, exist_ok=True)
 # ── API key ───────────────────────────────────────────────────────────────────
 api_key = get_groq_api_key()
 if not api_key:
-    api_key = st.text_input(
-        "Enter your Groq API Key (from console.groq.com):",
-        type="password", placeholder="gsk_...",
-    )
+    api_key = st.text_input("Enter your Groq API Key:", type="password", placeholder="gsk_...")
     if not api_key:
         st.info("Please enter your API key to continue.")
         st.stop()
@@ -177,7 +161,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Chat history
+# Render history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
@@ -192,32 +176,25 @@ if user_query:
 
     if error_key:
         response = t(error_key, lang)
-
     elif is_rate_limited(settings.max_requests_per_minute):
         response = t("rate_limited", lang)
-
     elif is_greeting(clean_query):
         response = t("greeting_reply", lang)
-
     else:
         st.session_state.messages.append({"role": "user", "content": clean_query})
         with st.chat_message("user"):
             st.write(clean_query)
-
         with st.chat_message("assistant"):
             if engine is None:
                 response = t("init_error", lang)
             elif not engine.is_ready:
-                if current_source == "dubai_hr":
-                    response = ("⚠️ لم أجد ملفات في مجلد dubai_hr_documents. أضفها أولاً."
-                                if lang == LANG_AR else
-                                "⚠️ No PDF files found in dubai_hr_documents. Please add your Dubai HR policy files first.")
-                else:
-                    response = t("no_documents", lang)
+                response = (
+                    "No PDF files found in dubai_hr_documents. Please add your files first."
+                    if current_source == "dubai_hr" else t("no_documents", lang)
+                )
             else:
                 try:
-                    spin = "جاري البحث..." if lang == LANG_AR else "Searching..."
-                    with st.spinner(spin):
+                    with st.spinner("Searching..." if lang != LANG_AR else "جاري البحث..."):
                         result = engine.answer(clean_query, history_text)
                     if result.status == "out_of_scope":
                         response = t("out_of_scope", lang)
@@ -228,9 +205,7 @@ if user_query:
                 except Exception:
                     logger.exception("Query failed: %r", clean_query)
                     response = t("system_error", lang)
-
             st.write(response)
-
         st.session_state.messages.append({"role": "assistant", "content": response})
         if len(st.session_state.messages) > settings.max_history_messages:
             st.session_state.messages = (
@@ -239,7 +214,6 @@ if user_query:
             )
         st.rerun()
 
-    # Short-circuit
     if error_key or is_rate_limited(settings.max_requests_per_minute) or is_greeting(clean_query):
         st.session_state.messages.append({"role": "user",      "content": user_query})
         st.session_state.messages.append({"role": "assistant", "content": response})
