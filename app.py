@@ -68,11 +68,8 @@ HERO_STATS_HTML = """
 """
 
 HOW_IT_WORKS_HTML = """
-<div class="hr-how-it-works">
-  <div class="hr-how-header">
-    <div class="hr-how-badge">كيف يعمل</div>
-    <h4 class="hr-how-title">ابدأ في 3 خطوات بسيطة</h4>
-  </div>
+<div class="hr-how-section">
+  <h4 class="hr-how-title">كيف يعمل؟</h4>
   <div class="hr-steps-grid">
     <div class="hr-step-card">
       <div class="hr-step-num">01</div>
@@ -153,9 +150,9 @@ if user_query:
     if error_key:
         response = t(error_key, lang)
     elif is_rate_limited(settings.max_requests_per_minute):
-        response = t("rate_limit", lang)
-    elif is_greeting(clean_query, lang):
-        response = t("greeting_response", lang)
+        response = t("rate_limited", lang)
+    elif is_greeting(clean_query):
+        response = t("greeting_reply", lang)
     else:
         st.session_state.messages.append({"role": "user", "content": clean_query})
         with st.chat_message("user"):
@@ -187,13 +184,20 @@ if user_query:
             st.write(response)
 
         st.session_state.messages.append({"role": "assistant", "content": response})
+        if len(st.session_state.messages) > settings.max_history_messages:
+            st.session_state.messages = (
+                st.session_state.messages[:1]
+                + st.session_state.messages[-(settings.max_history_messages - 1):]
+            )
+        st.rerun()
 
-    if len(st.session_state.messages) > settings.max_history_messages:
-        st.session_state.messages = (
-            st.session_state.messages[:1]
-            + st.session_state.messages[-(settings.max_history_messages - 1):]
-        )
-
-# ── How It Works (shown only at start) ────────────────────────────────────────
-if len(st.session_state.messages) <= 1:
-    st.markdown(HOW_IT_WORKS_HTML, unsafe_allow_html=True)
+    # Handle short-circuit responses (error, rate_limit, greeting)
+    if error_key or is_rate_limited(settings.max_requests_per_minute) or is_greeting(clean_query):
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        if len(st.session_state.messages) > settings.max_history_messages:
+            st.session_state.messages = (
+                st.session_state.messages[:1]
+                + st.session_state.messages[-(settings.max_history_messages - 1):]
+            )
+        st.rerun()
