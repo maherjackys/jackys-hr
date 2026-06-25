@@ -1,7 +1,7 @@
 """
 HR Policy Assistant - Streamlit entry point v4.0
 Multi-source | Dark/Light Mode | Language Switcher (AR/EN + RTL/LTR)
-All i18n translations run client-side via JavaScript (data-i18n attributes).
+i18n runs client-side via JS (data-i18n attributes) — no page reload needed.
 """
 from __future__ import annotations
 import logging
@@ -11,7 +11,7 @@ from core.language import detect_language, is_greeting, t, LANG_AR, LANG_EN
 from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
-from ui.styles import inject_css, inject_theme_toggle, inject_language_switcher
+from ui.styles import inject_css, inject_ui_controls
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
@@ -26,10 +26,9 @@ st.set_page_config(
 )
 
 inject_css(settings.css_path)
-inject_theme_toggle()
-inject_language_switcher()
+inject_ui_controls()   # Dark/Light toggle + Language Switcher (AR/EN + RTL/LTR)
 
-# ── Hero Stats Bar — data-i18n keys for client-side JS translation ────────────
+# ── Hero Stats Bar — data-i18n keys updated by client-side JS ────────────────
 HERO_STATS_HTML = """
 <div class="hr-stats-bar">
   <div class="hr-stat-item">
@@ -161,7 +160,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Render history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
