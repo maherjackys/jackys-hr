@@ -1,6 +1,6 @@
 """
-HR Policy Assistant - Streamlit entry point v3.0
-Multi-source Knowledge | Dark/Light Mode | Card Source Selector
+HR Policy Assistant - Streamlit entry point v4.0
+Multi-source Knowledge | Dark/Light Mode | Language Switcher (AR/EN/RTL)
 """
 from __future__ import annotations
 import logging
@@ -10,7 +10,8 @@ from core.language import detect_language, is_greeting, t, LANG_AR, LANG_EN
 from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
-from ui.styles import inject_css, inject_theme_toggle
+from ui.styles import inject_css, inject_theme_toggle, inject_language_switcher
+from ui.i18n import ui, get_ui_lang, AR, EN
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
@@ -21,131 +22,167 @@ st.set_page_config(
     page_icon="🤖",
     layout="centered",
     initial_sidebar_state="collapsed",
-    menu_items={"About": "HR Policy Assistant v3.0"},
+    menu_items={"About": "HR Policy Assistant v4.0"},
 )
+
 inject_css(settings.css_path)
 inject_theme_toggle()
+inject_language_switcher()
 
+# ── UI Language (from session or default EN) ──────────────────────────────────
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = EN
+
+ul = st.session_state.ui_lang  # shorthand for current UI language
+
+# ── Hero Stats Bar — with data-i18n for JS translation ───────────────────────
 HERO_STATS_HTML = """
 <div class="hr-stats-bar">
   <div class="hr-stat-item">
     <span class="hr-stat-icon">📄</span>
-    <div class="hr-stat-text"><strong>متعدد اللغات</strong><span>عربي وإنجليزي</span></div>
+    <div class="hr-stat-text">
+      <strong data-i18n="stat_ml_t">Multilingual</strong>
+      <span data-i18n="stat_ml_d">Arabic &amp; English</span>
+    </div>
   </div>
   <div class="hr-stat-divider"></div>
   <div class="hr-stat-item">
-    <span class="hr-stat-icon">⚡</span>
-    <div class="hr-stat-text"><strong>إجابات فورية</strong><span>بأقل من ثانية</span></div>
+    <span class="hr-stat-icon">&#x26A1;</span>
+    <div class="hr-stat-text">
+      <strong data-i18n="stat_ins_t">Instant Answers</strong>
+      <span data-i18n="stat_ins_d">Under a second</span>
+    </div>
   </div>
   <div class="hr-stat-divider"></div>
   <div class="hr-stat-item">
-    <span class="hr-stat-icon">🔒</span>
-    <div class="hr-stat-text"><strong>آمن وخاص</strong><span>بياناتك محمية</span></div>
+    <span class="hr-stat-icon">&#x1F512;</span>
+    <div class="hr-stat-text">
+      <strong data-i18n="stat_sec_t">Private &amp; Secure</strong>
+      <span data-i18n="stat_sec_d">Your data is safe</span>
+    </div>
   </div>
 </div>
 """
 
-# Source Selector Cards — pure CSS/HTML (no onclick, selection via st.session_state)
 def _source_cards_html(active: str) -> str:
-    c_sel = "selected" if active == "company" else ""
+    c_sel = "selected" if active == "company"  else ""
     d_sel = "selected" if active == "dubai_hr" else ""
     return f"""
 <div class="source-selector-wrap">
-  <span class="source-selector-label">اختر مصدر المعرفة / Select Knowledge Source</span>
+  <span class="source-selector-label" data-i18n="src_label">SELECT KNOWLEDGE SOURCE</span>
   <div class="source-cards-grid">
     <div class="source-card company {c_sel}">
       <div class="source-card-header">
-        <span class="source-card-icon">🏢</span>
-        <div class="source-card-check">✓</div>
+        <span class="source-card-icon">&#x1F3E2;</span>
+        <div class="source-card-check">&#x2713;</div>
       </div>
-      <div class="source-card-title">Company Policy</div>
-      <div class="source-card-desc">Answers based on your organization's internal HR policies and documents.</div>
+      <div class="source-card-title" data-i18n="src_co_t">Company Policy</div>
+      <div class="source-card-desc"  data-i18n="src_co_d">Answers based on your organization's internal HR policies.</div>
     </div>
     <div class="source-card dubai {d_sel}">
       <div class="source-card-header">
-        <span class="source-card-icon">🇦🇪</span>
-        <div class="source-card-check">✓</div>
+        <span class="source-card-icon">&#x1F1E6;&#x1F1EA;</span>
+        <div class="source-card-check">&#x2713;</div>
       </div>
-      <div class="source-card-title">Dubai HR Policy</div>
-      <div class="source-card-desc">Answers based on Dubai labor regulations and UAE HR policies.</div>
+      <div class="source-card-title" data-i18n="src_dxb_t">Dubai HR Policy</div>
+      <div class="source-card-desc"  data-i18n="src_dxb_d">Answers based on Dubai labor regulations and UAE HR policies.</div>
     </div>
   </div>
 </div>
 """
 
-# Page header
-st.markdown('<h1 class="main-title">🤖 HR Policy Assistant</h1>', unsafe_allow_html=True)
-st.markdown('<h3 class="sub-title">اسأل عن أي سياسة في ثوانٍ — بدلاً من التصفح لساعات</h3>', unsafe_allow_html=True)
+# ── Page header ───────────────────────────────────────────────────────────────
+st.markdown(
+    '<h1 class="main-title" data-i18n="app_title">HR Policy Assistant</h1>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<h3 class="sub-title" data-i18n="app_subtitle">Ask about any policy in seconds &mdash; instead of browsing for hours</h3>',
+    unsafe_allow_html=True,
+)
 st.markdown(HERO_STATS_HTML, unsafe_allow_html=True)
 
-# Source selection state
+# ── Source selection state ────────────────────────────────────────────────────
 if "knowledge_source" not in st.session_state:
     st.session_state.knowledge_source = "company"
 
-# Show source cards (visual)
 st.markdown(_source_cards_html(st.session_state.knowledge_source), unsafe_allow_html=True)
 
-# Streamlit buttons for actual source switching
+# Source switch buttons
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("🏢 Company Policy", key="btn_company", use_container_width=True,
-                 type="primary" if st.session_state.knowledge_source == "company" else "secondary"):
+    if st.button(
+        "Company Policy",
+        key="btn_company", use_container_width=True,
+        type="primary" if st.session_state.knowledge_source == "company" else "secondary",
+    ):
         if st.session_state.knowledge_source != "company":
             st.session_state.knowledge_source = "company"
-            welcome = f"{t('welcome_ar', LANG_AR)} 👋\n\n{t('welcome_en', LANG_EN)}"
-            st.session_state.messages = [{"role": "assistant", "content": welcome}]
+            st.session_state.messages = [{"role": "assistant", "content":
+                "Welcome! Place your HR policy PDFs in the hr_documents folder, then ask me anything."}]
             st.rerun()
 with col2:
-    if st.button("🇦🇪 Dubai HR Policy", key="btn_dubai", use_container_width=True,
-                 type="primary" if st.session_state.knowledge_source == "dubai_hr" else "secondary"):
+    if st.button(
+        "Dubai HR Policy",
+        key="btn_dubai", use_container_width=True,
+        type="primary" if st.session_state.knowledge_source == "dubai_hr" else "secondary",
+    ):
         if st.session_state.knowledge_source != "dubai_hr":
             st.session_state.knowledge_source = "dubai_hr"
-            welcome = ("مرحباً بك في مساعد سياسات دبي 🇦🇪\nضع ملفات PDF في مجلد dubai_hr_documents ثم اسألني!\n\n"
-                       "Welcome to Dubai HR Policy Assistant 🇦🇪\nPlace PDFs in dubai_hr_documents folder.")
-            st.session_state.messages = [{"role": "assistant", "content": welcome}]
+            st.session_state.messages = [{"role": "assistant", "content":
+                "Welcome to the Dubai HR Policy Assistant! Place your PDFs in dubai_hr_documents folder."}]
             st.rerun()
 
-# Create directories
+# ── Directories ───────────────────────────────────────────────────────────────
 settings.docs_dir.mkdir(parents=True, exist_ok=True)
 settings.dubai_docs_dir.mkdir(parents=True, exist_ok=True)
 settings.db_dir.mkdir(parents=True, exist_ok=True)
 settings.dubai_db_dir.mkdir(parents=True, exist_ok=True)
 
-# API key
+# ── API key ───────────────────────────────────────────────────────────────────
 api_key = get_groq_api_key()
 if not api_key:
-    api_key = st.text_input("🔑 أدخل Groq API Key:", type="password", placeholder="gsk_...")
+    api_key = st.text_input(
+        "Enter your Groq API Key (from console.groq.com):",
+        type="password", placeholder="gsk_...",
+    )
     if not api_key:
-        st.info("يرجى إدخال مفتاح API للمتابعة. | Please enter your API key to continue.")
+        st.info("Please enter your API key to continue.")
         st.stop()
 
-@st.cache_resource(show_spinner="⏳ جاري تحميل قاعدة المعرفة...")
+# ── Engine loader ─────────────────────────────────────────────────────────────
+@st.cache_resource(show_spinner="Loading knowledge base...")
 def load_engine(_api_key: str, source: str) -> RagEngine | None:
     try:
         return RagEngine(settings, _api_key, source=source)
     except Exception:
-        logger.exception("Engine init failed for source: %s", source)
+        logger.exception("Engine init failed for: %s", source)
         return None
 
 current_source = st.session_state.knowledge_source
 engine = load_engine(api_key, current_source)
 
-# Conversation state
+# ── Conversation state ────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
-    welcome = f"{t('welcome_ar', LANG_AR)} 👋\n\n{t('welcome_en', LANG_EN)}"
-    st.session_state.messages = [{"role": "assistant", "content": welcome}]
+    st.session_state.messages = [
+        {"role": "assistant", "content":
+         "Welcome! Place your HR policy PDFs in the hr_documents folder, then ask me anything."}
+    ]
 
 # Active source badge
-source_name  = "Dubai HR Policy 🇦🇪" if current_source == "dubai_hr" else "Company Policy 🏢"
-badge_class  = "active-source-badge dubai-badge" if current_source == "dubai_hr" else "active-source-badge"
-st.markdown(f'<div class="{badge_class}">📌 Active: {source_name}</div>', unsafe_allow_html=True)
+source_name = "Dubai HR Policy" if current_source == "dubai_hr" else "Company Policy"
+badge_class = "active-source-badge dubai-badge" if current_source == "dubai_hr" else "active-source-badge"
+st.markdown(
+    f'<div class="{badge_class}"><span data-i18n="active_pfx">Active:</span> {source_name}</div>',
+    unsafe_allow_html=True,
+)
 
 # Chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-# Chat input
+# ── Chat input ────────────────────────────────────────────────────────────────
 user_query = st.chat_input("Type your question... | اكتب سؤالك هنا...", key="hr_chat_input")
 
 if user_query:
@@ -202,9 +239,9 @@ if user_query:
             )
         st.rerun()
 
-    # Short-circuit (error / rate_limit / greeting)
+    # Short-circuit
     if error_key or is_rate_limited(settings.max_requests_per_minute) or is_greeting(clean_query):
-        st.session_state.messages.append({"role": "user", "content": user_query})
+        st.session_state.messages.append({"role": "user",      "content": user_query})
         st.session_state.messages.append({"role": "assistant", "content": response})
         if len(st.session_state.messages) > settings.max_history_messages:
             st.session_state.messages = (
