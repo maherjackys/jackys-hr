@@ -26,7 +26,7 @@ logger = logging.getLogger("hr_assistant")
 
 settings = get_settings()
 
-# ── Page setup ──────────────────────────────────────────────────────────────
+# ── Page setup ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="HR Policy Assistant | المساعد المعرفي للموارد البشرية",
     page_icon="🤖",
@@ -38,7 +38,7 @@ st.set_page_config(
 )
 inject_css(settings.css_path)
 
-# ── Hero Section HTML ────────────────────────────────────────────────────────
+# ── Hero Section HTML ─────────────────────────────────────────────────────────
 HERO_STATS_HTML = """
 <div class="hr-stats-bar">
   <div class="hr-stat-item">
@@ -96,8 +96,7 @@ HOW_IT_WORKS_HTML = """
 </div>
 """
 
-# ── Page header ─────────────────────────────────────────────────────────────
-# or at app.py you can just do: st.image("logo.png", width=180)
+# ── Page header ───────────────────────────────────────────────────────────────
 st.markdown('<h1 class="main-title">🤖 HR Policy Assistant</h1>', unsafe_allow_html=True)
 st.markdown(
     '<h3 class="sub-title">اسأل عن أي سياسة في ثوانٍ — بدلاً من التصفح لساعات</h3>',
@@ -108,7 +107,7 @@ st.markdown(HERO_STATS_HTML, unsafe_allow_html=True)
 settings.docs_dir.mkdir(parents=True, exist_ok=True)
 settings.db_dir.mkdir(parents=True, exist_ok=True)
 
-# ── API key resolution ───────────────────────────────────────────────────────
+# ── API key resolution ─────────────────────────────────────────────────────────
 api_key = get_groq_api_key()
 if not api_key:
     api_key = st.text_input(
@@ -131,7 +130,7 @@ def load_engine(_api_key: str) -> RagEngine | None:
 
 engine = load_engine(api_key)
 
-# ── Conversation state ───────────────────────────────────────────────────────
+# ── Conversation state ──────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": f"{t('welcome_ar', LANG_AR)} 👋\n\n{t('welcome_en', LANG_EN)}"}
@@ -153,7 +152,7 @@ if user_query:
 
     if error_key:
         response = t(error_key, lang)
-    elif is_rate_limited(settings.max_queries_per_session):
+    elif is_rate_limited(settings.max_requests_per_minute):
         response = t("rate_limit", lang)
     elif is_greeting(clean_query, lang):
         response = t("greeting_response", lang)
@@ -195,6 +194,6 @@ if user_query:
             + st.session_state.messages[-(settings.max_history_messages - 1):]
         )
 
-# ── How It Works (shown only at start) ──────────────────────────────────────
+# ── How It Works (shown only at start) ────────────────────────────────────────
 if len(st.session_state.messages) <= 1:
     st.markdown(HOW_IT_WORKS_HTML, unsafe_allow_html=True)
