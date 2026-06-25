@@ -1,69 +1,251 @@
-/* ─── الخطوط ─────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+/* ══════════════════════════════════════════════════════════════
+   HR Policy Assistant — style.css v2.0 | SaaS Production Design
+   ══════════════════════════════════════════════════════════════ */
 
-html, body, [class*="css"] {
-    font-family: 'Cairo', sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary:             #C0392B;
+    --primary-dark:        #96281B;
+    --primary-ultra-light: #FDECEA;
+    --neutral-900:         #1A1A2E;
+    --neutral-800:         #2C3E50;
+    --neutral-600:         #5D6D7E;
+    --neutral-400:         #95A5A6;
+    --white:               #FFFFFF;
+    --shadow-sm:           0 1px 4px rgba(0,0,0,0.07);
+    --shadow-md:           0 4px 20px rgba(0,0,0,0.09);
+    --radius-md:           14px;
+    --radius-lg:           20px;
+    --radius-sm:           8px;
+    --transition:          0.22s ease;
 }
 
-/* ─── العناوين ───────────────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: 'Cairo', 'Inter', sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+[data-testid="stApp"] {
+    background: linear-gradient(160deg, #fafafa 0%, #f5f6f8 50%, #eef0f4 100%) !important;
+}
+[data-testid="stAppViewContainer"],
+[data-testid="stAppScrollToBottomContainer"] {
+    background: transparent !important;
+}
+
+#MainMenu { visibility: hidden !important; }
+footer    { visibility: hidden !important; }
+[data-testid="stToolbar"] { display: none !important; }
+
+[data-testid="stHeader"] {
+    background: rgba(255,255,255,0.92) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid rgba(192,57,43,0.10) !important;
+    box-shadow: 0 1px 24px rgba(0,0,0,0.05) !important;
+}
+
+[data-testid="stMainBlockContainer"] {
+    max-width: 800px !important;
+    padding: 72px 24px 16px !important;
+    margin: 0 auto !important;
+}
+
+/* ── Hero Title ──────────────────────────────────────────── */
 .main-title {
-    color: #ED1C24;
-    font-weight: 700;
-    font-size: 2.2rem;
-    text-align: center;
-    margin-bottom: 0.2rem;
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem) !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    letter-spacing: -0.5px !important;
+    line-height: 1.2 !important;
+    padding: 4px 0 6px !important;
+    margin-bottom: 4px !important;
+    background: linear-gradient(135deg, #1A1A2E 0%, #C0392B 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
 }
 
 .sub-title {
-    color: #3a3a3a;
-    font-weight: 600;
-    font-size: 1.1rem;
-    text-align: center;
-    margin-bottom: 1.5rem;
+    font-size: clamp(0.95rem, 2.2vw, 1.2rem) !important;
+    font-weight: 500 !important;
+    color: #5D6D7E !important;
+    text-align: center !important;
+    line-height: 1.75 !important;
+    margin-bottom: 1.25rem !important;
+    -webkit-text-fill-color: #5D6D7E !important;
 }
 
-/* ─── رسائل المستخدم ─────────────────────────────────────────────────── */
+/* ── Stats Bar ───────────────────────────────────────────── */
+.hr-stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 14px;
+    padding: 14px 24px;
+    box-shadow: var(--shadow-sm);
+    margin: 0 auto 20px auto;
+    max-width: 640px;
+    direction: rtl;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.hr-stat-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 20px; flex: 1; min-width: 130px; justify-content: center;
+}
+.hr-stat-icon { font-size: 1.5rem; }
+.hr-stat-text strong { display: block; font-size: 0.85rem; font-weight: 700; color: #1A1A2E; }
+.hr-stat-text span   { display: block; font-size: 0.7rem; color: #95A5A6; }
+.hr-stat-divider { width: 1px; height: 30px; background: rgba(0,0,0,0.08); flex-shrink: 0; }
+
+/* ── Chat Messages ───────────────────────────────────────── */
+div[data-testid="stChatMessage"] {
+    border-radius: 14px !important;
+    margin-bottom: 10px !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: box-shadow var(--transition), transform var(--transition) !important;
+    animation: fadeInUp 0.3s ease both !important;
+}
+div[data-testid="stChatMessage"]:hover {
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-1px) !important;
+}
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarUser"]) {
-    background-color: #fdecec;
-    border-right: 4px solid #ED1C24;
-    border-radius: 10px;
-    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #fde8e8, #fdf0f0) !important;
+    border-right: 3px solid #C0392B !important;
+    padding: 14px 18px !important;
 }
-
-/* fallback لإصدارات Streamlit الأقدم */
-.stChatMessageUser {
-    background-color: #fdecec;
-    border-right: 4px solid #ED1C24;
-    border-radius: 10px;
-}
-
-/* ─── رسائل المساعد ──────────────────────────────────────────────────── */
 div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {
-    background-color: #f4f5f6;
-    border-right: 4px solid #3a3a3a;
-    border-radius: 10px;
-    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #ffffff, #f9fafc) !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    border-right: 3px solid #2C3E50 !important;
+    padding: 14px 18px !important;
 }
-
+.stChatMessageUser {
+    background: linear-gradient(135deg, #fde8e8, #fdf0f0) !important;
+    border-right: 3px solid #C0392B !important;
+    border-radius: 14px !important;
+}
 .stChatMessageAssistant {
-    background-color: #f4f5f6;
-    border-right: 4px solid #3a3a3a;
-    border-radius: 10px;
+    background: linear-gradient(135deg, #ffffff, #f9fafc) !important;
+    border-right: 3px solid #2C3E50 !important;
+    border-radius: 14px !important;
+}
+div[data-testid="stChatMessageAvatarAssistant"] {
+    background: linear-gradient(135deg, #C0392B, #96281B) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 3px 10px rgba(192,57,43,0.28) !important;
+}
+[data-testid="stChatMessageContent"] p {
+    font-size: 0.95rem !important;
+    line-height: 1.8 !important;
+    color: #2C3E50 !important;
+    margin: 0 !important;
 }
 
-/* ─── صندوق إدخال السؤال ─────────────────────────────────────────────── */
+/* ── Chat Input ──────────────────────────────────────────── */
 div[data-testid="stChatInput"] {
-    border: 1px solid #ED1C24;
-    border-radius: 10px;
+    background: #ffffff !important;
+    border: 2px solid rgba(192,57,43,0.20) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 28px rgba(192,57,43,0.07) !important;
+    transition: border-color var(--transition), box-shadow var(--transition) !important;
+    padding: 4px 10px !important;
+}
+div[data-testid="stChatInput"]:focus-within {
+    border-color: #C0392B !important;
+    box-shadow: 0 4px 28px rgba(192,57,43,0.14), 0 0 0 3px rgba(192,57,43,0.07) !important;
+}
+[data-testid="stChatInputTextArea"]::placeholder {
+    color: #95A5A6 !important;
+    font-style: italic !important;
+}
+button[data-testid="stChatInputSubmitButton"] {
+    background: linear-gradient(135deg, #C0392B, #96281B) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: 0 3px 14px rgba(192,57,43,0.32) !important;
+    transition: all var(--transition) !important;
+}
+button[data-testid="stChatInputSubmitButton"]:hover {
+    background: linear-gradient(135deg, #96281B, #7B241C) !important;
+    box-shadow: 0 5px 20px rgba(192,57,43,0.44) !important;
+    transform: scale(1.07) !important;
 }
 
-/* ─── الأزرار ─────────────────────────────────────────────────────────── */
+/* ── Buttons ─────────────────────────────────────────────── */
 button[kind="primary"] {
-    background-color: #ED1C24;
-    border-color: #ED1C24;
+    background: linear-gradient(135deg, #C0392B, #96281B) !important;
+    border-color: #C0392B !important;
+    border-radius: 8px !important;
+    transition: all var(--transition) !important;
+}
+button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #96281B, #7B241C) !important;
+    border-color: #96281B !important;
+    transform: translateY(-1px) !important;
 }
 
-button[kind="primary"]:hover {
-    background-color: #c9151b;
-    border-color: #c9151b;
+/* ── Bottom Bar ──────────────────────────────────────────── */
+[data-testid="stBottomBlockContainer"] {
+    background: linear-gradient(to top, rgba(245,246,248,0.98) 65%, rgba(245,246,248,0)) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    padding-bottom: 18px !important;
 }
+
+/* ── How It Works ────────────────────────────────────────── */
+.hr-how-it-works { margin: 28px 0 8px 0; direction: rtl; }
+.hr-how-header { text-align: center; margin-bottom: 14px; }
+.hr-how-badge {
+    display: inline-block; background: #FDECEA; color: #C0392B;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px;
+    padding: 4px 12px; border-radius: 100px;
+    border: 1px solid rgba(192,57,43,0.18); margin-bottom: 8px;
+}
+.hr-how-title { font-size: 1.15rem; font-weight: 700; color: #1A1A2E; margin: 0; }
+.hr-steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.hr-step-card {
+    background: #ffffff; border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 14px; padding: 18px 16px;
+    box-shadow: var(--shadow-sm); text-align: center;
+    transition: box-shadow var(--transition), transform var(--transition); direction: rtl;
+}
+.hr-step-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.hr-step-card.accent { background: linear-gradient(135deg, #FDECEA, #fdf5f5); border-color: rgba(192,57,43,0.15); }
+.hr-step-num { font-size: 0.65rem; font-weight: 800; color: #C0392B; letter-spacing: 2px; margin-bottom: 6px; }
+.hr-step-icon { font-size: 1.8rem; margin-bottom: 8px; }
+.hr-step-card h5 { font-size: 0.88rem; font-weight: 700; color: #1A1A2E; margin: 0 0 6px 0; }
+.hr-step-card p  { font-size: 0.75rem; color: #5D6D7E; line-height: 1.6; margin: 0; }
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(192,57,43,0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(192,57,43,0.45); }
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    [data-testid="stMainBlockContainer"] { padding: 64px 12px 14px !important; max-width: 100% !important; }
+    .main-title { font-size: 1.65rem !important; }
+    .sub-title  { font-size: 0.92rem !important; }
+    .hr-steps-grid { grid-template-columns: 1fr; }
+    .hr-stat-divider { display: none; }
+    .hr-stat-item { min-width: 100px; padding: 4px 10px; }
+    .hr-stats-bar { padding: 12px; }
+}
+@media (max-width: 480px) {
+    .main-title { font-size: 1.4rem !important; }
+    .sub-title  { font-size: 0.82rem !important; }
+    }
