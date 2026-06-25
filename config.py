@@ -8,41 +8,58 @@ logs or echoes the secret value.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
 import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent
 
+# Knowledge source type — extensible for future sources
+KnowledgeSource = Literal["company", "dubai_hr"]
+
 
 @dataclass(frozen=True)
 class Settings:
-    docs_dir: Path = BASE_DIR / "hr_documents"
-    db_dir: Path = BASE_DIR / "faiss_db"
-    css_path: Path = BASE_DIR / "style.css"
+    # ── Document directories ──────────────────────────────────────────────────
+    docs_dir: Path = field(default_factory=lambda: BASE_DIR / "hr_documents")
+    dubai_docs_dir: Path = field(default_factory=lambda: BASE_DIR / "dubai_hr_documents")
 
+    # ── FAISS index directories ────────────────────────────────────────────────
+    db_dir: Path = field(default_factory=lambda: BASE_DIR / "faiss_db")
+    dubai_db_dir: Path = field(default_factory=lambda: BASE_DIR / "dubai_faiss_db")
+
+    # ── Static assets ──────────────────────────────────────────────────────────
+    css_path: Path = field(default_factory=lambda: BASE_DIR / "style.css")
+
+    # ── Embedding & LLM ───────────────────────────────────────────────────────
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     llm_model: str = "llama-3.3-70b-versatile"
     llm_temperature: float = 0.1
     llm_max_tokens: int = 1024
 
-    # FAISS uses L2 distance: LOWER = more similar. Above this, treat the
-    # question as out of scope rather than risking a hallucinated answer.
+    # ── Retrieval ─────────────────────────────────────────────────────────────
+    # FAISS uses L2 distance: LOWER = more similar. Above this threshold,
+    # treat the question as out of scope to avoid hallucinated answers.
     similarity_threshold: float = 1.8
     retrieval_k: int = 3
 
+    # ── Conversation limits ───────────────────────────────────────────────────
     max_history_messages: int = 20
     max_input_chars: int = 1500
+    history_turns_for_context: int = 3
+
+    # ── Rate limiting ─────────────────────────────────────────────────────────
     max_requests_per_minute: int = 12
 
-    chunk_size: int = 1000
-    chunk_overlap: int = 200
+    def docs_dir_for(self, source: KnowledgeSource) -> Path:
+        """Return the correct documents directory for the given source."""
+        return self.dubai_docs_dir if source == "dubai_hr" else self.docs_dir
 
-    llm_retry_attempts: int = 2
-    llm_retry_base_delay_seconds: float = 1.0
-
-    history_turns_for_context: int = 3
+    def db_dir_for(self, source: KnowledgeSource) -> Path:
+        """Return the correct FAISS DB directory for the given source."""
+        return self.dubai_db_dir if source == "dubai_hr" else self.db_dir
 
 
 def get_settings() -> Settings:
@@ -51,13 +68,17 @@ def get_settings() -> Settings:
 
 def get_groq_api_key() -> str:
     """
-    Resolution order: environment variable -> Streamlit secrets -> empty.
-    The returned value is never logged.
+    Resolution order (first non-empty value wins):
+      1. Streamlit secrets  →  st.secrets["GROQ_API_KEY"]
+      2. Environment variable  →  os.environ["GROQ_API_KEY"]
+
+    Returns an empty string if neither is set so callers can prompt the user.
+    This function never logs or echoes the key.
     """
-    key = os.environ.get("GROQ_API_KEY", "").strip()
-    if key:
-        return key
     try:
-        return str(st.secrets.get("GROQ_API_KEY", "")).strip()
+        key = st.secrets.get("GROQ_API_KEY", "")
+        if key:
+            return key
     except Exception:
-        return ""
+        pass
+    return os.environ.get("GROQ_API_KEY", "")
