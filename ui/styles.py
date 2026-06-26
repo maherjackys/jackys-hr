@@ -263,7 +263,8 @@ def inject_css(css_path: Path) -> None:
     except FileNotFoundError:
         return
     # Also inject the parent-side message receiver
-    st.markdown(f"<style>{css}</style>{_PARENT_RECEIVER_JS}", unsafe_allow_html=True)
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+      components.html(_PARENT_RECEIVER_JS, height=0, scrolling=False)
 
 
 def inject_ui_controls() -> None:
