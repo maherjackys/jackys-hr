@@ -729,3 +729,6 @@ span { color: inherit !important; }
   .source-cards-grid { gap: 0.6rem; }
   .main .block-container { max-width: 720px !important; }
 }
+
+/* Hide injected script elements that render as text in Streamlit */
+script { display: none !important; }

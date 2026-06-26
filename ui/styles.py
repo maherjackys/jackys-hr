@@ -262,15 +262,14 @@ def inject_css(css_path: Path) -> None:
         css = css_path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return
-    # Also inject the parent-side message receiver
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-
+    # Inject stylesheet + parent-side message receiver (script hidden via CSS)
+    st.markdown(f"<style>{css}</style>{_PARENT_RECEIVER_JS}", unsafe_allow_html=True)
 
 
 def inject_ui_controls() -> None:
     """Inject the floating Dark/Light toggle + Language Switcher.
     Uses st.components.v1.html() so the <script> always executes."""
-    components.html(_UI_JS + _PARENT_RECEIVER_JS, height=56, scrolling=False)
+    components.html(_UI_JS, height=56, scrolling=False)
 
 
 # ── Kept for backwards compat (no-ops) ───────────────────────────────────────

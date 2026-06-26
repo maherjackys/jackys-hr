@@ -145,6 +145,12 @@ def load_engine(_api_key: str, source: str) -> RagEngine | None:
 current_source = st.session_state.knowledge_source
 engine = load_engine(api_key, current_source)
 
+# Rebuild button — clears cache so the engine is recreated with fresh PDFs
+if st.button("🔄 Rebuild Index", key="btn_rebuild",
+             help="Force reload of the knowledge base (use after adding new PDF files)"):
+    st.cache_resource.clear()
+    st.rerun()
+
 # ── Conversation state ────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -186,10 +192,19 @@ if user_query:
             if engine is None:
                 response = t("init_error", lang)
             elif not engine.is_ready:
-                response = (
-                    "No PDF files found in dubai_hr_documents. Please add your files first."
-                    if current_source == "dubai_hr" else t("no_documents", lang)
-                )
+                if current_source == "dubai_hr":
+                    pdf_count = len(list(settings.dubai_docs_dir.glob("*.pdf")))
+                    if pdf_count > 0:
+                        response = (
+                            f"⏳ Loading Dubai HR documents... ({pdf_count} PDF files found). "
+                            "Please wait or click 🔄 Rebuild Index."
+                        )
+                    else:
+                        response = (
+                            "⚠️ No PDF files found in dubai_hr_documents. Please add your files first."
+                        )
+                else:
+                    response = t("no_documents", lang)
             else:
                 try:
                     with st.spinner("Searching..." if lang != LANG_AR else "جاري البحث..."):

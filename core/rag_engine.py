@@ -121,17 +121,28 @@ class RagEngine:
             # Try to load existing index first
             index_file = self._db_dir / "index.faiss"
             if index_file.exists():
-                try:
-                    self._index = FAISS.load_local(
-                        str(self._db_dir),
-                        embeddings,
-                        allow_dangerous_deserialization=True,
-                    )
-                    self._is_ready = True
-                    logger.info("[%s] FAISS index loaded from disk.", self._source)
-                    return
-                except Exception:
-                    logger.warning("[%s] Failed to load saved index — rebuilding.", self._source)
+                # Rebuild if any PDF is newer than the saved index
+                pdf_files = list(self._docs_dir.glob("*.pdf"))
+                needs_rebuild = False
+                if pdf_files:
+                    index_mtime = index_file.stat().st_mtime
+                    latest_pdf = max(pdf_files, key=lambda p: p.stat().st_mtime)
+                    if latest_pdf.stat().st_mtime > index_mtime:
+                        logger.info("[%s] New PDFs detected — rebuilding index.", self._source)
+                        needs_rebuild = True
+
+                if not needs_rebuild:
+                    try:
+                        self._index = FAISS.load_local(
+                            str(self._db_dir),
+                            embeddings,
+                            allow_dangerous_deserialization=True,
+                        )
+                        self._is_ready = True
+                        logger.info("[%s] FAISS index loaded from disk.", self._source)
+                        return
+                    except Exception:
+                        logger.warning("[%s] Failed to load saved index — rebuilding.", self._source)
 
             # Build index from PDFs
             texts = _load_pdf_texts(self._docs_dir)
