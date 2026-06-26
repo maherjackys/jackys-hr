@@ -264,7 +264,7 @@ def inject_css(css_path: Path) -> None:
         return
     # Also inject the parent-side message receiver
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-      components.html(_PARENT_RECEIVER_JS, height=0, scrolling=False)
+    components.html(_PARENT_RECEIVER_JS, height=0, scrolling=False)
 
 
 def inject_ui_controls() -> None:
