@@ -12,7 +12,7 @@ import streamlit.components.v1 as components
 _UI_JS = """
 <style>
 html, body {
-  background: transparent !important;
+  background: transparent !important;h
   overflow: visible !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -275,7 +275,7 @@ def inject_css(css_path: Path) -> None:
 def inject_ui_controls() -> None:
     """Inject the floating Dark/Light toggle + Language Switcher.
     Uses st.components.v1.html() so the <script> always executes."""
-    components.html(_UI_JS, height=56, scrolling=False)
+    components.html(_UI_JS + _PARENT_RECEIVER_JS, height=56, scrolling=False)
 
 
 # ── Kept for backwards compat (no-ops) ───────────────────────────────────────
