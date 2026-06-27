@@ -414,6 +414,61 @@ span  { color: inherit !important; }
   margin-top: 0 !important;
 }
 
+/* ── Source card clickable area via CSS ::before overlay ─────────────────────
+   The <button> is rendered AFTER the card in the DOM.
+   In CSS stacking, later siblings are painted on top (higher z-order).
+   A transparent ::before on the button extends 220 px upward, physically
+   covering the card. Any click in the card area hits ::before → fires the
+   button. Zero JavaScript, works regardless of Streamlit's event sandbox.
+
+   Hover: when ::before is hovered, button:hover is true (pseudo-elements
+   count as part of their element). :has(button:hover) lets us re-apply the
+   card lift effect via the parent column selector.                          */
+
+/* Ensure the ::before can escape any ancestor overflow-clip */
+[data-testid="stColumn"],
+[data-testid="stVerticalBlock"],
+[data-testid="stBaseButton-primary"],
+[data-testid="stBaseButton-secondary"],
+[data-testid="stButton"] {
+  overflow: visible !important;
+}
+
+/* Give the <button> a positioned context so ::before anchors to it */
+[data-testid="stColumn"] [data-testid="stBaseButton-primary"] > button,
+[data-testid="stColumn"] [data-testid="stBaseButton-secondary"] > button,
+[data-testid="stColumn"] [data-testid="stButton"] > button {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Transparent click-shield — extends above button to cover the card */
+[data-testid="stColumn"] [data-testid="stBaseButton-primary"] > button::before,
+[data-testid="stColumn"] [data-testid="stBaseButton-secondary"] > button::before,
+[data-testid="stColumn"] [data-testid="stButton"] > button::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  bottom: 100% !important;
+  left: -12px !important;
+  right: -12px !important;
+  height: 220px !important;
+  cursor: pointer !important;
+}
+
+/* Re-apply card hover when button (or its ::before) is hovered */
+[data-testid="stColumn"]:has([data-testid="stBaseButton-primary"] > button:hover) .source-card,
+[data-testid="stColumn"]:has([data-testid="stBaseButton-secondary"] > button:hover) .source-card,
+[data-testid="stColumn"]:has([data-testid="stButton"] > button:hover) .source-card {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+[data-testid="stColumn"]:has([data-testid="stBaseButton-primary"] > button:hover) .source-card.dubai,
+[data-testid="stColumn"]:has([data-testid="stBaseButton-secondary"] > button:hover) .source-card.dubai,
+[data-testid="stColumn"]:has([data-testid="stButton"] > button:hover) .source-card.dubai {
+  border-color: var(--color-dubai);
+}
+
 /* ============================================================
    9. ACTIVE SOURCE BADGE
    ============================================================ */

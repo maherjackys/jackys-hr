@@ -40,17 +40,6 @@ def _safe_url(url: str) -> str:
     return url if url.startswith(("https://", "http://")) else ""
 
 
-# Inline card-click JS: find the column's Streamlit button and click it.
-# Runs natively in the parent frame — no cross-frame issues possible.
-_CJS = (
-    "var _c=this.closest('[data-testid=stColumn]');"
-    "if(_c){"
-    "var _b=Array.from(_c.querySelectorAll('button'))"
-    ".filter(function(x){return !this.contains(x);}.bind(this));"
-    "if(_b[0])_b[0].click();"
-    "}"
-)
-
 
 _SOCIAL_META: dict[str, dict] = {
     "linkedin":  {"label": "LinkedIn",    "hover": "#0A66C2",
@@ -169,9 +158,7 @@ with col1:
     c_sel = "selected" if current_source == "company" else ""
     st.markdown(f"""
 <div class="source-card company {c_sel}" role="button" tabindex="0" data-cr="1"
-     aria-label="Company Policy"
-     onclick="if(!event.target.closest('button')){{{_CJS}}}"
-     onkeydown="if(event.key==='Enter'||event.key===' '){{event.preventDefault();{_CJS}}}">
+     aria-label="Company Policy">
   <div class="source-card-header">
     <span class="source-card-icon">🏢</span>
     <div class="source-card-check">&#x2713;</div>
@@ -196,9 +183,7 @@ with col2:
     d_sel = "selected" if current_source == "dubai_hr" else ""
     st.markdown(f"""
 <div class="source-card dubai {d_sel}" role="button" tabindex="0" data-cr="1"
-     aria-label="Dubai HR Policy"
-     onclick="if(!event.target.closest('button')){{{_CJS}}}"
-     onkeydown="if(event.key==='Enter'||event.key===' '){{event.preventDefault();{_CJS}}}">
+     aria-label="Dubai HR Policy">
   <div class="source-card-header">
     <span class="source-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg></span>
     <div class="source-card-check">&#x2713;</div>
