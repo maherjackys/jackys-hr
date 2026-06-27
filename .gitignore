@@ -1,5 +1,8 @@
 .streamlit/secrets.toml
 .streamlit/Secrets.toml
 chroma_db_default/
+faiss_db/
+dubai_faiss_db/
 __pycache__/
 *.pyc
+*.pyo
