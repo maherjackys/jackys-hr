@@ -43,7 +43,7 @@ class Settings:
     # FAISS uses L2 distance: LOWER = more similar. Above this threshold,
     # treat the question as out of scope to avoid hallucinated answers.
     similarity_threshold: float = 1.8
-    retrieval_k: int = 3
+    retrieval_k: int = 6
 
     # ── Conversation limits ───────────────────────────────────────────────────
     max_history_messages: int = 20
