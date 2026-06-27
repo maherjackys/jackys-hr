@@ -695,6 +695,16 @@ span  { color: inherit !important; }
 }
 
 /* ============================================================
+   SIDEBAR — hide completely (Rebuild is in sidebar but the collapsed
+   control creates a visible white outline artifact in RTL mode)
+   ============================================================ */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarUserContent"],
+section[data-testid="stSidebar"] {
+  display: none !important;
+}
+
+/* ============================================================
    16. FOOTER
    ============================================================ */
 .hr-footer {

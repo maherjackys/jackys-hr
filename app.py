@@ -105,22 +105,12 @@ iframe[title="st.iframe"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("### ⚙️ Settings")
-    if st.button("🔄 Rebuild Index",
-                 help="Force reload after adding new PDF files",
-                 use_container_width=True):
+# ── Rebuild button (top-right of main area, shown only when needed) ───────────
+_rb_col = st.columns([8, 1])[1]
+with _rb_col:
+    if st.button("🔄", help="Rebuild Index — reload after adding new PDF files"):
         st.cache_resource.clear()
         st.rerun()
-    st.markdown("---")
-    st.markdown(
-        "<small>Add PDF files to<br>"
-        "<code>hr_documents/</code> or<br>"
-        "<code>dubai_hr_documents/</code><br>"
-        "then click Rebuild.</small>",
-        unsafe_allow_html=True,
-    )
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""
