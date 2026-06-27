@@ -4,7 +4,6 @@
    Senior UI/UX Level — WCAG AA Compliant
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ============================================================
    1. DESIGN TOKENS — Light Mode (Default)
@@ -177,14 +176,21 @@ html, body, [class*="css"] {
 .stDeployButton,
 #MainMenu { display: none !important; }
 
-/* Smooth all surface transitions */
-div, section, header, footer, aside, article,
-[data-testid], [class*="st"] {
+/* Scoped transitions — only components that need animated theme switching */
+.source-card,
+[data-testid="stChatMessage"],
+[data-testid="stButton"] > button,
+[data-testid="stBaseButton-primary"],
+[data-testid="stBaseButton-secondary"],
+.active-source-badge,
+.hr-stats-bar,
+[data-testid="stChatInput"],
+[data-testid="stSidebar"] {
   transition:
     background-color var(--transition-slow),
-    border-color var(--transition-slow),
+    border-color var(--transition-base),
     color var(--transition-slow),
-    box-shadow var(--transition-slow) !important;
+    box-shadow var(--transition-base) !important;
 }
 
 /* ============================================================
@@ -217,89 +223,6 @@ h1, h2, h3, h4, h5, h6,
 p, li { color: var(--text-secondary) !important; }
 span { color: inherit !important; }
 
-/* ============================================================
-   6. DARK MODE TOGGLE — Fixed Top Right
-   ============================================================ */
-.theme-toggle-wrap {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 99999;
-}
-
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-pill);
-  padding: 7px 13px 7px 9px;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  font-family: 'Cairo','Inter',sans-serif;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  user-select: none;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color var(--transition-slow),
-    border-color var(--transition-base),
-    box-shadow var(--transition-base),
-    color var(--transition-slow),
-    transform var(--transition-fast) !important;
-}
-
-.theme-toggle-btn:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
-  border-color: var(--brand-primary);
-  color: var(--text-primary);
-}
-
-.theme-toggle-btn:active { transform: scale(0.97); }
-
-.theme-toggle-btn:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
-}
-
-/* Track */
-.toggle-track {
-  width: 36px;
-  height: 20px;
-  border-radius: var(--radius-pill);
-  background: var(--toggle-track-off);
-  position: relative;
-  flex-shrink: 0;
-  transition: background var(--transition-slow) !important;
-}
-
-[data-theme="dark"] .toggle-track {
-  background: var(--toggle-track-on);
-}
-
-/* Knob */
-.toggle-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--toggle-knob);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  transition: transform var(--transition-slow) !important;
-}
-
-[data-theme="dark"] .toggle-knob {
-  transform: translateX(16px);
-}
-
-.toggle-icon { font-size: 0.9rem; line-height: 1; }
 
 /* ============================================================
    7. STATS BAR
@@ -383,7 +306,7 @@ span { color: inherit !important; }
   border-radius: var(--radius-md);
   padding: 1rem 1.1rem;
   cursor: pointer;
-  text-align: right;
+  text-align: start;
   box-shadow: var(--shadow-xs);
   position: relative;
   overflow: hidden;
@@ -435,7 +358,7 @@ span { color: inherit !important; }
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.35rem;
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: space-between;
 }
 
@@ -570,32 +493,42 @@ span { color: inherit !important; }
 /* ============================================================
    11. STREAMLIT COMPONENTS
    ============================================================ */
-/* Buttons */
-[data-testid="stButton"] > button {
+/* Primary buttons */
+[data-testid="stButton"] > button,
+[data-testid="stBaseButton-primary"] {
   background: var(--brand-primary) !important;
-  color: #fff !important;
+  color: var(--text-inverse) !important;
   border: none !important;
   border-radius: var(--radius-md) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
   font-weight: 600 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-[data-testid="stButton"] > button:hover {
+[data-testid="stButton"] > button:hover,
+[data-testid="stBaseButton-primary"]:hover {
   background: var(--brand-primary-dark) !important;
   box-shadow: var(--shadow-md) !important;
   transform: translateY(-1px);
 }
 
-/* Fix: ensure button text is always visible */
-[data-testid="stButton"] > button {
-  color: var(--text-inverse) !important;
+/* Secondary buttons — targets both old and new Streamlit DOM */
+[data-testid="stBaseButton-secondary"] {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1.5px solid var(--border-default) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: 'Cairo','Inter',sans-serif !important;
+  font-weight: 600 !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
-[data-testid="stButton"] > button[kind="secondary"] {
-  color: var(--text-primary) !important;
-  background: var(--bg-surface) !important;
-  border: 1.5px solid var(--border-default) !important;
+
+[data-testid="stBaseButton-secondary"]:hover {
+  background: var(--bg-surface-hover) !important;
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-1px);
 }
 
 /* Inputs */
@@ -636,72 +569,6 @@ span { color: inherit !important; }
   border-right: 1px solid var(--border-default) !important;
 }
 
-/* ============================================================
-   12. HOW IT WORKS
-   ============================================================ */
-.hr-how-section {
-  margin: 1.4rem auto 1.6rem;
-  max-width: 760px;
-}
-
-.hr-how-title {
-  text-align: center;
-  font-size: 0.75rem !important;
-  font-weight: 800 !important;
-  color: var(--text-muted) !important;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 0.9rem !important;
-}
-
-.hr-steps-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.8rem;
-}
-
-.hr-step-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  padding: 1rem 0.9rem;
-  text-align: center;
-  box-shadow: var(--shadow-xs);
-}
-
-.hr-step-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-  background: var(--bg-card-hover);
-}
-
-.hr-step-card.accent {
-  border-color: var(--brand-primary);
-  background: var(--bg-card-selected);
-}
-
-.hr-step-num {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--brand-primary) !important;
-  letter-spacing: 2px;
-  margin-bottom: 0.25rem;
-}
-
-.hr-step-icon { font-size: 1.5rem; margin-bottom: 0.35rem; }
-
-.hr-step-card h5 {
-  font-size: 0.8rem !important;
-  font-weight: 700 !important;
-  color: var(--text-primary) !important;
-  margin-bottom: 0.25rem !important;
-}
-
-.hr-step-card p {
-  font-size: 0.7rem !important;
-  color: var(--text-muted) !important;
-  line-height: 1.45;
-}
 
 /* ============================================================
    13. SCROLLBAR
@@ -727,14 +594,6 @@ span { color: inherit !important; }
   .hr-stat-divider { width: 70%; height: 1px; margin: 0; }
   .main-title { font-size: 1.55rem !important; }
 
-  .theme-toggle-btn {
-    padding: 6px 10px 6px 8px;
-    font-size: 0.72rem;
-  }
-
-  .toggle-track { width: 30px; height: 18px; }
-  .toggle-knob { width: 14px; height: 14px; }
-  [data-theme="dark"] .toggle-knob { transform: translateX(12px); }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
@@ -742,5 +601,3 @@ span { color: inherit !important; }
   .main .block-container { max-width: 720px !important; }
 }
 
-/* Hide injected script elements that render as text in Streamlit */
-script { display: none !important; }

@@ -15,16 +15,27 @@ def detect_language(text: str) -> str:
     """Heuristic: if more than 20% of characters are Arabic, treat as Arabic."""
     if not text:
         return LANG_EN
-    arabic_chars = sum(1 for c in text if "\u0600" <= c <= "\u06FF")
+    arabic_chars = sum(1 for c in text if "؀" <= c <= "ۿ")
     return LANG_AR if arabic_chars > len(text) * 0.2 else LANG_EN
 
 
 STRINGS: dict[str, dict[str, str]] = {
-    "welcome_ar": {LANG_AR: (
-        "مرحباً بك في المساعد المعرفي لسياسات الموارد البشرية 👋\n"
-        "ضع ملفات PDF السياسات في مجلد hr_documents ثم اسألني عنها!"
-    )},
-    "welcome_en": {LANG_EN: "Hello! Place your HR policy PDFs in the hr_documents folder, then ask me anything."},
+    "welcome_company": {
+        LANG_AR: "مرحباً! ضع ملفات PDF لسياسات الموارد البشرية في مجلد hr_documents ثم اسألني أي شيء.",
+        LANG_EN: "Welcome! Place your HR policy PDFs in the hr_documents folder, then ask me anything.",
+    },
+    "welcome_dubai": {
+        LANG_AR: "مرحباً في مساعد سياسات دبي للموارد البشرية 🇦🇪\nاسألني عن أنظمة العمل في دبي والإمارات.",
+        LANG_EN: "Welcome to Dubai HR Policy Assistant! Ask me about Dubai labor regulations and UAE HR policies.",
+    },
+    "source_company": {
+        LANG_AR: "سياسة الشركة",
+        LANG_EN: "Company Policy",
+    },
+    "source_dubai": {
+        LANG_AR: "سياسة دبي HR",
+        LANG_EN: "Dubai HR Policy",
+    },
     "greeting_reply": {
         LANG_AR: "أهلاً وسهلاً! كيف يمكنني مساعدتك في سياسات الموارد البشرية؟",
         LANG_EN: "Hello! How can I help you with HR policies today?",
