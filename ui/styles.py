@@ -142,47 +142,63 @@ html, body {
             app2.setAttribute('dir',  rtl ? 'rtl' : 'ltr');
             app2.setAttribute('lang', lang);
           }
-          p.querySelectorAll('[data-i18n]').forEach(function(el){
-            var k = el.getAttribute('data-i18n');
-            if(T[k] !== undefined){
-              if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'){
-                el.placeholder = T[k];
-              } else {
-                el.textContent = T[k];
-              }
-            }
-          });
+          translateI18n(T);
           var inp = p.querySelector('[data-testid="stChatInputTextArea"], textarea');
           if(inp && T.placeholder) inp.placeholder = T.placeholder;
           translateButtons(rtl);
         }
       });
 
-      /* Translate Streamlit Python-rendered button text to match current language */
+      /* ── Bilingual suggestion button texts ──────────────────────────── */
+      var _S_EN_AR = {
+        "What is the annual leave policy?":           "ما هي سياسة الإجازة السنوية؟",
+        "What are the working hours?":                "ما هي ساعات العمل؟",
+        "What is the expense claim process?":         "ما هي إجراءات المطالبة بالمصاريف؟",
+        "What is the notice period for resignation?": "ما هي مدة الإشعار عند الاستقالة؟",
+        "What are maternity leave entitlements?":     "ما هي مستحقات إجازة الأمومة؟"
+      };
+      var _S_AR_EN = {};
+      Object.keys(_S_EN_AR).forEach(function(en){ _S_AR_EN[_S_EN_AR[en]] = en; });
+      _S_AR_EN["ما هي ساعات العمل في الإمارات؟"] = "What are the working hours in the UAE?";
+
+      /* Translate Streamlit Python-rendered buttons — only changes DOM when needed */
       function translateButtons(rtl){
         p.querySelectorAll('button').forEach(function(btn){
           var node = btn.querySelector('p') || btn;
           var txt  = node.textContent.trim();
+          var next = null;
           if(rtl){
-            if(txt === 'Select')    node.textContent = 'اختر';
-            if(txt === '✓ Active') node.textContent = '✓ نشط';
+            if(txt === 'Select')         next = 'اختر';
+            else if(txt === '✓ Active') next = '✓ نشط';
+            else if(_S_EN_AR[txt])      next = _S_EN_AR[txt];
           } else {
-            if(txt === 'اختر')          node.textContent = 'Select';
-            if(txt === '✓ نشط') node.textContent = '✓ Active';
+            if(txt === 'اختر')          next = 'Select';
+            else if(txt === '✓ نشط')   next = '✓ Active';
+            else if(_S_AR_EN[txt])      next = _S_AR_EN[txt];
+          }
+          if(next && node.textContent !== next) node.textContent = next;
+        });
+      }
+
+      /* Translate [data-i18n] elements — only changes DOM when needed */
+      function translateI18n(T){
+        p.querySelectorAll('[data-i18n]').forEach(function(el){
+          var k = el.getAttribute('data-i18n');
+          if(T[k] !== undefined && el.textContent !== T[k]){
+            if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'){
+              el.placeholder = T[k];
+            } else {
+              el.textContent = T[k];
+            }
           }
         });
       }
 
-      /* Source card click delegation */
+      /* Source card click delegation — data-cr set ONLY after button is found */
       function setupCardDelegation(){
-        p.querySelectorAll('.source-card:not([data-cr])').forEach(function(card){
-          card.setAttribute('data-cr', '1');
-          card.setAttribute('role', 'button');
-          card.setAttribute('tabindex', '0');
-          var titleEl = card.querySelector('.source-card-title');
-          if(titleEl) card.setAttribute('aria-label', titleEl.textContent.trim());
+        p.querySelectorAll('.source-card').forEach(function(card){
+          if(card.hasAttribute('data-cr')) return;
 
-          /* Walk up: stColumn → stVerticalBlock → parent, find nearest button outside card */
           var btn = null;
           var selectors = [
             '[data-testid="stColumn"]',
@@ -195,8 +211,13 @@ html, body {
             var found = Array.from(container.querySelectorAll('button'));
             btn = found.find(function(b){ return !card.contains(b); }) || null;
           }
-          if(!btn) return;
+          if(!btn) return; /* button not yet rendered — try again on next mutation */
 
+          card.setAttribute('data-cr', '1');
+          card.setAttribute('role', 'button');
+          card.setAttribute('tabindex', '0');
+          var titleEl = card.querySelector('.source-card-title');
+          if(titleEl) card.setAttribute('aria-label', titleEl.textContent.trim());
           card.style.cursor = 'pointer';
           card.addEventListener('click', function(e){
             if(!e.target.closest('button')) btn.click();
@@ -214,7 +235,12 @@ html, body {
         _cardTimer = setTimeout(function(){
           setupCardDelegation();
           var savedLang = localStorage.getItem(LK);
-          if(savedLang) translateButtons(savedLang === 'ar');
+          if(savedLang){
+            var rtl = savedLang === 'ar';
+            var T   = getTranslations(savedLang);
+            translateButtons(rtl);
+            translateI18n(T);
+          }
         }, 250);
       });
       _cardObs.observe(p.body, { childList: true, subtree: true });
