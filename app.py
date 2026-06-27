@@ -36,15 +36,13 @@ iframe[title="st.iframe"] {
     right: 0 !important;
     width: 260px !important;
     height: 56px !important;
-    z-index: 99998 !important;
+    z-index: 9999999 !important;
     pointer-events: auto !important;
     border: none !important;
     background: transparent !important;
     overflow: visible !important;
-}
 </style>
 """, unsafe_allow_html=True)
-
 # ── Hero Stats Bar — data-i18n keys updated by client-side JS ────────────────
 HERO_STATS_HTML = """
 <div class="hr-stats-bar">
