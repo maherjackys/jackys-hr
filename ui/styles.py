@@ -116,7 +116,6 @@ html, body {
   function attachParentReceiver(){
     try {
       if(window.parent.__hrListenerSet) return;
-      window.parent.__hrListenerSet = true;
       var p = window.parent.document;
 
       window.parent.addEventListener('message', function(e){
@@ -194,37 +193,9 @@ html, body {
         });
       }
 
-      /* ── Source card delegation ─────────────────────────────────────────
-         Inject a <script> that runs natively IN the parent frame.
-         This avoids cross-frame event-handling quirks entirely.
-         The injected code finds the button geometrically at click-time,
-         so it is immune to Streamlit re-render ordering.                  */
-      function setupCardDelegation(){
-        if(window.parent.__hrCardDelegated) return;
-        window.parent.__hrCardDelegated = true;
-        try {
-          var sc = window.parent.document.createElement('script');
-          sc.textContent = '(function(){' +
-            'if(window.__hrCD) return; window.__hrCD=true;' +
-            'document.addEventListener("click",function(e){' +
-              'var c=e.target&&e.target.closest&&e.target.closest(".source-card");' +
-              'if(!c||e.target.closest("button")) return;' +
-              'var cr=c.getBoundingClientRect();' +
-              'var b=Array.from(document.querySelectorAll("button")).filter(function(x){' +
-                'if(c.contains(x)) return false;' +
-                'var r=x.getBoundingClientRect();' +
-                'return r.top>=cr.bottom-20&&r.left<cr.right+10&&r.right>cr.left-10;' +
-              '}).sort(function(a,b){' +
-                'return a.getBoundingClientRect().top-b.getBoundingClientRect().top;' +
-              '})[0];' +
-              'if(b) b.click();' +
-            '},true);' +
-          '})();';
-          window.parent.document.head.appendChild(sc);
-        } catch(_e){}
-      }
-
-      /* Stamp accessibility attributes on cards after every re-render */
+      /* Stamp accessibility attributes on cards after every re-render.
+         Cards rendered from Python HTML already have data-cr="1" set,
+         so this only applies to any dynamically inserted cards.         */
       function stampCardA11y(){
         p.querySelectorAll('.source-card').forEach(function(card){
           if(card.hasAttribute('data-cr')) return;
@@ -240,14 +211,12 @@ html, body {
         });
       }
 
-      setupCardDelegation();
       stampCardA11y();
 
       var _cardTimer;
       var _cardObs = new MutationObserver(function(){
         clearTimeout(_cardTimer);
         _cardTimer = setTimeout(function(){
-          setupCardDelegation(); /* no-op after first call */
           stampCardA11y();
           var savedLang = localStorage.getItem(LK);
           if(savedLang){
@@ -273,6 +242,7 @@ html, body {
         });
         _themeObs.observe(p.body, { childList: true, subtree: false });
       }
+      window.parent.__hrListenerSet = true;
     } catch(ex){}
   }
 

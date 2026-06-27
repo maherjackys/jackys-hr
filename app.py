@@ -40,6 +40,18 @@ def _safe_url(url: str) -> str:
     return url if url.startswith(("https://", "http://")) else ""
 
 
+# Inline card-click JS: find the column's Streamlit button and click it.
+# Runs natively in the parent frame — no cross-frame issues possible.
+_CJS = (
+    "var _c=this.closest('[data-testid=stColumn]');"
+    "if(_c){"
+    "var _b=Array.from(_c.querySelectorAll('button'))"
+    ".filter(function(x){return !this.contains(x);}.bind(this));"
+    "if(_b[0])_b[0].click();"
+    "}"
+)
+
+
 _SOCIAL_META: dict[str, dict] = {
     "linkedin":  {"label": "LinkedIn",    "hover": "#0A66C2",
                   "svg": '<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>'},
@@ -156,7 +168,10 @@ col1, col2 = st.columns(2)
 with col1:
     c_sel = "selected" if current_source == "company" else ""
     st.markdown(f"""
-<div class="source-card company {c_sel}">
+<div class="source-card company {c_sel}" role="button" tabindex="0" data-cr="1"
+     aria-label="Company Policy"
+     onclick="if(!event.target.closest('button')){{{_CJS}}}"
+     onkeydown="if(event.key==='Enter'||event.key===' '){{event.preventDefault();{_CJS}}}">
   <div class="source-card-header">
     <span class="source-card-icon">🏢</span>
     <div class="source-card-check">&#x2713;</div>
@@ -180,7 +195,10 @@ with col1:
 with col2:
     d_sel = "selected" if current_source == "dubai_hr" else ""
     st.markdown(f"""
-<div class="source-card dubai {d_sel}">
+<div class="source-card dubai {d_sel}" role="button" tabindex="0" data-cr="1"
+     aria-label="Dubai HR Policy"
+     onclick="if(!event.target.closest('button')){{{_CJS}}}"
+     onkeydown="if(event.key==='Enter'||event.key===' '){{event.preventDefault();{_CJS}}}">
   <div class="source-card-header">
     <span class="source-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg></span>
     <div class="source-card-check">&#x2713;</div>
