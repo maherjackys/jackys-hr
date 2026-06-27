@@ -34,6 +34,12 @@ _SOCIAL: dict[str, str] = {
     "whatsapp":  "",   # https://wa.me/971501234567
 }
 
+def _safe_url(url: str) -> str:
+    """Only allow http/https social links — prevents javascript: injection."""
+    url = url.strip()
+    return url if url.startswith(("https://", "http://")) else ""
+
+
 _SOCIAL_META: dict[str, dict] = {
     "linkedin":  {"label": "LinkedIn",    "hover": "#0A66C2",
                   "svg": '<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>'},
@@ -228,10 +234,11 @@ if "messages" not in st.session_state:
     ]
 
 # ── Active source badge ───────────────────────────────────────────────────────
-source_name = t("source_dubai", LANG_EN) if current_source == "dubai_hr" else t("source_company", LANG_EN)
+src_i18n = "src_dxb_t" if current_source == "dubai_hr" else "src_co_t"
+src_name_en = t("source_dubai", LANG_EN) if current_source == "dubai_hr" else t("source_company", LANG_EN)
 badge_class = "active-source-badge dubai-badge" if current_source == "dubai_hr" else "active-source-badge"
 st.markdown(
-    f'<div class="{badge_class}"><span data-i18n="active_pfx">Active:</span> {source_name}</div>',
+    f'<div class="{badge_class}"><span data-i18n="active_pfx">Active:</span> <span data-i18n="{src_i18n}">{src_name_en}</span></div>',
     unsafe_allow_html=True,
 )
 
@@ -384,13 +391,13 @@ if user_query and clean_query:
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 _social_items = [
-    f'<a href="{url}" class="social-link social-{name}" '
+    f'<a href="{_safe_url(url)}" class="social-link social-{name}" '
     f'target="_blank" rel="noopener noreferrer" aria-label="{_SOCIAL_META[name]["label"]}" '
     f'style="--social-hover:{_SOCIAL_META[name]["hover"]}">'
     f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
     f'fill="currentColor" aria-hidden="true">{_SOCIAL_META[name]["svg"]}</svg>'
     f'</a>'
-    for name, url in _SOCIAL.items() if url.strip()
+    for name, url in _SOCIAL.items() if _safe_url(url)
 ]
 _social_bar = (
     f'<div class="social-bar">{"".join(_social_items)}</div>'

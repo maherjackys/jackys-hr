@@ -1,6 +1,17 @@
 [theme]
-base                     = "light"
-primaryColor             = "#ED1C24"
-backgroundColor          = "#ffffff"
+base = "light"
+primaryColor = "#ED1C24"
+backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#f4f5f6"
-textColor                = "#3a3a3a"
+textColor = "#3a3a3a"
+
+[server]
+maxUploadSize = 50
+enableXsrfProtection = true
+headless = false
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+fastReruns = true
