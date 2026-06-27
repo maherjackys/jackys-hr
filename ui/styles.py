@@ -194,46 +194,58 @@ html, body {
         });
       }
 
-      /* Source card click delegation — data-cr set ONLY after button is found */
+      /* ── Source card delegation — single persistent document listener ─────
+         Finds the button geometrically at click-time (no DOM traversal race).
+         Works regardless of Streamlit rerender order.                        */
       function setupCardDelegation(){
+        if(p.__hrCardDelegated) return;
+        p.__hrCardDelegated = true;
+
+        p.addEventListener('click', function(e){
+          var card = e.target.closest && e.target.closest('.source-card');
+          if(!card || e.target.closest('button')) return;
+
+          var cr = card.getBoundingClientRect();
+          var btn = Array.from(p.querySelectorAll('button')).filter(function(b){
+            if(card.contains(b)) return false;
+            var br = b.getBoundingClientRect();
+            /* Button must be directly below the card and horizontally overlapping */
+            return br.top >= cr.bottom - 20 &&
+                   br.left < cr.right + 10 &&
+                   br.right > cr.left - 10;
+          }).sort(function(a,b){
+            return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+          })[0];
+
+          if(btn) btn.click();
+        }, true); /* capture phase — fires before any other handler */
+      }
+
+      /* Stamp accessibility attributes on cards after every re-render */
+      function stampCardA11y(){
         p.querySelectorAll('.source-card').forEach(function(card){
           if(card.hasAttribute('data-cr')) return;
-
-          var btn = null;
-          var selectors = [
-            '[data-testid="stColumn"]',
-            '[data-testid="stVerticalBlockBorderWrapper"]',
-            '[data-testid="stVerticalBlock"]'
-          ];
-          for(var si = 0; si < selectors.length && !btn; si++){
-            var container = card.closest(selectors[si]);
-            if(!container) continue;
-            var found = Array.from(container.querySelectorAll('button'));
-            btn = found.find(function(b){ return !card.contains(b); }) || null;
-          }
-          if(!btn) return; /* button not yet rendered — try again on next mutation */
-
           card.setAttribute('data-cr', '1');
           card.setAttribute('role', 'button');
           card.setAttribute('tabindex', '0');
+          card.style.cursor = 'pointer';
           var titleEl = card.querySelector('.source-card-title');
           if(titleEl) card.setAttribute('aria-label', titleEl.textContent.trim());
-          card.style.cursor = 'pointer';
-          card.addEventListener('click', function(e){
-            if(!e.target.closest('button')) btn.click();
-          });
           card.addEventListener('keydown', function(e){
-            if(e.key==='Enter'||e.key===' '){ e.preventDefault(); btn.click(); }
+            if(e.key==='Enter'||e.key===' '){ e.preventDefault(); card.click(); }
           });
         });
       }
+
       setupCardDelegation();
+      stampCardA11y();
 
       var _cardTimer;
       var _cardObs = new MutationObserver(function(){
         clearTimeout(_cardTimer);
         _cardTimer = setTimeout(function(){
-          setupCardDelegation();
+          setupCardDelegation(); /* no-op after first call */
+          stampCardA11y();
           var savedLang = localStorage.getItem(LK);
           if(savedLang){
             var rtl = savedLang === 'ar';
