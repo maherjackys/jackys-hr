@@ -695,12 +695,17 @@ span  { color: inherit !important; }
 }
 
 /* ============================================================
-   SIDEBAR — hide completely (Rebuild is in sidebar but the collapsed
-   control creates a visible white outline artifact in RTL mode)
+   SIDEBAR — hide completely including all toggle/header controls
    ============================================================ */
 [data-testid="stSidebarCollapsedControl"],
 [data-testid="stSidebarUserContent"],
-section[data-testid="stSidebar"] {
+[data-testid="collapsedControl"],
+section[data-testid="stSidebar"],
+[data-testid="stHeader"],
+[data-testid="stHeaderActionElements"],
+[data-testid="stBaseButton-headerNoPadding"],
+button[kind="header"],
+header[data-testid="stHeader"] {
   display: none !important;
 }
 
