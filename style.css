@@ -929,7 +929,15 @@ header[data-testid="stHeader"] {
 [dir="rtl"] [data-testid="stSidebar"] { direction: rtl; text-align: right; }
 
 /* ============================================================
-   19. THINKING ANIMATION
+   19. BILINGUAL WELCOME MESSAGE
+   ============================================================ */
+.msg-ar { display: none; }
+.msg-en { display: inline; }
+[dir="rtl"] .msg-en { display: none; }
+[dir="rtl"] .msg-ar { display: inline; }
+
+/* ============================================================
+   19b. THINKING ANIMATION
    ============================================================ */
 .thinking-indicator {
   display: flex;
