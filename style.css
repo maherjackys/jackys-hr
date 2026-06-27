@@ -1,151 +1,121 @@
 /* ==========================================================================
-   HR Policy Assistant — style.css v3.0
+   HR Policy Assistant — style.css v6.0
    Full Dark / Light Mode | CSS Design Tokens | Production Ready
-   Senior UI/UX Level — WCAG AA Compliant
    ========================================================================== */
 
-
 /* ============================================================
-   1. DESIGN TOKENS — Light Mode (Default)
+   1. DESIGN TOKENS — Light Mode
    ============================================================ */
 :root {
-  /* ── Brand ── */
-  --brand-primary:          #C0392B;
-  --brand-primary-dark:     #96281B;
-  --brand-primary-light:    #E74C3C;
-  --brand-accent:           #E67E22;
-  --brand-accent-dark:      #CA6F1E;
+  /* Brand */
+  --brand-primary:        #C0392B;
+  --brand-primary-dark:   #96281B;
+  --brand-primary-light:  #E74C3C;
+  --brand-accent:         #E67E22;
 
-  /* ── App Backgrounds ── */
-  --bg-app:                 #F5F6F8;
-  --bg-surface:             #FFFFFF;
-  --bg-surface-2:           #F8F9FA;
-  --bg-surface-hover:       #F0F2F5;
-  --bg-overlay:             rgba(0,0,0,0.45);
+  /* App Backgrounds */
+  --bg-app:               #F4F5F7;
+  --bg-surface:           #FFFFFF;
+  --bg-surface-2:         #F8F9FA;
+  --bg-surface-hover:     #F0F2F5;
 
-  /* ── Component Backgrounds ── */
-  --bg-chat-user:           #FEF0EE;
-  --bg-chat-bot:            #FFFFFF;
-  --bg-card:                #FFFFFF;
-  --bg-card-hover:          #FAFBFC;
-  --bg-card-selected:       #FEF0EE;
-  --bg-input:               #FFFFFF;
-  --bg-badge:               #FEF0EE;
-  --bg-source-badge:        linear-gradient(135deg, #C0392B 0%, #E74C3C 100%);
-  --bg-dubai-badge:         linear-gradient(135deg, #1a6b3c 0%, #27ae60 100%);
+  /* Component Backgrounds */
+  --bg-chat-user:         #FEF0EE;
+  --bg-chat-bot:          #FFFFFF;
+  --bg-card:              #FFFFFF;
+  --bg-card-hover:        #FAFBFC;
+  --bg-card-selected:     #FEF4F3;
+  --bg-input:             #FFFFFF;
+  --bg-badge:             #FEF0EE;
 
-  /* ── Text ── */
-  --text-primary:           #1A1A2E;
-  --text-secondary:         #4B5563;
-  --text-muted:             #9CA3AF;
-  --text-inverse:           #FFFFFF;
-  --text-brand:             #C0392B;
-  --text-link:              #C0392B;
-  --text-link-hover:        #96281B;
+  /* Text */
+  --text-primary:         #111827;
+  --text-secondary:       #4B5563;
+  --text-muted:           #9CA3AF;
+  --text-inverse:         #FFFFFF;
+  --text-brand:           #C0392B;
 
-  /* ── Borders ── */
-  --border-default:         #E5E7EB;
-  --border-subtle:          #F3F4F6;
-  --border-focus:           #C0392B;
-  --border-card:            #E9ECEF;
-  --border-card-selected:   #C0392B;
-  --border-input:           #D1D5DB;
+  /* Borders */
+  --border-default:       #E5E7EB;
+  --border-subtle:        #F3F4F6;
+  --border-focus:         #C0392B;
+  --border-card:          #E9ECEF;
+  --border-card-selected: #C0392B;
+  --border-input:         #D1D5DB;
 
-  /* ── Shadows ── */
-  --shadow-xs:              0 1px 3px rgba(0,0,0,0.06);
-  --shadow-sm:              0 2px 8px rgba(0,0,0,0.07);
-  --shadow-md:              0 4px 20px rgba(0,0,0,0.09);
-  --shadow-lg:              0 12px 40px rgba(0,0,0,0.13);
-  --shadow-focus:           0 0 0 3px rgba(192,57,43,0.18);
-  --shadow-card-hover:      0 8px 28px rgba(0,0,0,0.13);
+  /* Shadows */
+  --shadow-xs:            0 1px 3px rgba(0,0,0,0.06);
+  --shadow-sm:            0 2px 8px rgba(0,0,0,0.07);
+  --shadow-md:            0 4px 20px rgba(0,0,0,0.09);
+  --shadow-lg:            0 12px 40px rgba(0,0,0,0.13);
+  --shadow-focus:         0 0 0 3px rgba(192,57,43,0.18);
+  --shadow-card-hover:    0 8px 28px rgba(0,0,0,0.12);
 
-  /* ── Radii ── */
-  --radius-xs:              6px;
-  --radius-sm:              10px;
-  --radius-md:              14px;
-  --radius-lg:              20px;
-  --radius-xl:              28px;
-  --radius-pill:            999px;
+  /* Radii */
+  --radius-xs:            6px;
+  --radius-sm:            10px;
+  --radius-md:            14px;
+  --radius-lg:            20px;
+  --radius-xl:            28px;
+  --radius-pill:          999px;
 
-  /* ── Transitions ── */
-  --transition-fast:        0.12s ease;
-  --transition-base:        0.22s ease;
-  --transition-slow:        0.38s cubic-bezier(0.4,0,0.2,1);
+  /* Transitions */
+  --transition-fast:      0.12s ease;
+  --transition-base:      0.22s ease;
+  --transition-slow:      0.38s cubic-bezier(0.4,0,0.2,1);
 
-  /* ── Toggle ── */
-  --toggle-track-off:       #D1D5DB;
-  --toggle-track-on:        #C0392B;
-  --toggle-knob:            #FFFFFF;
-
-  /* ── Scrollbar ── */
-  --scrollbar-track:        #F3F4F6;
-  --scrollbar-thumb:        #D1D5DB;
-  --scrollbar-thumb-hover:  #9CA3AF;
+  /* Scrollbar */
+  --scrollbar-track:      #F3F4F6;
+  --scrollbar-thumb:      #D1D5DB;
+  --scrollbar-thumb-hover:#9CA3AF;
 }
 
 /* ============================================================
    2. DESIGN TOKENS — Dark Mode
    ============================================================ */
 [data-theme="dark"] {
-  /* ── App Backgrounds ── */
-  --bg-app:                 #0D1117;
-  --bg-surface:             #161B22;
-  --bg-surface-2:           #1C2128;
-  --bg-surface-hover:       #21262D;
-  --bg-overlay:             rgba(0,0,0,0.72);
+  --bg-app:               #0D1117;
+  --bg-surface:           #161B22;
+  --bg-surface-2:         #1C2128;
+  --bg-surface-hover:     #21262D;
 
-  /* ── Component Backgrounds ── */
-  --bg-chat-user:           #2D1B18;
-  --bg-chat-bot:            #161B22;
-  --bg-card:                #161B22;
-  --bg-card-hover:          #1C2128;
-  --bg-card-selected:       #2D1B18;
-  --bg-input:               #1C2128;
-  --bg-badge:               #2D1B18;
-  --bg-source-badge:        linear-gradient(135deg, #96281B 0%, #C0392B 100%);
-  --bg-dubai-badge:         linear-gradient(135deg, #145a32 0%, #1e8449 100%);
+  --bg-chat-user:         #2D1B18;
+  --bg-chat-bot:          #161B22;
+  --bg-card:              #161B22;
+  --bg-card-hover:        #1C2128;
+  --bg-card-selected:     #2D1B18;
+  --bg-input:             #1C2128;
+  --bg-badge:             #2D1B18;
 
-  /* ── Text ── */
-  --text-primary:           #E6EDF3;
-  --text-secondary:         #8B949E;
-  --text-muted:             #6E7681;
-  --text-inverse:           #0D1117;
-  --text-brand:             #E74C3C;
-  --text-link:              #E74C3C;
-  --text-link-hover:        #FF6B5B;
+  --text-primary:         #E6EDF3;
+  --text-secondary:       #8B949E;
+  --text-muted:           #6E7681;
+  --text-inverse:         #0D1117;
+  --text-brand:           #E74C3C;
 
-  /* ── Borders ── */
-  --border-default:         #30363D;
-  --border-subtle:          #21262D;
-  --border-focus:           #E74C3C;
-  --border-card:            #30363D;
-  --border-card-selected:   #E74C3C;
-  --border-input:           #30363D;
+  --border-default:       #30363D;
+  --border-subtle:        #21262D;
+  --border-focus:         #E74C3C;
+  --border-card:          #30363D;
+  --border-card-selected: #E74C3C;
+  --border-input:         #30363D;
 
-  /* ── Shadows ── */
-  --shadow-xs:              0 1px 3px rgba(0,0,0,0.3);
-  --shadow-sm:              0 2px 8px rgba(0,0,0,0.4);
-  --shadow-md:              0 4px 20px rgba(0,0,0,0.5);
-  --shadow-lg:              0 12px 40px rgba(0,0,0,0.65);
-  --shadow-focus:           0 0 0 3px rgba(231,76,60,0.25);
-  --shadow-card-hover:      0 8px 28px rgba(0,0,0,0.55);
+  --shadow-xs:            0 1px 3px rgba(0,0,0,0.3);
+  --shadow-sm:            0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md:            0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg:            0 12px 40px rgba(0,0,0,0.65);
+  --shadow-focus:         0 0 0 3px rgba(231,76,60,0.25);
+  --shadow-card-hover:    0 8px 28px rgba(0,0,0,0.55);
 
-  /* ── Toggle ── */
-  --toggle-track-off:       #30363D;
-  --toggle-track-on:        #E74C3C;
-
-  /* ── Scrollbar ── */
-  --scrollbar-track:        #161B22;
-  --scrollbar-thumb:        #30363D;
-  --scrollbar-thumb-hover:  #484F58;
+  --scrollbar-track:      #161B22;
+  --scrollbar-thumb:      #30363D;
+  --scrollbar-thumb-hover:#484F58;
 }
 
 /* ============================================================
    3. GLOBAL RESET & BASE
    ============================================================ */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body, [class*="css"] {
   font-family: 'Cairo', 'Inter', sans-serif !important;
@@ -154,20 +124,18 @@ html, body, [class*="css"] {
 }
 
 /* ============================================================
-   4. APP CONTAINER — global theme transitions
+   4. APP CONTAINER
    ============================================================ */
 [data-testid="stApp"] {
   background-color: var(--bg-app) !important;
   color: var(--text-primary) !important;
-  transition:
-    background-color var(--transition-slow),
-    color var(--transition-slow) !important;
+  transition: background-color var(--transition-slow), color var(--transition-slow) !important;
 }
 
 .main .block-container {
-  padding-top: 1.5rem !important;
-  padding-bottom: 4rem !important;
-  max-width: 840px !important;
+  padding-top: 1.25rem !important;
+  padding-bottom: 5rem !important;
+  max-width: 860px !important;
 }
 
 /* Hide Streamlit chrome */
@@ -176,7 +144,7 @@ html, body, [class*="css"] {
 .stDeployButton,
 #MainMenu { display: none !important; }
 
-/* Scoped transitions — only components that need animated theme switching */
+/* Scoped theme transitions */
 .source-card,
 [data-testid="stChatMessage"],
 [data-testid="stButton"] > button,
@@ -184,6 +152,7 @@ html, body, [class*="css"] {
 [data-testid="stBaseButton-secondary"],
 .active-source-badge,
 .hr-stats-bar,
+.hr-footer,
 [data-testid="stChatInput"],
 [data-testid="stSidebar"] {
   transition:
@@ -196,33 +165,62 @@ html, body, [class*="css"] {
 /* ============================================================
    5. TYPOGRAPHY
    ============================================================ */
-h1, h2, h3, h4, h5, h6,
-.main-title, .sub-title {
+h1, h2, h3, h4, h5, h6 {
   font-family: 'Cairo', sans-serif !important;
   color: var(--text-primary) !important;
 }
 
-.main-title {
-  font-size: clamp(1.75rem, 4vw, 2.6rem) !important;
-  font-weight: 900 !important;
+p, li { color: var(--text-secondary) !important; }
+span  { color: inherit !important; }
+
+/* ============================================================
+   6. HEADER
+   ============================================================ */
+.hr-header {
   text-align: center;
+  padding: 0.5rem 0 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.hr-header-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(192,57,43,0.25));
+}
+
+.main-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem) !important;
+  font-weight: 900 !important;
   letter-spacing: -0.5px;
-  line-height: 1.2 !important;
-  margin-bottom: 0.25rem !important;
+  line-height: 1.15 !important;
+  margin-bottom: 0.3rem !important;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="dark"] .main-title {
+  background: linear-gradient(135deg, #E74C3C 0%, #FF6B5B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sub-title {
-  font-size: clamp(0.9rem, 2vw, 1.1rem) !important;
+  font-size: clamp(0.85rem, 2vw, 1rem) !important;
   font-weight: 400 !important;
   color: var(--text-secondary) !important;
-  text-align: center;
-  margin-bottom: 1.4rem !important;
+  margin-bottom: 0 !important;
   line-height: 1.6 !important;
+  /* Override the gradient from .main-title if applied by inheritance */
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
 }
-
-p, li { color: var(--text-secondary) !important; }
-span { color: inherit !important; }
-
 
 /* ============================================================
    7. STATS BAR
@@ -234,89 +232,78 @@ span { color: inherit !important; }
   background: var(--bg-surface);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
-  padding: 0.9rem 1.5rem;
-  margin: 0 auto 1.6rem;
-  max-width: 600px;
-  box-shadow: var(--shadow-sm);
+  padding: 0.75rem 1.5rem;
+  margin: 1rem auto 1.4rem;
+  max-width: 580px;
+  box-shadow: var(--shadow-xs);
 }
 
 .hr-stat-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   flex: 1;
   justify-content: center;
 }
 
-.hr-stat-icon { font-size: 1.4rem; line-height: 1; }
+.hr-stat-icon { font-size: 1.25rem; line-height: 1; }
 
-.hr-stat-text {
-  display: flex;
-  flex-direction: column;
-}
+.hr-stat-text { display: flex; flex-direction: column; }
 
 .hr-stat-text strong {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-primary) !important;
   line-height: 1.2;
 }
 
 .hr-stat-text span {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--text-muted) !important;
 }
 
 .hr-stat-divider {
   width: 1px;
-  height: 34px;
+  height: 30px;
   background: var(--border-default);
-  margin: 0 0.4rem;
+  margin: 0 0.3rem;
   flex-shrink: 0;
 }
 
 /* ============================================================
-   8. SOURCE SELECTOR — Card Design
+   8. SOURCE SELECTOR
    ============================================================ */
-.source-selector-wrap {
-  margin: 0 auto 1.6rem;
-  max-width: 680px;
-}
-
 .source-selector-label {
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-muted) !important;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
   text-align: center;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.7rem !important;
   display: block;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  background: none !important;
 }
 
-.source-cards-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
+/* Source cards — visual display only (NOT interactive) */
 .source-card {
   background: var(--bg-card);
   border: 2px solid var(--border-card);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.1rem;
-  cursor: pointer;
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 1rem 1.1rem 0.8rem;
+  cursor: default;
   text-align: start;
   box-shadow: var(--shadow-xs);
   position: relative;
   overflow: hidden;
   transition:
     background var(--transition-slow),
-    border-color var(--transition-base),
-    box-shadow var(--transition-base),
-    transform var(--transition-fast) !important;
+    border-color var(--transition-base) !important;
 }
 
+/* Colored top accent line */
 .source-card::before {
   content: '';
   position: absolute;
@@ -325,60 +312,36 @@ span { color: inherit !important; }
   opacity: 0;
   transition: opacity var(--transition-base);
 }
-
-.source-card.company::before {
-  background: linear-gradient(90deg, #C0392B, #E74C3C);
-}
-
-.source-card.dubai::before {
-  background: linear-gradient(90deg, #1a6b3c, #27ae60);
-}
-
-.source-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card-hover);
-  border-color: var(--border-focus);
-  background: var(--bg-card-hover);
-}
+.source-card.company::before { background: linear-gradient(90deg, #C0392B, #E74C3C); }
+.source-card.dubai::before   { background: linear-gradient(90deg, #1a6b3c, #27ae60); }
 
 .source-card.selected {
   background: var(--bg-card-selected);
   border-color: var(--border-card-selected);
-  box-shadow: var(--shadow-card-hover);
 }
-
 .source-card.selected::before { opacity: 1; }
-
-.source-card.dubai.selected {
-  border-color: #27ae60;
-}
+.source-card.dubai.selected   { border-color: #27ae60; }
 
 .source-card-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.3rem;
   flex-direction: row;
   justify-content: space-between;
 }
 
-.source-card-icon { font-size: 1.4rem; }
+.source-card-icon { font-size: 1.35rem; }
 
 .source-card-check {
-  width: 18px;
-  height: 18px;
+  width: 18px; height: 18px;
   border-radius: 50%;
   border: 2px solid var(--border-default);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   font-size: 0.65rem;
   color: transparent;
   flex-shrink: 0;
-  transition:
-    background var(--transition-base),
-    border-color var(--transition-base),
-    color var(--transition-base);
+  transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
 }
 
 .source-card.selected .source-card-check {
@@ -386,60 +349,76 @@ span { color: inherit !important; }
   border-color: var(--brand-primary);
   color: #fff;
 }
-
-.source-card.dubai.selected .source-card-check {
-  background: #27ae60;
-  border-color: #27ae60;
-}
+.source-card.dubai.selected .source-card-check { background: #27ae60; border-color: #27ae60; }
 
 .source-card-title {
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--text-primary) !important;
   line-height: 1.2;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background: none !important;
 }
-
 .source-card-desc {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-muted) !important;
   line-height: 1.5;
+  margin-top: 0.2rem;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  background: none !important;
 }
 
-/* Active source badge in chat */
+/* Card + button join — button sits flush below the card */
+[data-testid="stColumn"] [data-testid="stButton"] > button,
+[data-testid="stColumn"] [data-testid="stBaseButton-primary"],
+[data-testid="stColumn"] [data-testid="stBaseButton-secondary"] {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* ============================================================
+   9. ACTIVE SOURCE BADGE
+   ============================================================ */
 .active-source-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   background: var(--bg-badge);
-  border: 1px solid var(--border-card);
+  border: 1px solid rgba(192,57,43,0.2);
   border-radius: var(--radius-pill);
-  padding: 4px 10px;
-  font-size: 0.73rem;
+  padding: 4px 12px;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-brand) !important;
-  margin: 0 auto 1rem;
+  -webkit-text-fill-color: var(--text-brand) !important;
+  margin: 0.9rem auto 0.7rem;
   width: fit-content;
+  display: block;
+  text-align: center;
 }
 
 .active-source-badge.dubai-badge {
   color: #27ae60 !important;
-  border-color: #27ae60;
+  -webkit-text-fill-color: #27ae60 !important;
+  border-color: rgba(39,174,96,0.2);
+  background: rgba(39,174,96,0.06);
 }
 
 /* ============================================================
-   9. CHAT MESSAGES
+   10. CHAT MESSAGES
    ============================================================ */
 [data-testid="stChatMessage"] {
   border-radius: var(--radius-md) !important;
-  padding: 0.95rem 1.15rem !important;
-  margin-bottom: 0.65rem !important;
+  padding: 0.9rem 1.1rem !important;
+  margin-bottom: 0.6rem !important;
   border: 1px solid var(--border-default) !important;
   box-shadow: var(--shadow-xs) !important;
 }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   background: var(--bg-chat-user) !important;
-  border-color: rgba(192,57,43,0.2) !important;
+  border-color: rgba(192,57,43,0.15) !important;
 }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
@@ -449,12 +428,31 @@ span { color: inherit !important; }
 [data-testid="stChatMessage"] p,
 [data-testid="stChatMessage"] span {
   color: var(--text-primary) !important;
-  font-size: 0.93rem !important;
-  line-height: 1.75 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.8 !important;
+}
+
+[data-testid="stChatMessage"] li {
+  color: var(--text-primary) !important;
+  font-size: 0.92rem !important;
+  line-height: 1.7 !important;
+}
+
+[data-testid="stChatMessage"] strong {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+}
+
+[data-testid="stChatMessage"] code {
+  background: var(--bg-surface-2) !important;
+  color: var(--text-brand) !important;
+  border-radius: var(--radius-xs) !important;
+  padding: 1px 5px !important;
+  font-size: 0.85em !important;
 }
 
 /* ============================================================
-   10. CHAT INPUT
+   11. CHAT INPUT
    ============================================================ */
 [data-testid="stChatInput"] {
   background: var(--bg-input) !important;
@@ -473,7 +471,7 @@ span { color: inherit !important; }
   background: transparent !important;
   color: var(--text-primary) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
-  font-size: 0.93rem !important;
+  font-size: 0.92rem !important;
   caret-color: var(--brand-primary);
 }
 
@@ -484,16 +482,16 @@ span { color: inherit !important; }
 [data-testid="stChatInput"] button {
   background: var(--brand-primary) !important;
   border-radius: var(--radius-pill) !important;
+  transition: background var(--transition-fast) !important;
 }
-
 [data-testid="stChatInput"] button:hover {
   background: var(--brand-primary-dark) !important;
 }
 
 /* ============================================================
-   11. STREAMLIT COMPONENTS
+   12. BUTTONS
    ============================================================ */
-/* Primary buttons */
+/* Primary (selected source / active action) */
 [data-testid="stButton"] > button,
 [data-testid="stBaseButton-primary"] {
   background: var(--brand-primary) !important;
@@ -502,36 +500,58 @@ span { color: inherit !important; }
   border-radius: var(--radius-md) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
   font-weight: 600 !important;
+  font-size: 0.9rem !important;
   opacity: 1 !important;
   visibility: visible !important;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast) !important;
 }
 
 [data-testid="stButton"] > button:hover,
 [data-testid="stBaseButton-primary"]:hover {
   background: var(--brand-primary-dark) !important;
   box-shadow: var(--shadow-md) !important;
-  transform: translateY(-1px);
+  transform: translateY(-1px) !important;
+}
+[data-testid="stButton"] > button:active,
+[data-testid="stBaseButton-primary"]:active {
+  transform: scale(0.98) !important;
 }
 
-/* Secondary buttons — targets both old and new Streamlit DOM */
+/* Secondary (inactive source) */
 [data-testid="stBaseButton-secondary"] {
   background: var(--bg-surface) !important;
-  color: var(--text-primary) !important;
+  color: var(--text-secondary) !important;
   border: 1.5px solid var(--border-default) !important;
   border-radius: var(--radius-md) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
   font-weight: 600 !important;
+  font-size: 0.9rem !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
-
 [data-testid="stBaseButton-secondary"]:hover {
   background: var(--bg-surface-hover) !important;
-  box-shadow: var(--shadow-md) !important;
-  transform: translateY(-1px);
+  border-color: var(--border-focus) !important;
+  color: var(--text-primary) !important;
 }
 
-/* Inputs */
+/* ============================================================
+   13. SUGGESTED QUESTIONS
+   ============================================================ */
+.suggestions-label {
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  background: none !important;
+  text-align: center;
+  margin: 0.5rem 0 0.6rem !important;
+}
+
+
+/* ============================================================
+   14. INPUTS
+   ============================================================ */
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea {
   background: var(--bg-input) !important;
@@ -546,7 +566,6 @@ span { color: inherit !important; }
   border-color: var(--border-focus) !important;
   box-shadow: var(--shadow-focus) !important;
 }
-
 [data-testid="stTextInput"] input::placeholder { color: var(--text-muted) !important; }
 
 /* Alerts */
@@ -569,9 +588,39 @@ span { color: inherit !important; }
   border-right: 1px solid var(--border-default) !important;
 }
 
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] small {
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  background: none !important;
+}
+
+[data-testid="stSidebar"] code {
+  background: var(--bg-surface-2) !important;
+  color: var(--text-brand) !important;
+  border-radius: var(--radius-xs) !important;
+  padding: 1px 4px !important;
+  font-size: 0.8em !important;
+}
 
 /* ============================================================
-   13. SCROLLBAR
+   15. FOOTER
+   ============================================================ */
+.hr-footer {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted) !important;
+  background: none !important;
+  padding: 1.5rem 0 0.5rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.hr-footer strong { color: var(--text-secondary) !important; -webkit-text-fill-color: var(--text-secondary) !important; }
+.hr-footer-dot { margin: 0 0.5rem; opacity: 0.4; }
+
+/* ============================================================
+   16. SCROLLBAR
    ============================================================ */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 3px; }
@@ -579,25 +628,21 @@ span { color: inherit !important; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 /* ============================================================
-   14. RESPONSIVE
+   17. RESPONSIVE
    ============================================================ */
 @media (max-width: 640px) {
-  .hr-steps-grid { grid-template-columns: 1fr; }
-  .source-cards-grid { grid-template-columns: 1fr; }
+  .source-cards-grid   { grid-template-columns: 1fr; }
+  .hr-stats-bar        { flex-direction: column; gap: 0.6rem; padding: 0.75rem 1rem; }
+  .hr-stat-divider     { width: 60%; height: 1px; margin: 0; }
+  .main-title          { font-size: 1.5rem !important; }
+  .hr-header-icon      { font-size: 2rem; }
 
-  .hr-stats-bar {
-    flex-direction: column;
-    gap: 0.65rem;
-    padding: 0.9rem 1rem;
+  [data-testid="stHorizontalBlock"] [data-testid="stBaseButton-secondary"] {
+    font-size: 0.7rem !important;
+    padding: 5px 8px !important;
   }
-
-  .hr-stat-divider { width: 70%; height: 1px; margin: 0; }
-  .main-title { font-size: 1.55rem !important; }
-
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
-  .source-cards-grid { gap: 0.6rem; }
   .main .block-container { max-width: 720px !important; }
 }
-
