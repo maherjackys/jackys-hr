@@ -40,16 +40,24 @@ st.markdown("""
 inject_css(settings.css_path)
 inject_ui_controls()
 
-# Position the single controls iframe as a fixed overlay
+# Fix controls bar visibility:
+# 1. Hide Streamlit's native header (we've replaced its functionality)
+# 2. Use max CSS z-index so nothing can cover our iframe
 st.markdown("""
 <style>
+/* Hide Streamlit's native header entirely — replaced by our controls bar */
+[data-testid="stHeader"] {
+    display: none !important;
+}
+
+/* Our controls iframe — pinned top-right at maximum z-index */
 iframe[title="st.iframe"] {
     position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 270px !important;
+    top: 6px !important;
+    right: 12px !important;
+    width: 280px !important;
     height: 56px !important;
-    z-index: 99998 !important;
+    z-index: 2147483647 !important;
     pointer-events: auto !important;
     border: none !important;
     background: transparent !important;

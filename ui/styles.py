@@ -27,101 +27,85 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Controls bar sits at top-left of the iframe viewport.
+   The iframe itself is positioned fixed top-right by app.py CSS. */
 .hr-controls-bar {
-  position: fixed;
+  position: absolute;
   top: 8px;
-  right: 16px;
-  z-index: 99999;
+  left: 8px;
+  right: 8px;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: flex-end;
 }
-[dir="rtl"] .hr-controls-bar { right: auto; left: 16px; }
+[dir="rtl"] .hr-controls-bar { flex-direction: row-reverse; }
 
-/* ── Theme toggle button ── */
-.theme-toggle-btn {
+/* ── Shared pill button base ── */
+.theme-toggle-btn,
+.lang-switch-btn {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1.5px solid rgba(0, 0, 0, 0.18);
-  background: rgba(255, 255, 255, 0.95);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #1F2937;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.12s;
 }
-[data-theme="dark"] .theme-toggle-btn {
-  background: rgba(22, 27, 34, 0.96);
-  border-color: rgba(255, 255, 255, 0.28);
-  color: #E6EDF3;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-.theme-toggle-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  border-color: rgba(192, 57, 43, 0.5);
-}
-[data-theme="dark"] .theme-toggle-btn:hover {
-  background: rgba(30, 38, 50, 0.98);
-  border-color: rgba(255, 112, 96, 0.55);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
-}
-.theme-toggle-btn:active { transform: scale(0.97); }
-.theme-toggle-btn:focus-visible {
-  outline: 2px solid #C0392B;
-  outline-offset: 2px;
-}
-[data-theme="dark"] .theme-toggle-btn:focus-visible { outline-color: #FF7060; }
-.toggle-icon { font-size: 14px; line-height: 1; }
 
-/* ── Language switcher ── */
-.lang-switcher-wrap { position: relative; }
+/* ── Light mode pill ── */
+.theme-toggle-btn,
 .lang-switch-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid rgba(0, 0, 0, 0.18);
-  background: rgba(255, 255, 255, 0.95);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1F2937;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #FFFFFF;
+  border: 1.5px solid rgba(0, 0, 0, 0.15);
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
 }
+
+/* ── Dark mode pill ──
+   #252D3A = noticeably lighter than the page bg #0D1117 → creates visual
+   separation. White border at 40% opacity ensures the pill is always visible. */
+[data-theme="dark"] .theme-toggle-btn,
 [data-theme="dark"] .lang-switch-btn {
-  background: rgba(22, 27, 34, 0.96);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: #252D3A;
+  border: 1.5px solid rgba(255, 255, 255, 0.40);
   color: #E6EDF3;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.6), 0 3px 10px rgba(0,0,0,0.5);
 }
+
+/* ── Hover ── */
+.theme-toggle-btn:hover,
 .lang-switch-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  border-color: rgba(192, 57, 43, 0.5);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  border-color: rgba(192,57,43,0.55);
 }
+[data-theme="dark"] .theme-toggle-btn:hover,
 [data-theme="dark"] .lang-switch-btn:hover {
-  background: rgba(30, 38, 50, 0.98);
-  border-color: rgba(255, 112, 96, 0.55);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  background: #2E3849;
+  border-color: rgba(255,112,96,0.65);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.65);
 }
+
+/* ── Active / Focus ── */
+.theme-toggle-btn:active,
 .lang-switch-btn:active { transform: scale(0.97); }
+.theme-toggle-btn:focus-visible,
 .lang-switch-btn:focus-visible {
   outline: 2px solid #C0392B;
   outline-offset: 2px;
 }
+[data-theme="dark"] .theme-toggle-btn:focus-visible,
 [data-theme="dark"] .lang-switch-btn:focus-visible { outline-color: #FF7060; }
+.toggle-icon { font-size: 14px; line-height: 1; }
+
+/* ── Language switcher ── */
+.lang-switcher-wrap { position: relative; }
 
 .lang-chevron { font-size: 9px; opacity: 0.55; transition: transform 0.2s; margin-left: 2px; }
 [data-theme="dark"] .lang-chevron { opacity: 0.7; }
@@ -145,9 +129,9 @@ html, body {
 }
 [dir="rtl"] .lang-dropdown { right: auto; left: 0; }
 [data-theme="dark"] .lang-dropdown {
-  background: rgba(22, 27, 34, 0.99);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: #252D3A;
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 .lang-dropdown.open {
   display: block;
