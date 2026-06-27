@@ -194,31 +194,34 @@ html, body {
         });
       }
 
-      /* ── Source card delegation — single persistent document listener ─────
-         Finds the button geometrically at click-time (no DOM traversal race).
-         Works regardless of Streamlit rerender order.                        */
+      /* ── Source card delegation ─────────────────────────────────────────
+         Inject a <script> that runs natively IN the parent frame.
+         This avoids cross-frame event-handling quirks entirely.
+         The injected code finds the button geometrically at click-time,
+         so it is immune to Streamlit re-render ordering.                  */
       function setupCardDelegation(){
-        if(p.__hrCardDelegated) return;
-        p.__hrCardDelegated = true;
-
-        p.addEventListener('click', function(e){
-          var card = e.target.closest && e.target.closest('.source-card');
-          if(!card || e.target.closest('button')) return;
-
-          var cr = card.getBoundingClientRect();
-          var btn = Array.from(p.querySelectorAll('button')).filter(function(b){
-            if(card.contains(b)) return false;
-            var br = b.getBoundingClientRect();
-            /* Button must be directly below the card and horizontally overlapping */
-            return br.top >= cr.bottom - 20 &&
-                   br.left < cr.right + 10 &&
-                   br.right > cr.left - 10;
-          }).sort(function(a,b){
-            return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
-          })[0];
-
-          if(btn) btn.click();
-        }, true); /* capture phase — fires before any other handler */
+        if(window.parent.__hrCardDelegated) return;
+        window.parent.__hrCardDelegated = true;
+        try {
+          var sc = window.parent.document.createElement('script');
+          sc.textContent = '(function(){' +
+            'if(window.__hrCD) return; window.__hrCD=true;' +
+            'document.addEventListener("click",function(e){' +
+              'var c=e.target&&e.target.closest&&e.target.closest(".source-card");' +
+              'if(!c||e.target.closest("button")) return;' +
+              'var cr=c.getBoundingClientRect();' +
+              'var b=Array.from(document.querySelectorAll("button")).filter(function(x){' +
+                'if(c.contains(x)) return false;' +
+                'var r=x.getBoundingClientRect();' +
+                'return r.top>=cr.bottom-20&&r.left<cr.right+10&&r.right>cr.left-10;' +
+              '}).sort(function(a,b){' +
+                'return a.getBoundingClientRect().top-b.getBoundingClientRect().top;' +
+              '})[0];' +
+              'if(b) b.click();' +
+            '},true);' +
+          '})();';
+          window.parent.document.head.appendChild(sc);
+        } catch(_e){}
       }
 
       /* Stamp accessibility attributes on cards after every re-render */
