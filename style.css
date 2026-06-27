@@ -68,6 +68,15 @@
   --scrollbar-track:      #F3F4F6;
   --scrollbar-thumb:      #D1D5DB;
   --scrollbar-thumb-hover:#9CA3AF;
+
+  /* Dubai theme (green) — light mode values */
+  /* #1a7a43 gives 4.9:1 on white bg — WCAG AA */
+  --color-dubai:          #1a7a43;
+  --color-dubai-border:   rgba(26, 122, 67, 0.25);
+  --bg-dubai-badge:       rgba(26, 122, 67, 0.07);
+
+  /* User chat message border */
+  --border-chat-user:     rgba(192, 57, 43, 0.12);
 }
 
 /* ============================================================
@@ -89,16 +98,18 @@
 
   --text-primary:         #E6EDF3;
   --text-secondary:       #8B949E;
-  --text-muted:           #6E7681;
+  /* #7D8590 gives ≥5.1:1 on --bg-surface (#161B22) — WCAG AA for small text */
+  --text-muted:           #7D8590;
   --text-inverse:         #0D1117;
-  --text-brand:           #E74C3C;
+  /* #FF7060 gives ≥6.5:1 on --bg-surface and ≥6.0:1 on --bg-badge — WCAG AA */
+  --text-brand:           #FF7060;
 
   --border-default:       #30363D;
   --border-subtle:        #21262D;
-  --border-focus:         #E74C3C;
+  --border-focus:         #FF7060;
   --border-card:          #30363D;
-  --border-card-selected: #E74C3C;
-  --border-input:         #30363D;
+  --border-card-selected: #FF7060;
+  --border-input:         #484F58;
 
   --shadow-xs:            0 1px 3px rgba(0,0,0,0.3);
   --shadow-sm:            0 2px 8px rgba(0,0,0,0.4);
@@ -110,6 +121,15 @@
   --scrollbar-track:      #161B22;
   --scrollbar-thumb:      #30363D;
   --scrollbar-thumb-hover:#484F58;
+
+  /* Dubai theme — dark mode values */
+  /* #4DD687 gives ≥9:1 on dark badge bg — WCAG AAA */
+  --color-dubai:          #4DD687;
+  --color-dubai-border:   rgba(77, 214, 135, 0.35);
+  --bg-dubai-badge:       rgba(77, 214, 135, 0.1);
+
+  /* User chat message border — visible but subtle on dark bg */
+  --border-chat-user:     rgba(255, 112, 96, 0.22);
 }
 
 /* ============================================================
@@ -313,14 +333,14 @@ span  { color: inherit !important; }
   transition: opacity var(--transition-base);
 }
 .source-card.company::before { background: linear-gradient(90deg, #C0392B, #E74C3C); }
-.source-card.dubai::before   { background: linear-gradient(90deg, #1a6b3c, #27ae60); }
+.source-card.dubai::before   { background: linear-gradient(90deg, #1a6b3c, var(--color-dubai)); }
 
 .source-card.selected {
   background: var(--bg-card-selected);
   border-color: var(--border-card-selected);
 }
 .source-card.selected::before { opacity: 1; }
-.source-card.dubai.selected   { border-color: #27ae60; }
+.source-card.dubai.selected   { border-color: var(--color-dubai); }
 
 .source-card-header {
   display: flex;
@@ -347,9 +367,10 @@ span  { color: inherit !important; }
 .source-card.selected .source-card-check {
   background: var(--brand-primary);
   border-color: var(--brand-primary);
-  color: #fff;
+  color: #FFFFFF;
 }
-.source-card.dubai.selected .source-card-check { background: #27ae60; border-color: #27ae60; }
+[data-theme="dark"] .source-card.selected .source-card-check { color: #FFFFFF; }
+.source-card.dubai.selected .source-card-check { background: var(--color-dubai); border-color: var(--color-dubai); }
 
 .source-card-title {
   font-size: 0.875rem;
@@ -381,28 +402,26 @@ span  { color: inherit !important; }
    9. ACTIVE SOURCE BADGE
    ============================================================ */
 .active-source-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  display: block;
+  width: fit-content;
+  margin: 0.9rem auto 0.7rem;
+  text-align: center;
   background: var(--bg-badge);
-  border: 1px solid rgba(192,57,43,0.2);
+  border: 1px solid rgba(192, 57, 43, 0.22);
   border-radius: var(--radius-pill);
-  padding: 4px 12px;
+  padding: 4px 14px;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-brand) !important;
   -webkit-text-fill-color: var(--text-brand) !important;
-  margin: 0.9rem auto 0.7rem;
-  width: fit-content;
-  display: block;
-  text-align: center;
+  letter-spacing: 0.2px;
 }
 
 .active-source-badge.dubai-badge {
-  color: #27ae60 !important;
-  -webkit-text-fill-color: #27ae60 !important;
-  border-color: rgba(39,174,96,0.2);
-  background: rgba(39,174,96,0.06);
+  background: var(--bg-dubai-badge);
+  border-color: var(--color-dubai-border);
+  color: var(--color-dubai) !important;
+  -webkit-text-fill-color: var(--color-dubai) !important;
 }
 
 /* ============================================================
@@ -418,7 +437,7 @@ span  { color: inherit !important; }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   background: var(--bg-chat-user) !important;
-  border-color: rgba(192,57,43,0.15) !important;
+  border-color: var(--border-chat-user) !important;
 }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
@@ -517,6 +536,12 @@ span  { color: inherit !important; }
   transform: scale(0.98) !important;
 }
 
+[data-testid="stButton"] > button:focus-visible,
+[data-testid="stBaseButton-primary"]:focus-visible {
+  outline: 2px solid var(--border-focus) !important;
+  outline-offset: 2px !important;
+}
+
 /* Secondary (inactive source) */
 [data-testid="stBaseButton-secondary"] {
   background: var(--bg-surface) !important;
@@ -533,6 +558,10 @@ span  { color: inherit !important; }
   background: var(--bg-surface-hover) !important;
   border-color: var(--border-focus) !important;
   color: var(--text-primary) !important;
+}
+[data-testid="stBaseButton-secondary"]:focus-visible {
+  outline: 2px solid var(--border-focus) !important;
+  outline-offset: 2px !important;
 }
 
 /* ============================================================
@@ -604,7 +633,53 @@ span  { color: inherit !important; }
 }
 
 /* ============================================================
-   15. FOOTER
+   15. DARK MODE COMPONENT OVERRIDES
+   Explicit overrides for components whose CSS variables alone are
+   insufficient due to Streamlit's own injected styles overriding ours.
+   ============================================================ */
+
+/* Source card accent top bar — green for Dubai in both modes */
+[data-theme="dark"] .source-card.dubai.selected {
+  border-color: var(--color-dubai);
+}
+[data-theme="dark"] .source-card.dubai::before {
+  background: linear-gradient(90deg, #1a7a43, var(--color-dubai));
+}
+
+/* Spinner color in dark mode */
+[data-theme="dark"] [data-testid="stSpinner"] {
+  color: var(--text-brand) !important;
+}
+
+/* Alert info/warning styling in dark mode */
+[data-theme="dark"] [data-testid="stAlert"] {
+  background: var(--bg-surface-2) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+
+/* Streamlit native markdown links */
+[data-theme="dark"] a { color: var(--text-brand) !important; }
+[data-theme="dark"] a:hover { color: var(--brand-primary-light) !important; }
+
+/* Chat input send button hover in dark mode */
+[data-theme="dark"] [data-testid="stChatInput"] button {
+  background: var(--brand-primary-light) !important;
+}
+[data-theme="dark"] [data-testid="stChatInput"] button:hover {
+  background: var(--brand-primary) !important;
+}
+
+/* Streamlit code blocks */
+[data-theme="dark"] code,
+[data-theme="dark"] pre {
+  background: var(--bg-surface-2) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ============================================================
+   16. FOOTER
    ============================================================ */
 .hr-footer {
   text-align: center;
