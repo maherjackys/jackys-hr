@@ -586,6 +586,18 @@ span { color: inherit !important; }
   transform: translateY(-1px);
 }
 
+/* Fix: ensure button text is always visible */
+[data-testid="stButton"] > button {
+  color: var(--text-inverse) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+[data-testid="stButton"] > button[kind="secondary"] {
+  color: var(--text-primary) !important;
+  background: var(--bg-surface) !important;
+  border: 1.5px solid var(--border-default) !important;
+}
+
 /* Inputs */
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea {

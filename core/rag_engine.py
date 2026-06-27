@@ -118,24 +118,50 @@ class RagEngine:
                 encode_kwargs={"normalize_embeddings": True},
             )
 
-            # Try to load existing index first
-            index_file = self._db_dir / "index.faiss"
-            if index_file.exists():
-                # Rebuild if any PDF is newer than the saved index
-                pdf_files = list(self._docs_dir.glob("*.pdf"))
-                needs_rebuild = False
-                if pdf_files:
-                    index_mtime = index_file.stat().st_mtime
-                    latest_pdf = max(pdf_files, key=lambda p: p.stat().st_mtime)
-                    if latest_pdf.stat().st_mtime > index_mtime:
-                        logger.info("[%s] New PDFs detected — rebuilding index.", self._source)
-                        needs_rebuild = True
+            index_file  = self._db_dir / "index.faiss"
+            count_file  = self._db_dir / "pdf_count.txt"
+            pdf_files   = list(self._docs_dir.glob("*.pdf"))
+            pdf_count   = len(pdf_files)
 
-                if not needs_rebuild:
+            if index_file.exists():
+                if pdf_count == 0:
+                    # No PDFs but index exists — load it as-is
                     try:
                         self._index = FAISS.load_local(
-                            str(self._db_dir),
-                            embeddings,
+                            str(self._db_dir), embeddings,
+                            allow_dangerous_deserialization=True,
+                        )
+                        self._is_ready = True
+                        logger.info("[%s] FAISS index loaded (no PDFs present).", self._source)
+                        return
+                    except Exception:
+                        logger.warning("[%s] Corrupt index and no PDFs — not ready.", self._source)
+                        return
+
+                # Determine if rebuild is needed: count mismatch OR newer PDF
+                saved_count = 0
+                if count_file.exists():
+                    try:
+                        saved_count = int(count_file.read_text().strip())
+                    except Exception:
+                        saved_count = 0
+
+                index_mtime = index_file.stat().st_mtime
+                latest_pdf  = max(pdf_files, key=lambda p: p.stat().st_mtime)
+                needs_rebuild = (
+                    pdf_count != saved_count
+                    or latest_pdf.stat().st_mtime > index_mtime
+                )
+
+                if needs_rebuild:
+                    logger.info(
+                        "[%s] Rebuild triggered (PDF count %d→%d or newer PDF detected).",
+                        self._source, saved_count, pdf_count,
+                    )
+                else:
+                    try:
+                        self._index = FAISS.load_local(
+                            str(self._db_dir), embeddings,
                             allow_dangerous_deserialization=True,
                         )
                         self._is_ready = True
@@ -153,8 +179,12 @@ class RagEngine:
             self._index = FAISS.from_texts(texts, embeddings)
             self._db_dir.mkdir(parents=True, exist_ok=True)
             self._index.save_local(str(self._db_dir))
+            count_file.write_text(str(pdf_count))
             self._is_ready = True
-            logger.info("[%s] FAISS index built and saved (%d chunks).", self._source, len(texts))
+            logger.info(
+                "[%s] FAISS index built and saved (%d chunks, %d PDFs).",
+                self._source, len(texts), pdf_count,
+            )
 
         except Exception:
             logger.exception("[%s] Index build failed.", self._source)

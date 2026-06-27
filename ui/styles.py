@@ -11,12 +11,18 @@ import streamlit.components.v1 as components
 # ── JS payload: Theme toggle + i18n (AR/EN + RTL/LTR) ───────────────────────
 _UI_JS = """
 <style>
+html, body {
+  background: transparent !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 /* ── UI Controls floating bar ── */
 .hr-controls-bar {
   position: fixed;
-  top: 14px;
-  right: 18px;
-  z-index: 9999;
+  top: 8px;
+  right: 16px;
+  z-index: 99999;
   display: flex;
   align-items: center;
   gap: 10px;

@@ -27,6 +27,23 @@ st.set_page_config(
 
 inject_css(settings.css_path)
 inject_ui_controls()   # Dark/Light toggle + Language Switcher (AR/EN + RTL/LTR)
+st.markdown("""
+<style>
+/* Position the UI controls iframe as a fixed overlay at the top-right */
+iframe[title="st.iframe"] {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 260px !important;
+    height: 56px !important;
+    z-index: 99998 !important;
+    pointer-events: auto !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ── Hero Stats Bar — data-i18n keys updated by client-side JS ────────────────
 HERO_STATS_HTML = """
