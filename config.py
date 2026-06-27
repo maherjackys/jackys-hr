@@ -45,6 +45,11 @@ class Settings:
     similarity_threshold: float = 1.8
     retrieval_k: int = 6
 
+    # ── Text chunking ─────────────────────────────────────────────────────────
+    # Larger chunks preserve policy context that spans multiple sentences.
+    chunk_size: int = 1200
+    chunk_overlap: int = 200
+
     # ── Conversation limits ───────────────────────────────────────────────────
     max_history_messages: int = 20
     max_input_chars: int = 1500

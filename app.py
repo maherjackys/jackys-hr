@@ -360,9 +360,9 @@ if user_query and clean_query:
                         response    = st.write_stream(itertools.chain([first_chunk], stream_gen))
                         source_docs = engine.last_source_docs
                     else:
-                        # LLM unavailable — blocking fallback
-                        result   = engine.answer(clean_query, history_text)
-                        response = result.text if result.status == "ok" else t("no_answer", lang)
+                        # Stream yielded nothing — blocking fallback (always has text now)
+                        result      = engine.answer(clean_query, history_text)
+                        response    = result.text
                         source_docs = result.source_docs or []
                         st.markdown(response)
 
