@@ -26,6 +26,16 @@ html, body {
   overflow: visible !important;
   margin: 0 !important;
   padding: 0 !important;
+  /* Area below the controls bar must not block Streamlit clicks */
+  pointer-events: none !important;
+}
+
+/* Only interactive elements re-enable pointer events */
+.hr-controls-bar,
+.hr-controls-bar *,
+.lang-dropdown,
+.lang-dropdown * {
+  pointer-events: auto !important;
 }
 
 /* Controls bar sits at top-left of the iframe viewport.
@@ -117,14 +127,16 @@ html, body {
   position: absolute;
   top: calc(100% + 7px);
   right: 0;
-  min-width: 152px;
+  /* Wider dropdown to fit flags + language names and allow scrolling */
+  min-width: 260px;
+  max-height: 180px;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.99);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  overflow: hidden;
+  overflow-y: auto;
   z-index: 10000;
 }
 [dir="rtl"] .lang-dropdown { right: auto; left: 0; }
@@ -237,10 +249,11 @@ html, body {
     try {
       if(window.parent.__hrListenerSet) return;
       window.parent.__hrListenerSet = true;
+      var p = window.parent.document;
+
       window.parent.addEventListener('message', function(e){
         var d = e.data;
         if(!d || typeof d.type !== 'string' || !d.type.startsWith('hr_')) return;
-        var p = window.parent.document;
 
         if(d.type === 'hr_theme'){
           var th = d.payload;
@@ -272,6 +285,26 @@ html, body {
           if(inp && T.placeholder) inp.placeholder = T.placeholder;
         }
       });
+
+      /* Close dropdown when user clicks anywhere on the parent (Streamlit) page */
+      p.addEventListener('click', function(){ _closeDD(); });
+
+      /* BUG 2 FIX: MutationObserver re-stamps data-theme after Streamlit reruns.
+         Streamlit's React reconciler can strip custom DOM attributes when it
+         re-renders the component tree. The observer catches childList mutations
+         on the parent body and restores the theme from localStorage. */
+      if(window.MutationObserver && p.body){
+        var _themeObserver = new MutationObserver(function(){
+          var saved = localStorage.getItem(TK) || L;
+          if(p.documentElement.getAttribute('data-theme') !== saved){
+            p.documentElement.setAttribute('data-theme', saved);
+            if(p.body) p.body.setAttribute('data-theme', saved);
+            var stApp = p.querySelector('[data-testid="stApp"]');
+            if(stApp) stApp.setAttribute('data-theme', saved);
+          }
+        });
+        _themeObserver.observe(p.body, { childList: true, subtree: false });
+      }
     } catch(ex){}
   }
 
@@ -372,6 +405,18 @@ html, body {
   }
 
   /* ── Dropdown ────────────────────────────────────────────────────────────── */
+  /* NOTE: No iframe resizing needed. The iframe is always 150px tall (set in
+     app.py CSS). The 94px below the button bar has pointer-events:none (body
+     CSS above) so it never blocks Streamlit. The dropdown renders within that
+     space without clipping. */
+
+  function _closeDD(){
+    var dd  = document.getElementById("hr-lang-dd");
+    var btn = document.getElementById("hr-lang-btn");
+    if(dd)  dd.classList.remove("open");
+    if(btn) btn.setAttribute("aria-expanded", "false");
+  }
+
   function toggleDropdown(){
     var dd  = document.getElementById("hr-lang-dd");
     var btn = document.getElementById("hr-lang-btn");
@@ -379,7 +424,6 @@ html, body {
     var isOpen = dd.classList.toggle("open");
     btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
     if(isOpen){
-      /* Focus first option for keyboard nav */
       var first = dd.querySelector(".lang-option");
       if(first) setTimeout(function(){ first.focus(); }, 50);
     }
@@ -387,12 +431,7 @@ html, body {
 
   function closeDropdown(e){
     var wrap = document.querySelector(".lang-switcher-wrap");
-    if(wrap && !wrap.contains(e.target)){
-      var dd  = document.getElementById("hr-lang-dd");
-      var btn = document.getElementById("hr-lang-btn");
-      if(dd)  dd.classList.remove("open");
-      if(btn) btn.setAttribute("aria-expanded", "false");
-    }
+    if(wrap && !wrap.contains(e.target)) _closeDD();
   }
 
   /* ── Boot ────────────────────────────────────────────────────────────────── */
@@ -427,22 +466,16 @@ html, body {
     }
 
     /* Language options */
-    function closeDD(){
-      var dd  = document.getElementById("hr-lang-dd");
-      var btn = document.getElementById("hr-lang-btn");
-      if(dd)  dd.classList.remove("open");
-      if(btn) btn.setAttribute("aria-expanded", "false");
-    }
     var oen = document.getElementById("opt-en");
     var oar = document.getElementById("opt-ar");
-    if(oen) oen.addEventListener("click", function(){ applyLang("en"); closeDD(); });
-    if(oar) oar.addEventListener("click", function(){ applyLang("ar"); closeDD(); });
+    if(oen) oen.addEventListener("click", function(){ applyLang("en"); _closeDD(); });
+    if(oar) oar.addEventListener("click", function(){ applyLang("ar"); _closeDD(); });
 
     /* Keyboard nav within dropdown */
     var dd = document.getElementById("hr-lang-dd");
     if(dd){
       dd.addEventListener("keydown", function(e){
-        if(e.key === "Escape"){ closeDD(); lb && lb.focus(); }
+        if(e.key === "Escape"){ _closeDD(); lb && lb.focus(); }
         if(e.key === "ArrowDown" || e.key === "ArrowUp"){
           e.preventDefault();
           var opts = Array.from(dd.querySelectorAll(".lang-option"));
@@ -483,7 +516,10 @@ def inject_ui_controls() -> None:
     It also stamps data-theme on its OWN document so the iframe-internal CSS
     dark-mode rules activate immediately — no second iframe needed.
     """
-    components.html(_UI_JS, height=56, scrolling=False)
+    # 150px = 56px button bar + 94px dropdown space.
+    # The 94px below the bar is transparent & pointer-events:none (set in CSS above)
+    # so it never visually covers or blocks Streamlit content.
+    components.html(_UI_JS, height=150, scrolling=False)
 
 
 def inject_theme_toggle() -> None:
