@@ -99,7 +99,7 @@ html, body {
     <span id="hr-tl">Dark</span>
   </button>
   <button id="hr-lang-btn" class="lang-switch-btn" aria-label="Switch language — click to toggle">
-    <span class="lang-flag" id="hr-lang-flag" aria-hidden="true">&#127468;&#127463;</span>
+    <span class="lang-flag" id="hr-lang-flag" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="15" viewBox="0 0 60 40" style="border-radius:2px;display:inline-block;vertical-align:middle"><rect width="60" height="40" fill="#012169"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="4"/><rect x="24" width="12" height="40" fill="#fff"/><rect y="14" width="60" height="12" fill="#fff"/><rect x="26" width="8" height="40" fill="#C8102E"/><rect y="16" width="60" height="8" fill="#C8102E"/></svg></span>
     <span id="hr-lang-label">EN</span>
   </button>
 </div>
@@ -235,6 +235,14 @@ html, body {
     } catch(ex){}
   }
 
+  /* ── Flag SVG helper — avoids flag-emoji rendering as "AE"/"GB" on Windows ── */
+  function flagSVG(lang){
+    if(lang==='ar'){
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="15" viewBox="0 0 6 4" style="border-radius:2px;display:inline-block;vertical-align:middle"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg>';
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="15" viewBox="0 0 60 40" style="border-radius:2px;display:inline-block;vertical-align:middle"><rect width="60" height="40" fill="#012169"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/><path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" stroke-width="4"/><rect x="24" width="12" height="40" fill="#fff"/><rect y="14" width="60" height="12" fill="#fff"/><rect x="26" width="8" height="40" fill="#C8102E"/><rect y="16" width="60" height="8" fill="#C8102E"/></svg>';
+  }
+
   /* ── i18n strings ── */
   var TRANS = {
     en:{
@@ -249,6 +257,7 @@ html, body {
       src_dxb_t:"Dubai HR Policy",
       src_dxb_d:"Answers based on Dubai labor regulations and UAE HR policies.",
       active_pfx:"Active:",
+      try_asking:"Try asking:",
       dark_lbl:"Dark", light_lbl:"Light",
       placeholder:"Type your question..."
     },
@@ -264,6 +273,7 @@ html, body {
       src_dxb_t:"سياسة دبي HR",
       src_dxb_d:"إجابات مبنية على قوانين العمل.",
       active_pfx:"المصدر:",
+      try_asking:"جرب أن تسأل:",
       dark_lbl:"داكن", light_lbl:"فاتح",
       placeholder:"اكتب سؤالك..."
     }
@@ -308,7 +318,7 @@ html, body {
 
     var flag = document.getElementById("hr-lang-flag");
     var lbl  = document.getElementById("hr-lang-label");
-    if(flag) flag.innerHTML = (lang === "ar") ? "&#127462;&#127466;" : "&#127468;&#127463;";
+    if(flag) flag.innerHTML = flagSVG(lang);
     if(lbl)  lbl.textContent = (lang === "ar") ? "AR" : "EN";
 
     document.documentElement.setAttribute('dir', rtl ? 'rtl' : 'ltr');

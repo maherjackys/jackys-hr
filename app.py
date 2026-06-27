@@ -71,24 +71,8 @@ st.markdown("""
 inject_css(settings.css_path)
 inject_ui_controls()
 
-# ── Controls bar CSS ───────────────────────────────────────────────────────────
-# BUG 1 FIX:
-# stHeader z-index is 999990 in Streamlit → our iframe must be higher.
-# We keep stHeader visible but transparent (instead of hiding it) so
-# Streamlit's own navigation still works if present.
-# z-index: 9999999 > 999990 ← iframe always on top.
 st.markdown("""
 <style>
-/* Keep stHeader in DOM but visually invisible — avoids Streamlit nav issues */
-[data-testid="stHeader"] {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-/* Controls iframe — pinned top-right, above stHeader (9999999 > 999990).
-   Height 150px = 56px button bar + 94px dropdown space.
-   The 94px below the bar has pointer-events:none inside the iframe so it
-   never blocks Streamlit content (set via html/body CSS in ui/styles.py). */
 iframe[title="st.iframe"] {
     position: fixed !important;
     top: 0 !important;
@@ -104,13 +88,6 @@ iframe[title="st.iframe"] {
 }
 </style>
 """, unsafe_allow_html=True)
-
-# ── Rebuild button (top-right of main area, shown only when needed) ───────────
-_rb_col = st.columns([8, 1])[1]
-with _rb_col:
-    if st.button("🔄", help="Rebuild Index — reload after adding new PDF files"):
-        st.cache_resource.clear()
-        st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""
@@ -290,7 +267,7 @@ _SUGGESTIONS: dict[str, list[str]] = {
 }
 
 if len(st.session_state.messages) <= 1 and engine and engine.is_ready:
-    st.markdown('<p class="suggestions-label">💡 Try asking:</p>', unsafe_allow_html=True)
+    st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
     sugg_list = _SUGGESTIONS.get(current_source, [])
     s_cols = st.columns(len(sugg_list))
     for i, (sc, q) in enumerate(zip(s_cols, sugg_list)):
