@@ -192,7 +192,7 @@ with col2:
     st.markdown(f"""
 <div class="source-card dubai {d_sel}">
   <div class="source-card-header">
-    <span class="source-card-icon">🇦🇪</span>
+    <span class="source-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg></span>
     <div class="source-card-check">&#x2713;</div>
   </div>
   <div class="source-card-title" data-i18n="src_dxb_t">Dubai HR Policy</div>

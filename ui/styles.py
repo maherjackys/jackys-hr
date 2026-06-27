@@ -181,9 +181,23 @@ html, body {
           card.setAttribute('tabindex', '0');
           var titleEl = card.querySelector('.source-card-title');
           if(titleEl) card.setAttribute('aria-label', titleEl.textContent.trim());
-          var col = card.closest('[data-testid="stVerticalBlock"]');
-          var btn = col && col.querySelector('button');
+
+          /* Walk up: stColumn → stVerticalBlock → parent, find nearest button outside card */
+          var btn = null;
+          var selectors = [
+            '[data-testid="stColumn"]',
+            '[data-testid="stVerticalBlockBorderWrapper"]',
+            '[data-testid="stVerticalBlock"]'
+          ];
+          for(var si = 0; si < selectors.length && !btn; si++){
+            var container = card.closest(selectors[si]);
+            if(!container) continue;
+            var found = Array.from(container.querySelectorAll('button'));
+            btn = found.find(function(b){ return !card.contains(b); }) || null;
+          }
           if(!btn) return;
+
+          card.style.cursor = 'pointer';
           card.addEventListener('click', function(e){
             if(!e.target.closest('button')) btn.click();
           });
