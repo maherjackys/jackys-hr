@@ -269,7 +269,7 @@ def inject_css(css_path: Path) -> None:
     except FileNotFoundError:
         return
     # Inject stylesheet + parent-side message receiver (script hidden via CSS)
-    st.markdown(f"<style>{css}</style>{_PARENT_RECEIVER_JS}", unsafe_allow_html=True)
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 
 def inject_ui_controls() -> None:
