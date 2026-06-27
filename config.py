@@ -36,8 +36,8 @@ class Settings:
     # ── Embedding & LLM ───────────────────────────────────────────────────────
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     llm_model: str = "llama-3.3-70b-versatile"
-    llm_temperature: float = 0.1
-    llm_max_tokens: int = 1024
+    llm_temperature: float = 0.35
+    llm_max_tokens: int = 2048
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     # FAISS uses L2 distance: LOWER = more similar. Above this threshold,
