@@ -13,7 +13,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from config import get_groq_api_key, get_settings
-from core.language import LANG_AR, LANG_EN, detect_language, is_greeting, t
+from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
 from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
@@ -250,11 +250,23 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=message.get("is_welcome", False))
         # Show source citation if stored in the message
-        if message["role"] == "assistant" and message.get("sources"):
-            srcs = sorted({os.path.basename(s) for s in message["sources"] if s})
-            if srcs:
+        if message["role"] == "assistant":
+            srcs       = sorted({os.path.basename(s) for s in (message.get("sources") or []) if s})[:3]
+            msg_score  = message.get("best_score", float("inf"))
+            msg_lang   = detect_language(message.get("content", ""))
+            if srcs and msg_score <= settings.min_score_to_show_source:
+                with st.expander(t("source_label", msg_lang)):
+                    for s in srcs:
+                        st.markdown(f"- `{s}`")
+            elif srcs:
                 src_html = " · ".join(f"📄 {s}" for s in srcs)
                 st.markdown(f'<div class="source-citation">{src_html}</div>', unsafe_allow_html=True)
+            elif not message.get("is_welcome"):
+                st.markdown(
+                    f'<p style="font-size:0.75rem;color:var(--color-muted,#888);font-style:italic;margin:4px 0 0">'
+                    f'{t("general_knowledge_note", msg_lang)}</p>',
+                    unsafe_allow_html=True,
+                )
 
 # Scroll to bottom after a new response (flag set before st.rerun())
 if st.session_state.pop("scroll_to_bottom", False):
@@ -270,28 +282,63 @@ if st.session_state.pop("scroll_to_bottom", False):
 """, height=0, scrolling=False)
 
 # ── Suggested questions (empty state) ────────────────────────────────────────
-_SUGGESTIONS: dict[str, list[str]] = {
-    "company": [
-        "What is the annual leave policy?",
-        "What are the working hours?",
-        "What is the expense claim process?",
-    ],
-    "dubai_hr": [
-        "ما هي ساعات العمل في الإمارات؟",
-        "What is the notice period for resignation?",
-        "What are maternity leave entitlements?",
-    ],
+_SUGGESTIONS: dict[str, dict[str, list[str]]] = {
+    "company": {
+        LANG_EN: [
+            "What is the annual leave policy?",
+            "How do I apply for sick leave?",
+            "What is the travel allowance?",
+        ],
+        LANG_AR: [
+            "ما سياسة الإجازة السنوية؟",
+            "كيف أطلب إجازة مرضية؟",
+            "ما سياسة بدل السفر؟",
+        ],
+    },
+    "dubai_hr": {
+        LANG_EN: [
+            "What are working hours under UAE law?",
+            "How is end-of-service calculated?",
+            "What are maternity leave rights?",
+        ],
+        LANG_AR: [
+            "ما ساعات العمل حسب قانون العمل الإماراتي؟",
+            "ما مكافأة نهاية الخدمة؟",
+            "ما حقوق الموظفة الحامل؟",
+        ],
+    },
 }
 
+# ui_lang tracks the preferred language for suggestions — defaults by source
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = LANG_AR if current_source == "dubai_hr" else LANG_EN
+
 if len(st.session_state.messages) <= 1 and engine and engine.is_ready:
-    st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
-    sugg_list = _SUGGESTIONS.get(current_source, [])
-    s_cols = st.columns(len(sugg_list))
-    for i, (sc, q) in enumerate(zip(s_cols, sugg_list)):
-        with sc:
-            if st.button(q, key=f"sugg_{i}", use_container_width=True):
-                st.session_state.suggested_query = q
-                st.rerun()
+    sugg_lang = st.session_state.ui_lang
+    sugg_list = _SUGGESTIONS.get(current_source, {}).get(sugg_lang, [])
+
+    # Label row + EN/AR micro-toggle
+    s_head, s_en, s_ar = st.columns([6, 1, 1])
+    with s_head:
+        st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
+    with s_en:
+        if st.button("EN", key="sugg_lang_en", use_container_width=True,
+                     type="primary" if sugg_lang == LANG_EN else "secondary"):
+            st.session_state.ui_lang = LANG_EN
+            st.rerun()
+    with s_ar:
+        if st.button("AR", key="sugg_lang_ar", use_container_width=True,
+                     type="primary" if sugg_lang == LANG_AR else "secondary"):
+            st.session_state.ui_lang = LANG_AR
+            st.rerun()
+
+    if sugg_list:
+        s_cols = st.columns(len(sugg_list))
+        for i, (sc, q) in enumerate(zip(s_cols, sugg_list)):
+            with sc:
+                if st.button(q, key=f"sugg_{i}", use_container_width=True):
+                    st.session_state.suggested_query = q
+                    st.rerun()
 
 # ── Chat input ────────────────────────────────────────────────────────────────
 user_query = st.chat_input("Type your question… | اكتب سؤالك هنا…", key="hr_chat_input")
@@ -315,10 +362,17 @@ if user_query:
         user_query = None
 
 if user_query and clean_query:
+    # Update suggestion language preference based on what the user typed
+    _, _conf = detect_language_confidence(clean_query)
+    if _conf >= 0.7:
+        st.session_state.ui_lang = lang
+
     history_text = format_history(st.session_state.messages, settings.history_turns_for_context)
 
-    if error_key == "too_long":
+    if error_key == "input_too_long":
         shortcut_response = t("input_too_long", lang)
+    elif error_key == "injection_attempt":
+        shortcut_response = t("injection_attempt", lang)
     elif is_greeting(clean_query):
         shortcut_response = t("greeting_reply", lang)
     elif is_rate_limited(settings.max_requests_per_minute):
@@ -366,11 +420,24 @@ if user_query and clean_query:
                         source_docs = result.source_docs or []
                         st.markdown(response)
 
-                    unique_sources = sorted({os.path.basename(s) for s in source_docs if s})
-                    if unique_sources:
+                    unique_sources = sorted({os.path.basename(s) for s in source_docs if s})[:3]
+                    best_score    = engine.last_best_score
+
+                    if unique_sources and best_score <= settings.min_score_to_show_source:
+                        with st.expander(t("source_label", lang)):
+                            for s in unique_sources:
+                                st.markdown(f"- `{s}`")
+                    elif unique_sources:
+                        # Docs retrieved but below citation confidence — subtle inline
                         src_html = " · ".join(f"📄 {s}" for s in unique_sources)
                         st.markdown(f'<div class="source-citation">{src_html}</div>',
                                     unsafe_allow_html=True)
+                    else:
+                        st.markdown(
+                            f'<p style="font-size:0.75rem;color:var(--color-muted,#888);font-style:italic;margin:4px 0 0">'
+                            f'{t("general_knowledge_note", lang)}</p>',
+                            unsafe_allow_html=True,
+                        )
 
                 except Exception:
                     logger.exception("Query failed: %r", clean_query)
@@ -378,9 +445,10 @@ if user_query and clean_query:
                     st.markdown(response)
 
         st.session_state.messages.append({
-            "role":    "assistant",
-            "content": response,
-            "sources": source_docs,
+            "role":       "assistant",
+            "content":    response,
+            "sources":    source_docs,
+            "best_score": engine.last_best_score if engine else float("inf"),
         })
 
     if len(st.session_state.messages) > settings.max_history_messages:

@@ -11,12 +11,58 @@ LANG_AR = "ar"
 LANG_EN = "en"
 
 
-def detect_language(text: str) -> str:
-    """Heuristic: if more than 20% of characters are Arabic, treat as Arabic."""
+def detect_language_confidence(text: str) -> tuple[str, float]:
+    """
+    Return (language_code, confidence) where confidence is 0.0–1.0.
+
+    Heuristic:
+    - Count Arabic Unicode chars (U+0600–U+06FF) and basic Latin letters.
+    - If Arabic share > 30% → Arabic.
+    - For very short inputs (≤ 2 words) that are ambiguous → default to Arabic,
+      since most users of this UAE-focused assistant are Arabic speakers.
+    - Confidence reflects how clear-cut the detection is.
+    """
     if not text:
-        return LANG_EN
-    arabic_chars = sum(1 for c in text if "؀" <= c <= "ۿ")
-    return LANG_AR if arabic_chars > len(text) * 0.2 else LANG_EN
+        return LANG_EN, 0.5
+
+    stripped = text.strip()
+    total_alpha = 0
+    arabic_count = 0
+    latin_count = 0
+
+    for ch in stripped:
+        if "؀" <= ch <= "ۿ":
+            arabic_count += 1
+            total_alpha += 1
+        elif ch.isalpha() and ord(ch) < 0x0300:  # Basic Latin / Latin-1
+            latin_count += 1
+            total_alpha += 1
+
+    if total_alpha == 0:
+        # Only digits, punctuation, spaces — default Arabic (UAE context)
+        return LANG_AR, 0.5
+
+    arabic_ratio = arabic_count / total_alpha
+
+    # Short ambiguous inputs (≤ 2 words with no clear script) → default Arabic
+    word_count = len(stripped.split())
+    if word_count <= 2 and arabic_ratio < 0.3 and latin_count == 0:
+        return LANG_AR, 0.5
+
+    if arabic_ratio > 0.30:
+        # Confidence scales: pure Arabic → 1.0, barely over threshold → 0.6
+        confidence = min(1.0, 0.6 + arabic_ratio * 0.4)
+        return LANG_AR, round(confidence, 2)
+
+    # Mostly Latin
+    confidence = min(1.0, 0.6 + (1.0 - arabic_ratio) * 0.4)
+    return LANG_EN, round(confidence, 2)
+
+
+def detect_language(text: str) -> str:
+    """Detect language of *text*. Returns LANG_AR or LANG_EN."""
+    lang, _ = detect_language_confidence(text)
+    return lang
 
 
 STRINGS: dict[str, dict[str, str]] = {
@@ -67,6 +113,18 @@ STRINGS: dict[str, dict[str, str]] = {
     "init_error": {
         LANG_AR: "⚠️ تعذّر تهيئة النظام. تأكد من صحة مفتاح API والاتصال بالإنترنت.",
         LANG_EN: "⚠️ System initialization failed. Check your API key and internet connection.",
+    },
+    "injection_attempt": {
+        LANG_AR: "⚠️ تم اكتشاف محتوى غير مسموح به في سؤالك.",
+        LANG_EN: "⚠️ Your input contains disallowed content and has been sanitized.",
+    },
+    "general_knowledge_note": {
+        LANG_AR: "💡 إجابة من المعرفة العامة",
+        LANG_EN: "💡 General knowledge answer",
+    },
+    "source_label": {
+        LANG_AR: "📄 المصدر",
+        LANG_EN: "📄 Source",
     },
 }
 

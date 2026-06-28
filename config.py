@@ -40,10 +40,11 @@ class Settings:
     llm_max_tokens: int = 2048
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
-    # FAISS uses L2 distance: LOWER = more similar. Above this threshold,
-    # treat the question as out of scope to avoid hallucinated answers.
-    similarity_threshold: float = 1.8
-    retrieval_k: int = 6
+    # FAISS L2 distance: LOWER value = MORE similar. Scores range ~0 (identical)
+    # to ~4+ (unrelated). Tune both thresholds together.
+    similarity_threshold: float = 1.4    # reject docs above this (too dissimilar)
+    retrieval_k: int = 8                  # fetch more candidates before threshold filter
+    min_score_to_show_source: float = 1.2 # only cite the source doc if score ≤ this
 
     # ── Text chunking ─────────────────────────────────────────────────────────
     # Larger chunks preserve policy context that spans multiple sentences.
