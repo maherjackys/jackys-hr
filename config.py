@@ -41,10 +41,11 @@ class Settings:
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     # FAISS L2 distance: LOWER value = MORE similar. Scores range ~0 (identical)
-    # to ~4+ (unrelated). Tune both thresholds together.
-    similarity_threshold: float = 1.4    # reject docs above this (too dissimilar)
+    # to ~4+ (unrelated). all-MiniLM-L6-v2 with normalized embeddings produces
+    # relevant-doc scores roughly in [0.6, 1.6] — set threshold above that range.
+    similarity_threshold: float = 1.8    # reject docs above this (too dissimilar)
     retrieval_k: int = 8                  # fetch more candidates before threshold filter
-    min_score_to_show_source: float = 1.2 # only cite the source doc if score ≤ this
+    min_score_to_show_source: float = 1.3 # show expander citation only if score ≤ this
 
     # ── Text chunking ─────────────────────────────────────────────────────────
     # Larger chunks preserve policy context that spans multiple sentences.
