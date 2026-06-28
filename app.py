@@ -66,7 +66,7 @@ settings = get_settings()
 
 st.set_page_config(
     page_title="HR Policy Assistant | المساعد المعرفي للموارد البشرية",
-    page_icon="🏛️",
+    page_icon="🏢",
     layout="centered",
     initial_sidebar_state="collapsed",
     menu_items={"About": "HR Policy Assistant — Powered by Groq + LangChain"},
@@ -105,7 +105,20 @@ iframe[title="st.iframe"] {
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hr-header">
-  <div class="hr-header-icon">🏛️</div>
+  <div class="hr-header-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52" fill="none">
+      <circle cx="32" cy="18" r="8" fill="#C0392B"/>
+      <path d="M18 46c0-7.732 6.268-14 14-14s14 6.268 14 14"
+            stroke="#C0392B" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <circle cx="14" cy="22" r="6" fill="#E74C3C" opacity="0.7"/>
+      <path d="M4 46c0-5.523 4.477-10 10-10s10 4.477 10 10"
+            stroke="#E74C3C" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <circle cx="50" cy="22" r="6" fill="#E74C3C" opacity="0.7"/>
+      <path d="M40 46c0-5.523 4.477-10 10-10s10 4.477 10 10"
+            stroke="#E74C3C" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+    </svg>
+  </div>
+  <div class="hr-brand-pill">HR Policy Assistant</div>
   <h1 class="main-title" data-i18n="app_title">HR Policy Assistant</h1>
   <p class="sub-title" data-i18n="app_subtitle">Ask about any policy in seconds — instead of browsing for hours</p>
 </div>
