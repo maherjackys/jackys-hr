@@ -396,15 +396,18 @@ if user_query and clean_query:
                     thinking_slot.empty()
 
                     if first_chunk is not None:
-                        # Collect chunks while streaming so response is always stored,
-                        # regardless of whether st.write_stream() returns the string.
-                        _chunks: list[str] = [first_chunk]
-                        def _collecting_gen():
-                            for _ch in stream_gen:
-                                _chunks.append(_ch)
-                                yield _ch
-                        st.write_stream(_collecting_gen())
-                        response    = "".join(_chunks)
+                        # Manual streaming: accumulate every chunk into _parts so
+                        # `response` is always the full text after streaming ends.
+                        # st.write_stream() returns None on some Streamlit Cloud builds,
+                        # so we bypass it and drive the st.empty() placeholder directly.
+                        _parts: list[str] = []
+                        _box = st.empty()
+                        _parts.append(first_chunk)
+                        _box.markdown("".join(_parts))
+                        for _c in stream_gen:
+                            _parts.append(_c)
+                            _box.markdown("".join(_parts))
+                        response    = "".join(_parts)
                         source_docs = engine.last_source_docs
                     else:
                         # Stream yielded nothing — blocking fallback (always has text now)
