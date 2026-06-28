@@ -412,14 +412,17 @@ class RagEngine:
                 self._last_best_score  = float("inf")
                 human_text = _build_human_general(query, history, self._source)
 
-            messages    = [SystemMessage(content=_HANA_SYSTEM), HumanMessage(content=human_text)]
-            response    = self._llm.invoke(messages)
-            answer_text = response.content.strip() or t("system_error", lang)
+            messages = [SystemMessage(content=_HANA_SYSTEM), HumanMessage(content=human_text)]
+            chunks: list[str] = []
+            for chunk in self._llm.stream(messages):
+                if chunk.content:
+                    chunks.append(chunk.content)
+            answer_text = "".join(chunks).strip() or t("system_error", lang)
 
             return AnswerResult(answer_text, "ok", source_docs)
 
-        except Exception:
-            logger.exception("[%s] Query failed.", self._source)
+        except Exception as exc:
+            logger.exception("[%s] Query failed: %s", self._source, type(exc).__name__)
             return AnswerResult(t("system_error", lang), "error", [])
 
     # ── Answer (streaming) ────────────────────────────────────────────────────
