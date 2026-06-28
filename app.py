@@ -390,31 +390,13 @@ if user_query and clean_query:
                     thinking_slot = st.empty()
                     thinking_slot.markdown(_THINKING_HTML, unsafe_allow_html=True)
 
-                    stream_gen  = engine.answer_stream(clean_query, history_text)
-                    first_chunk = next(stream_gen, None)
+                    result = engine.answer(clean_query, history_text)
 
                     thinking_slot.empty()
 
-                    if first_chunk is not None:
-                        # Manual streaming: accumulate every chunk into _parts so
-                        # `response` is always the full text after streaming ends.
-                        # st.write_stream() returns None on some Streamlit Cloud builds,
-                        # so we bypass it and drive the st.empty() placeholder directly.
-                        _parts: list[str] = []
-                        _box = st.empty()
-                        _parts.append(first_chunk)
-                        _box.markdown("".join(_parts))
-                        for _c in stream_gen:
-                            _parts.append(_c)
-                            _box.markdown("".join(_parts))
-                        response    = "".join(_parts)
-                        source_docs = engine.last_source_docs
-                    else:
-                        # Stream yielded nothing — blocking fallback (always has text now)
-                        result      = engine.answer(clean_query, history_text)
-                        response    = result.text
-                        source_docs = result.source_docs or []
-                        st.markdown(response)
+                    response    = result.text
+                    source_docs = result.source_docs or []
+                    st.markdown(response)
 
                     unique_sources = sorted({os.path.basename(s) for s in source_docs if s})[:3]
                     best_score    = getattr(engine, "last_best_score", float("inf"))
@@ -424,7 +406,6 @@ if user_query and clean_query:
                             for s in unique_sources:
                                 st.markdown(f"- `{s}`")
                     elif unique_sources:
-                        # Docs retrieved but below citation confidence — subtle inline
                         src_html = " · ".join(f"📄 {s}" for s in unique_sources)
                         st.markdown(f'<div class="source-citation">{src_html}</div>',
                                     unsafe_allow_html=True)
