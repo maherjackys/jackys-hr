@@ -263,7 +263,7 @@ class RagEngine:
     @property
     def last_best_score(self) -> float:
         """Best (lowest) L2 score from the most recent retrieval. inf = no retrieval."""
-        return self._last_best_score
+        return getattr(self, "_last_best_score", float("inf"))
 
     # ── Index building ────────────────────────────────────────────────────────
     def _build_index(self) -> None:

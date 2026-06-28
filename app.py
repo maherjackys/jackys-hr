@@ -317,21 +317,7 @@ if len(st.session_state.messages) <= 1 and engine and engine.is_ready:
     sugg_lang = st.session_state.ui_lang
     sugg_list = _SUGGESTIONS.get(current_source, {}).get(sugg_lang, [])
 
-    # Label row + EN/AR micro-toggle
-    s_head, s_en, s_ar = st.columns([6, 1, 1])
-    with s_head:
-        st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
-    with s_en:
-        if st.button("EN", key="sugg_lang_en", use_container_width=True,
-                     type="primary" if sugg_lang == LANG_EN else "secondary"):
-            st.session_state.ui_lang = LANG_EN
-            st.rerun()
-    with s_ar:
-        if st.button("AR", key="sugg_lang_ar", use_container_width=True,
-                     type="primary" if sugg_lang == LANG_AR else "secondary"):
-            st.session_state.ui_lang = LANG_AR
-            st.rerun()
-
+    st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
     if sugg_list:
         s_cols = st.columns(len(sugg_list))
         for i, (sc, q) in enumerate(zip(s_cols, sugg_list)):
@@ -421,7 +407,7 @@ if user_query and clean_query:
                         st.markdown(response)
 
                     unique_sources = sorted({os.path.basename(s) for s in source_docs if s})[:3]
-                    best_score    = engine.last_best_score
+                    best_score    = getattr(engine, "last_best_score", float("inf"))
 
                     if unique_sources and best_score <= settings.min_score_to_show_source:
                         with st.expander(t("source_label", lang)):
@@ -448,7 +434,7 @@ if user_query and clean_query:
             "role":       "assistant",
             "content":    response,
             "sources":    source_docs,
-            "best_score": engine.last_best_score if engine else float("inf"),
+            "best_score": getattr(engine, "last_best_score", float("inf")),
         })
 
     if len(st.session_state.messages) > settings.max_history_messages:
