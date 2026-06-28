@@ -5,7 +5,6 @@ Streaming responses | Thinking animation | Source citations
 """
 from __future__ import annotations
 
-import itertools
 import logging
 import os
 
@@ -397,7 +396,15 @@ if user_query and clean_query:
                     thinking_slot.empty()
 
                     if first_chunk is not None:
-                        response    = st.write_stream(itertools.chain([first_chunk], stream_gen))
+                        # Collect chunks while streaming so response is always stored,
+                        # regardless of whether st.write_stream() returns the string.
+                        _chunks: list[str] = [first_chunk]
+                        def _collecting_gen():
+                            for _ch in stream_gen:
+                                _chunks.append(_ch)
+                                yield _ch
+                        st.write_stream(_collecting_gen())
+                        response    = "".join(_chunks)
                         source_docs = engine.last_source_docs
                     else:
                         # Stream yielded nothing — blocking fallback (always has text now)
