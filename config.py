@@ -34,19 +34,23 @@ class Settings:
     css_path: Path = field(default_factory=lambda: BASE_DIR / "style.css")
 
     # ── Embedding & LLM ───────────────────────────────────────────────────────
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # multilingual-e5-small: ~470 MB, fits Streamlit Cloud 1 GB RAM.
+    # Proper Arabic + English retrieval (all-MiniLM-L6-v2 was English-only).
+    # e5 models REQUIRE "passage: " prefix at index time and "query: " at search
+    # time — omitting them collapses retrieval quality significantly.
+    embedding_model: str = "intfloat/multilingual-e5-small"
     llm_model: str = "llama-3.3-70b-versatile"
     llm_temperature: float = 0.35
     llm_max_tokens: int = 2048
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
-    # FAISS L2 distance: LOWER = MORE similar. all-MiniLM-L6-v2 (normalized)
-    # produces on-topic scores ~0.4–1.1; off-topic scores typically >1.2.
-    # 1.8 was too permissive — unrelated questions retrieved wrong-topic chunks.
-    similarity_threshold: float = 1.2    # reject docs above this (too dissimilar)
+    # FAISS L2 distance: LOWER = MORE similar.
+    # multilingual-e5-small (normalized) produces on-topic scores ~0.2–0.7;
+    # off-topic scores typically >0.85. Starting values — tune after testing.
+    similarity_threshold: float = 0.85   # reject docs above this (too dissimilar)
     retrieval_k: int = 8                  # fetch more candidates before threshold filter
     # Show high-confidence expander citation only when score is clearly relevant.
-    min_score_to_show_source: float = 1.0 # expander if score ≤ this; inline badge otherwise
+    min_score_to_show_source: float = 0.75  # expander if score ≤ this; inline badge otherwise
 
     # ── Text chunking ─────────────────────────────────────────────────────────
     # Larger chunks preserve policy context that spans multiple sentences.

@@ -86,7 +86,11 @@ def _load_pdf_docs(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 
             loader = PyPDFLoader(str(pdf))
             pages  = loader.load()
             chunks = splitter.split_documents(pages)
-            docs.extend(c for c in chunks if c.page_content.strip())
+            for c in chunks:
+                if c.page_content.strip():
+                    # e5 models require "passage: " prefix on indexed text
+                    c.page_content = "passage: " + c.page_content
+                    docs.append(c)
         except Exception:
             logger.exception("Failed to load PDF: %s", pdf.name)
     return docs
@@ -237,7 +241,7 @@ class RagEngine:
         return getattr(self, "_last_best_score", float("inf"))
 
     # ── Index building ────────────────────────────────────────────────────────
-    _INDEX_VERSION = 2  # bump when index schema changes to force a rebuild
+    _INDEX_VERSION = 3  # v3: switched to multilingual-e5-small + passage/query prefixes
 
     def _build_index(self) -> None:
         try:
@@ -367,8 +371,10 @@ class RagEngine:
 
     def _retrieve(self, query: str) -> tuple[str, list[str], str] | None:
         """Return (context, source_docs, source_label) or None if no relevant results."""
+        # e5 models require "query: " prefix at search time for proper similarity
+        prefixed_query = "query: " + query
         results = self._index.similarity_search_with_score(
-            query, k=self._settings.retrieval_k
+            prefixed_query, k=self._settings.retrieval_k
         )
         relevant = [
             (doc, score) for doc, score in results
