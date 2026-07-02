@@ -18,21 +18,16 @@ logger = logging.getLogger(__name__)
 
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
-# Prompt-injection patterns — matched case-insensitively after stripping
+# Prompt-injection patterns — only unambiguous injection phrases
+# Overly broad patterns (act as, pretend, you are now) were removed because
+# they blocked innocent HR questions like "Who can act as my approver?"
 _INJECTION_PATTERNS: list[re.Pattern] = [
     re.compile(r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", re.I),
-    re.compile(r"\byou\s+are\s+now\b", re.I),
-    re.compile(r"\bact\s+as\b", re.I),
-    re.compile(r"\bpretend\s+(you\s+are|to\s+be)\b", re.I),
     re.compile(r"(?:^|\s)system\s*:", re.I),
     re.compile(r"(?:^|\s)assistant\s*:", re.I),
-    re.compile(r"(?:^|\s)human\s*:", re.I),
-    re.compile(r"\bdo\s+not\s+follow\b", re.I),
     re.compile(r"\bdisregard\b.*\binstructions?\b", re.I),
-    re.compile(r"\bforget\b.*\binstructions?\b", re.I),
     re.compile(r"\bjailbreak\b", re.I),
     re.compile(r"\bdan\s+mode\b", re.I),
-    re.compile(r"\boverride\b.*\brules?\b", re.I),
 ]
 
 # Base64-like payload: long run of b64 alphabet chars — often used to hide injections
@@ -72,14 +67,13 @@ def sanitize_input(text: str, max_chars: int) -> tuple[str, str | None]:
     if len(cleaned) > max_chars:
         return cleaned[:max_chars], "input_too_long"
 
-    # Prompt-injection check
+    # Prompt-injection: strip silently and answer normally — avoids false-positive warnings
     for pattern in _INJECTION_PATTERNS:
         if pattern.search(cleaned):
-            logger.warning("Injection attempt detected: %r", cleaned[:50])
-            # Strip the matching phrase and return a sanitized version
-            sanitized = pattern.sub("[…]", cleaned).strip()
-            return sanitized, "injection_attempt"
+            logger.warning("Injection phrase stripped from query: %r", cleaned[:80])
+            cleaned = pattern.sub("", cleaned).strip()
 
+    # Base64 payloads are unambiguously malicious — still block these
     if _is_b64_payload(cleaned):
         logger.warning("Base64 payload detected: %r", cleaned[:50])
         sanitized = _B64_PAYLOAD.sub("[…]", cleaned).strip()
