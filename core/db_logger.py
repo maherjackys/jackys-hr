@@ -56,6 +56,11 @@ def _get_client():
         return None
 
 
+def get_logging_mode() -> str:
+    """Return 'supabase' if the client is ready, else 'local'."""
+    return "supabase" if _supabase_ready else "local"
+
+
 # ── Local fallback ────────────────────────────────────────────────────────────
 
 def _local_append(path: Path, entry: dict, max_lines: int = 500) -> None:
@@ -111,7 +116,7 @@ def log_unanswered(query: str, source: str) -> None:
                     "source": source,
                 },
             )
-    except Exception:
+    except Exception as exc:
         logger.warning("db_logger: log_unanswered failed (%s: %s).", type(exc).__name__, exc)
 
 

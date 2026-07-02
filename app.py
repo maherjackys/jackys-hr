@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 
 from config import get_groq_api_key, get_settings
 from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
+from core.db_logger import get_logging_mode as _logging_mode
 from core.db_logger import log_feedback as _db_log_feedback
 from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
@@ -561,7 +562,7 @@ st.markdown(f"""
     <span class="hr-footer-dot">·</span>
     <span>Powered by <strong>Groq</strong> + <strong>LangChain</strong></span>
     <span class="hr-footer-dot">·</span>
-    <span>v7.0</span>
+    <span>v7.0 · logs: {_logging_mode()}</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
