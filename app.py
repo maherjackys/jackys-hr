@@ -164,13 +164,31 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+@st.dialog(" ")
+def _confirm_switch(target_source: str) -> None:
+    ui_lang = st.session_state.get("ui_lang", LANG_AR)
+    st.markdown(f"### {t('confirm_switch_title', ui_lang)}")
+    st.markdown(t("confirm_switch_body", ui_lang))
+    col_yes, col_no = st.columns(2)
+    with col_yes:
+        if st.button(t("confirm_yes", ui_lang), type="primary", use_container_width=True):
+            welcome_key = "welcome_dubai" if target_source == "dubai_hr" else "welcome_company"
+            st.session_state.knowledge_source = target_source
+            st.session_state.messages = [
+                {"role": "assistant", "content": _welcome(welcome_key), "is_welcome": True}
+            ]
+            st.rerun()
+    with col_no:
+        if st.button(t("confirm_no", ui_lang), use_container_width=True):
+            st.rerun()
+
+
 col1, col2 = st.columns(2)
 
 with col1:
     c_sel = "selected" if current_source == "company" else ""
     st.markdown(f"""
-<div class="source-card company {c_sel}" role="button" tabindex="0" data-cr="1"
-     aria-label="Company Policy">
+<div class="source-card company {c_sel}" data-cr="1" aria-label="Company Policy">
   <div class="source-card-header">
     <span class="source-card-icon">🏢</span>
     <div class="source-card-check">&#x2713;</div>
@@ -185,17 +203,19 @@ with col1:
         type="primary" if current_source == "company" else "secondary",
     ):
         if current_source != "company":
-            st.session_state.knowledge_source = "company"
-            st.session_state.messages = [
-                {"role": "assistant", "content": _welcome("welcome_company"), "is_welcome": True}
-            ]
-            st.rerun()
+            if len(st.session_state.get("messages", [])) > 1:
+                _confirm_switch("company")
+            else:
+                st.session_state.knowledge_source = "company"
+                st.session_state.messages = [
+                    {"role": "assistant", "content": _welcome("welcome_company"), "is_welcome": True}
+                ]
+                st.rerun()
 
 with col2:
     d_sel = "selected" if current_source == "dubai_hr" else ""
     st.markdown(f"""
-<div class="source-card dubai {d_sel}" role="button" tabindex="0" data-cr="1"
-     aria-label="Dubai HR Policy">
+<div class="source-card dubai {d_sel}" data-cr="1" aria-label="Dubai HR Policy">
   <div class="source-card-header">
     <span class="source-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg></span>
     <div class="source-card-check">&#x2713;</div>
@@ -210,11 +230,14 @@ with col2:
         type="primary" if current_source == "dubai_hr" else "secondary",
     ):
         if current_source != "dubai_hr":
-            st.session_state.knowledge_source = "dubai_hr"
-            st.session_state.messages = [
-                {"role": "assistant", "content": _welcome("welcome_dubai"), "is_welcome": True}
-            ]
-            st.rerun()
+            if len(st.session_state.get("messages", [])) > 1:
+                _confirm_switch("dubai_hr")
+            else:
+                st.session_state.knowledge_source = "dubai_hr"
+                st.session_state.messages = [
+                    {"role": "assistant", "content": _welcome("welcome_dubai"), "is_welcome": True}
+                ]
+                st.rerun()
 
 # ── Directories ───────────────────────────────────────────────────────────────
 settings.docs_dir.mkdir(parents=True, exist_ok=True)
@@ -248,14 +271,25 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": _welcome("welcome_company"), "is_welcome": True}
     ]
 
-# ── Active source badge ───────────────────────────────────────────────────────
+# ── Active source badge + New Chat ───────────────────────────────────────────
 src_i18n = "src_dxb_t" if current_source == "dubai_hr" else "src_co_t"
 src_name_en = t("source_dubai", LANG_EN) if current_source == "dubai_hr" else t("source_company", LANG_EN)
 badge_class = "active-source-badge dubai-badge" if current_source == "dubai_hr" else "active-source-badge"
-st.markdown(
-    f'<div class="{badge_class}"><span data-i18n="active_pfx">Active:</span> <span data-i18n="{src_i18n}">{src_name_en}</span></div>',
-    unsafe_allow_html=True,
-)
+
+_badge_col, _btn_col = st.columns([4, 1])
+with _badge_col:
+    st.markdown(
+        f'<div class="{badge_class}"><span data-i18n="active_pfx">Active:</span> <span data-i18n="{src_i18n}">{src_name_en}</span></div>',
+        unsafe_allow_html=True,
+    )
+with _btn_col:
+    _nc_lang = st.session_state.get("ui_lang", LANG_AR)
+    if st.button(t("new_chat_btn", _nc_lang), key="btn_new_chat", use_container_width=True):
+        welcome_key = "welcome_dubai" if current_source == "dubai_hr" else "welcome_company"
+        st.session_state.messages = [
+            {"role": "assistant", "content": _welcome(welcome_key), "is_welcome": True}
+        ]
+        st.rerun()
 
 # ── Chat history ──────────────────────────────────────────────────────────────
 for message in st.session_state.messages:
@@ -403,14 +437,19 @@ if user_query and clean_query:
                     thinking_slot = st.empty()
                     thinking_slot.markdown(_THINKING_HTML, unsafe_allow_html=True)
 
-                    result = engine.answer(clean_query, history_text)
+                    _state = {"cleared": False}
+                    def _stream():
+                        for token in engine.answer_stream(clean_query, history_text):
+                            if not _state["cleared"]:
+                                thinking_slot.empty()
+                                _state["cleared"] = True
+                            yield token
 
-                    thinking_slot.empty()
+                    response = st.write_stream(_stream()) or t("system_error", lang)
+                    if not _state["cleared"]:
+                        thinking_slot.empty()
 
-                    response    = result.text
-                    source_docs = result.source_docs or []
-                    st.markdown(response)
-
+                    source_docs = list(engine.last_source_docs or [])
                     unique_sources = sorted({os.path.basename(s) for s in source_docs if s})[:3]
                     best_score    = getattr(engine, "last_best_score", float("inf"))
 

@@ -67,8 +67,8 @@ def detect_language(text: str) -> str:
 
 STRINGS: dict[str, dict[str, str]] = {
     "welcome_company": {
-        LANG_AR: "مرحباً! ضع ملفات PDF لسياسات الموارد البشرية في مجلد hr_documents ثم اسألني أي شيء.",
-        LANG_EN: "Welcome! Place your HR policy PDFs in the hr_documents folder, then ask me anything.",
+        LANG_AR: "مرحباً بك! أنا مساعدك لسياسات الموارد البشرية.\nيمكنني الإجابة على أسئلتك فوراً استناداً إلى السياسات الرسمية للشركة.\n\nجرّب أن تسأل:\n• ما سياسة الإجازات السنوية؟\n• كيف أقدّم طلب إجازة مرضية؟",
+        LANG_EN: "Welcome! I'm your HR Policy Assistant.\nI can answer your questions instantly based on your company's official HR policies.\n\nTry asking:\n• What is the annual leave policy?\n• How do I apply for sick leave?",
     },
     "welcome_dubai": {
         LANG_AR: "مرحباً في مساعد سياسات دبي للموارد البشرية 🇦🇪\nاسألني عن أنظمة العمل في دبي والإمارات.",
@@ -125,6 +125,26 @@ STRINGS: dict[str, dict[str, str]] = {
     "source_label": {
         LANG_AR: "📄 المصدر",
         LANG_EN: "📄 Source",
+    },
+    "confirm_switch_title": {
+        LANG_AR: "تغيير مصدر المعرفة",
+        LANG_EN: "Switch Knowledge Source",
+    },
+    "confirm_switch_body": {
+        LANG_AR: "سيؤدي هذا إلى مسح سجل المحادثة الحالي. هل تريد المتابعة؟",
+        LANG_EN: "This will clear your current conversation history. Do you want to continue?",
+    },
+    "confirm_yes": {
+        LANG_AR: "نعم، تابع",
+        LANG_EN: "Yes, continue",
+    },
+    "confirm_no": {
+        LANG_AR: "لا، إلغاء",
+        LANG_EN: "No, cancel",
+    },
+    "new_chat_btn": {
+        LANG_AR: "🗑️ محادثة جديدة",
+        LANG_EN: "🗑️ New Chat",
     },
 }
 
