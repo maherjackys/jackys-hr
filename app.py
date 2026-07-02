@@ -365,23 +365,35 @@ _SUGGESTIONS: dict[str, dict[str, list[str]]] = {
             "What is the annual leave policy?",
             "How do I apply for sick leave?",
             "What is the travel allowance?",
+            "How is end-of-service gratuity calculated?",
+            "What are the standard working hours?",
+            "What is the dress code policy?",
         ],
         LANG_AR: [
             "ما سياسة الإجازة السنوية؟",
             "كيف أطلب إجازة مرضية؟",
             "ما سياسة بدل السفر؟",
+            "كيف تُحسب مكافأة نهاية الخدمة؟",
+            "ما ساعات العمل الرسمية؟",
+            "ما سياسة الزي الرسمي؟",
         ],
     },
     "dubai_hr": {
         LANG_EN: [
             "What are working hours under UAE law?",
-            "How is end-of-service calculated?",
+            "How is end-of-service gratuity calculated?",
             "What are maternity leave rights?",
+            "What is the annual leave entitlement?",
+            "How does sick leave work under UAE law?",
+            "What are the rules for overtime pay?",
         ],
         LANG_AR: [
             "ما ساعات العمل حسب قانون العمل الإماراتي؟",
-            "ما مكافأة نهاية الخدمة؟",
-            "ما حقوق الموظفة الحامل؟",
+            "كيف تُحسب مكافأة نهاية الخدمة؟",
+            "ما حقوق الموظفة في إجازة الأمومة؟",
+            "كم يوم إجازة سنوية يستحق الموظف؟",
+            "كيف تعمل الإجازة المرضية بموجب القانون الإماراتي؟",
+            "ما أحكام الأجر الإضافي (الأوفرتايم)؟",
         ],
     },
 }
@@ -390,18 +402,29 @@ _SUGGESTIONS: dict[str, dict[str, list[str]]] = {
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = LANG_AR if current_source == "dubai_hr" else LANG_EN
 
-if len(st.session_state.messages) <= 1 and engine and engine.is_ready:
+if engine and engine.is_ready:
     sugg_lang = st.session_state.ui_lang
     sugg_list = _SUGGESTIONS.get(current_source, {}).get(sugg_lang, [])
+    has_history = len(st.session_state.messages) > 1
 
-    st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
-    if sugg_list:
-        s_cols = st.columns(len(sugg_list))
-        for i, (sc, q) in enumerate(zip(s_cols, sugg_list)):
-            with sc:
-                if st.button(q, key=f"sugg_{i}", use_container_width=True):
-                    st.session_state.suggested_query = q
-                    st.rerun()
+    def _render_suggestions(sugg_list: list, key_prefix: str) -> None:
+        row1, row2 = sugg_list[:3], sugg_list[3:6]
+        for row_idx, row in enumerate([row1, row2]):
+            if not row:
+                continue
+            cols = st.columns(3)
+            for col_idx, q in enumerate(row):
+                with cols[col_idx]:
+                    if st.button(q, key=f"{key_prefix}_{row_idx}_{col_idx}", use_container_width=True):
+                        st.session_state.suggested_query = q
+                        st.rerun()
+
+    if not has_history:
+        st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
+        _render_suggestions(sugg_list, "sugg")
+    else:
+        with st.expander("💡 اقتراحات / Suggestions", expanded=False):
+            _render_suggestions(sugg_list, "sugg_ex")
 
 # ── Chat input ────────────────────────────────────────────────────────────────
 user_query = st.chat_input("Type your question… | اكتب سؤالك هنا…", key="hr_chat_input")
