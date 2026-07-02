@@ -87,12 +87,11 @@ def _log_unanswered_query(query: str, source: str) -> None:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-def _load_pdf_texts(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 200) -> list[str]:
-    """Load and split all PDFs in *docs_dir* into text chunks.
+def _load_pdf_docs(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 200):
+    """Load and split all PDFs in *docs_dir* into Document chunks with metadata.
 
-    Separators include Arabic punctuation so Arabic policy documents chunk
-    at natural sentence boundaries. Larger chunks preserve policy context
-    that spans multiple sentences or clauses.
+    Returns list[Document] so that page numbers and source filenames survive
+    into the FAISS index via from_documents().
     """
     try:
         from langchain_community.document_loaders import PyPDFLoader
@@ -110,16 +109,16 @@ def _load_pdf_texts(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int =
         chunk_overlap=chunk_overlap,
         separators=["\n\n", "\n", ".", "،", "؟", "؛", " ", ""],
     )
-    texts: list[str] = []
+    docs = []
     for pdf in pdf_files:
         try:
             loader = PyPDFLoader(str(pdf))
-            docs   = loader.load()
-            chunks = splitter.split_documents(docs)
-            texts.extend(c.page_content for c in chunks if c.page_content.strip())
+            pages  = loader.load()
+            chunks = splitter.split_documents(pages)
+            docs.extend(c for c in chunks if c.page_content.strip())
         except Exception:
             logger.exception("Failed to load PDF: %s", pdf.name)
-    return texts
+    return docs
 
 
 def format_history(messages: list[dict], turns: int) -> str:
@@ -267,17 +266,29 @@ class RagEngine:
         return getattr(self, "_last_best_score", float("inf"))
 
     # ── Index building ────────────────────────────────────────────────────────
+    _INDEX_VERSION = 2  # bump when index schema changes to force a rebuild
+
     def _build_index(self) -> None:
         try:
             from langchain_community.vectorstores import FAISS
 
-            embeddings  = _get_embeddings(self._settings.embedding_model)
-            index_file  = self._db_dir / "index.faiss"
-            count_file  = self._db_dir / "pdf_count.txt"
-            pdf_files   = list(self._docs_dir.glob("*.pdf"))
-            pdf_count   = len(pdf_files)
+            embeddings    = _get_embeddings(self._settings.embedding_model)
+            index_file    = self._db_dir / "index.faiss"
+            count_file    = self._db_dir / "pdf_count.txt"
+            version_file  = self._db_dir / "index_version.txt"
+            pdf_files     = list(self._docs_dir.glob("*.pdf"))
+            pdf_count     = len(pdf_files)
 
-            if index_file.exists():
+            # Version check — old indexes lack page-number metadata
+            saved_version = 0
+            if version_file.exists():
+                try:
+                    saved_version = int(version_file.read_text().strip())
+                except Exception:
+                    saved_version = 0
+            version_outdated = saved_version < self._INDEX_VERSION
+
+            if index_file.exists() and not version_outdated:
                 if pdf_count == 0:
                     try:
                         self._index = FAISS.load_local(
@@ -323,26 +334,32 @@ class RagEngine:
                         "[%s] Rebuild triggered (PDF count %d→%d or newer PDF detected).",
                         self._source, saved_count, pdf_count,
                     )
+            elif version_outdated and index_file.exists():
+                logger.info(
+                    "[%s] Index version %d < %d — rebuilding to add page-number metadata.",
+                    self._source, saved_version, self._INDEX_VERSION,
+                )
 
-            texts = _load_pdf_texts(
+            docs = _load_pdf_docs(
                 self._docs_dir,
                 self._settings.chunk_size,
                 self._settings.chunk_overlap,
             )
-            if not texts:
+            if not docs:
                 logger.warning("[%s] No PDFs found — general-knowledge mode.", self._source)
                 self._is_ready = True
                 self._index = None
                 return
 
-            self._index = FAISS.from_texts(texts, embeddings)
+            self._index = FAISS.from_documents(docs, embeddings)
             self._db_dir.mkdir(parents=True, exist_ok=True)
             self._index.save_local(str(self._db_dir))
             count_file.write_text(str(pdf_count))
+            version_file.write_text(str(self._INDEX_VERSION))
             self._is_ready = True
             logger.info(
-                "[%s] FAISS index built and saved (%d chunks, %d PDFs).",
-                self._source, len(texts), pdf_count,
+                "[%s] FAISS index built and saved (%d chunks, %d PDFs, v%d).",
+                self._source, len(docs), pdf_count, self._INDEX_VERSION,
             )
 
         except Exception:
@@ -362,6 +379,14 @@ class RagEngine:
             logger.exception("LLM init failed.")
 
     # ── Shared retrieval ──────────────────────────────────────────────────────
+    @staticmethod
+    def _fmt_source(doc) -> str:
+        """Format a retrieved document's source as 'filename.pdf — p.N'."""
+        raw  = doc.metadata.get("source", "")
+        name = Path(raw).name if raw else "unknown"
+        page = doc.metadata.get("page", 0)
+        return f"{name} — p.{page + 1}"
+
     def _retrieve(self, query: str) -> tuple[str, list[str], str] | None:
         """Return (context, source_docs, source_label) or None if no relevant results."""
         results = self._index.similarity_search_with_score(
@@ -379,7 +404,7 @@ class RagEngine:
 
         self._last_best_score = relevant[0][1]  # lowest (best) L2 score
         context     = "\n\n---\n\n".join(doc.page_content for doc, _ in relevant)
-        source_docs = [doc.metadata.get("source", "") for doc, _ in relevant]
+        source_docs = [self._fmt_source(doc) for doc, _ in relevant]
         self._last_source_docs = source_docs
 
         source_label = (

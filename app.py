@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-import os
 from pathlib import Path
 
 import streamlit as st
@@ -504,7 +503,7 @@ if user_query and clean_query:
                         thinking_slot.empty()
 
                     source_docs = list(engine.last_source_docs or [])
-                    unique_sources = sorted({os.path.basename(s) for s in source_docs if s})[:3]
+                    unique_sources = sorted({s for s in source_docs if s})[:3]
                     best_score    = getattr(engine, "last_best_score", float("inf"))
 
                     if unique_sources and best_score <= settings.min_score_to_show_source:

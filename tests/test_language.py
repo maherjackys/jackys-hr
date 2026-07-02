@@ -46,7 +46,7 @@ def test_translation_returns_requested_language():
 def test_sanitize_input_flags_text_over_limit():
     text = "a" * 2000
     cleaned, error = sanitize_input(text, max_chars=1500)
-    assert error == "too_long"
+    assert error == "input_too_long"
     assert len(cleaned) == 1500
 
 
