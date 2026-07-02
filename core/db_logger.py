@@ -26,29 +26,34 @@ _LOCAL_FEEDBACK   = _LOGS_DIR / "feedback.jsonl"
 # ── Supabase client (cached at module level, initialised once) ────────────────
 
 _supabase_client = None
-_supabase_tried  = False
+_supabase_ready  = False   # True only after a successful client creation
 
 
 def _get_client():
-    """Return a Supabase client or None if secrets are unavailable."""
-    global _supabase_client, _supabase_tried
-    if _supabase_tried:
+    """Return a Supabase client or None if secrets are unavailable.
+
+    Does NOT permanently cache failure — secrets may not be loaded on the
+    very first call (e.g. during engine init before Streamlit runtime is up).
+    Once the client is successfully created it is cached for the process.
+    """
+    global _supabase_client, _supabase_ready
+    if _supabase_ready:
         return _supabase_client
-    _supabase_tried = True
     try:
         import streamlit as st
         url = st.secrets.get("SUPABASE_URL", "")
         key = st.secrets.get("SUPABASE_KEY", "")
         if not url or not key:
-            logger.info("db_logger: Supabase secrets not set — using local JSONL fallback.")
+            logger.info("db_logger: SUPABASE_URL/KEY not in secrets — local JSONL fallback active.")
             return None
         from supabase import create_client
         _supabase_client = create_client(url, key)
-        logger.info("db_logger: Supabase client initialised.")
-    except Exception:
-        logger.warning("db_logger: Could not initialise Supabase client — using local fallback.", exc_info=True)
-        _supabase_client = None
-    return _supabase_client
+        _supabase_ready  = True
+        logger.info("db_logger: Supabase client initialised (%s).", url[:40])
+        return _supabase_client
+    except Exception as exc:
+        logger.warning("db_logger: Supabase client init failed (%s: %s) — local fallback.", type(exc).__name__, exc)
+        return None
 
 
 # ── Local fallback ────────────────────────────────────────────────────────────
@@ -78,8 +83,8 @@ def _supabase_insert(row: dict[str, Any]) -> None:
         return
     try:
         client.table("logs").insert(row).execute()
-    except Exception:
-        logger.warning("db_logger: Supabase insert failed — row dropped.", exc_info=True)
+    except Exception as exc:
+        logger.warning("db_logger: Supabase insert failed (%s: %s) — row dropped.", type(exc).__name__, exc)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -107,7 +112,7 @@ def log_unanswered(query: str, source: str) -> None:
                 },
             )
     except Exception:
-        logger.warning("db_logger: log_unanswered failed silently.", exc_info=True)
+        logger.warning("db_logger: log_unanswered failed (%s: %s).", type(exc).__name__, exc)
 
 
 def log_feedback(
@@ -142,5 +147,5 @@ def log_feedback(
                     "vote":         vote,
                 },
             )
-    except Exception:
-        logger.warning("db_logger: log_feedback failed silently.", exc_info=True)
+    except Exception as exc:
+        logger.warning("db_logger: log_feedback failed (%s: %s).", type(exc).__name__, exc)
