@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from config import get_groq_api_key, get_settings
 from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
@@ -341,7 +342,7 @@ for _msg_idx, message in enumerate(st.session_state.messages):
 
 # Scroll to bottom after a new response (flag set before st.rerun())
 if st.session_state.pop("scroll_to_bottom", False):
-    st.iframe("""
+    components.html("""
 <script>
 (function(){
   try {
