@@ -213,9 +213,10 @@ class RagEngine:
         self._source    = source
         self._docs_dir  = settings.docs_dir_for(source)
         self._db_dir    = settings.db_dir_for(source)
-        self._index     = None
-        self._llm       = None
-        self._is_ready  = False
+        self._index        = None
+        self._llm          = None
+        self._fallback_llm = None
+        self._is_ready     = False
         self._last_source_docs: list[str] = []
         self._last_best_score: float = float("inf")
 
@@ -350,6 +351,12 @@ class RagEngine:
                 temperature=self._settings.llm_temperature,
                 max_tokens=self._settings.llm_max_tokens,
             )
+            self._fallback_llm = ChatGroq(
+                api_key=self._api_key,
+                model=self._settings.llm_fallback_model,
+                temperature=self._settings.llm_temperature,
+                max_tokens=self._settings.llm_max_tokens,
+            )
         except Exception:
             logger.exception("LLM init failed.")
 
@@ -473,17 +480,27 @@ class RagEngine:
 
             messages = [SystemMessage(content=_HANA_SYSTEM), HumanMessage(content=human_text)]
             yielded  = False
-            for chunk in self._llm.stream(messages):
-                if chunk.content:
-                    yielded = True
-                    yield chunk.content
+            try:
+                for chunk in self._llm.stream(messages):
+                    if chunk.content:
+                        yielded = True
+                        yield chunk.content
+            except Exception as _primary_exc:
+                _exc_str = str(_primary_exc)
+                if ("rate_limit" in _exc_str.lower() or "429" in _exc_str) and self._fallback_llm is not None:
+                    logger.warning("[%s] Primary model rate-limited — switching to fallback.", self._source)
+                    for chunk in self._fallback_llm.stream(messages):
+                        if chunk.content:
+                            yielded = True
+                            yield chunk.content
+                else:
+                    raise
 
             if not yielded:
                 yield t("system_error", lang)
 
         except Exception as _exc:
-            _exc_type = type(_exc).__name__
-            _exc_msg  = str(_exc)
+            _exc_msg = str(_exc)
             logger.exception("[%s] Stream query failed: %s", self._source, _exc)
             if "rate_limit" in _exc_msg.lower() or "429" in _exc_msg:
                 import re as _re
