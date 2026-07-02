@@ -67,15 +67,25 @@ st.markdown('<p class="admin-header">📊 Admin Dashboard</p>', unsafe_allow_htm
 st.markdown('<p class="admin-sub">HR Policy Assistant — Supabase Logs</p>', unsafe_allow_html=True)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
-from core.db_logger import fetch_logs
+from core.db_logger import fetch_logs, get_logging_mode
 
 @st.cache_data(ttl=60)
-def _load(log_type: str | None, limit: int) -> list[dict]:
+def _load(log_type: str | None, limit: int) -> tuple[list[dict], str | None]:
     return fetch_logs(log_type=log_type, limit=limit)
 
-all_rows      = _load(None, 500)
+all_rows, fetch_error = _load(None, 500)
 unanswered    = [r for r in all_rows if r.get("log_type") == "unanswered"]
 feedback_rows = [r for r in all_rows if r.get("log_type") == "feedback"]
+
+# ── Debug banner ──────────────────────────────────────────────────────────────
+with st.expander("🔍 Debug info", expanded=bool(fetch_error)):
+    st.caption(f"Logging mode : `{get_logging_mode()}`")
+    st.caption(f"Total rows fetched : `{len(all_rows)}`")
+    st.caption(f"Unanswered : `{len(unanswered)}`  |  Feedback : `{len(feedback_rows)}`")
+    if fetch_error:
+        st.error(f"fetch_logs error: {fetch_error}")
+    else:
+        st.success("fetch_logs OK — no errors.")
 
 col_refresh = st.columns([6, 1])[1]
 with col_refresh:

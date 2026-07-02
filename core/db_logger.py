@@ -176,24 +176,27 @@ def log_feedback(
         logger.warning("db_logger: log_feedback failed (%s: %s).", type(exc).__name__, exc)
 
 
-def fetch_logs(log_type: str | None = None, limit: int = 200) -> list[dict]:
+def fetch_logs(log_type: str | None = None, limit: int = 200) -> tuple[list[dict], str | None]:
     """Fetch rows from the logs table, newest first.
 
     Args:
-        log_type: 'unanswered', 'feedback', or None for all.
+        log_type: 'unanswered', 'feedback', or None for all rows.
         limit: max rows to return.
 
-    Returns [] on any failure — never raises.
+    Returns (rows, error_message). rows=[] and error_message set on any failure.
+    Correct PostgREST builder order: select → filter → order → limit → execute.
     """
     try:
         client = _get_client()
         if client is None:
-            return []
-        q = client.table("logs").select("*").order("created_at", desc=True).limit(limit)
-        if log_type:
+            return [], "Supabase client is None — check SUPABASE_URL/KEY secrets."
+        q = client.table("logs").select("*")
+        if log_type:                          # never pass .eq() when filtering all
             q = q.eq("log_type", log_type)
+        q = q.order("created_at", desc=True).limit(limit)
         response = q.execute()
-        return response.data or []
+        return response.data or [], None
     except Exception as exc:
-        logger.warning("db_logger: fetch_logs failed (%s: %s).", type(exc).__name__, exc)
-        return []
+        msg = f"{type(exc).__name__}: {exc}"
+        logger.warning("db_logger: fetch_logs failed (%s).", msg)
+        return [], msg
