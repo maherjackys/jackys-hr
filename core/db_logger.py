@@ -174,3 +174,26 @@ def log_feedback(
             )
     except Exception as exc:
         logger.warning("db_logger: log_feedback failed (%s: %s).", type(exc).__name__, exc)
+
+
+def fetch_logs(log_type: str | None = None, limit: int = 200) -> list[dict]:
+    """Fetch rows from the logs table, newest first.
+
+    Args:
+        log_type: 'unanswered', 'feedback', or None for all.
+        limit: max rows to return.
+
+    Returns [] on any failure — never raises.
+    """
+    try:
+        client = _get_client()
+        if client is None:
+            return []
+        q = client.table("logs").select("*").order("created_at", desc=True).limit(limit)
+        if log_type:
+            q = q.eq("log_type", log_type)
+        response = q.execute()
+        return response.data or []
+    except Exception as exc:
+        logger.warning("db_logger: fetch_logs failed (%s: %s).", type(exc).__name__, exc)
+        return []
