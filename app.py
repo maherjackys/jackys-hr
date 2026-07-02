@@ -5,15 +5,17 @@ Streaming responses | Thinking animation | Source citations
 """
 from __future__ import annotations
 
+import datetime
 import logging
 import os
+from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 from config import get_groq_api_key, get_settings
 from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
-from core.rag_engine import RagEngine, format_history
+from core.rag_engine import RagEngine, _append_jsonl, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
 from ui.styles import inject_css, inject_ui_controls
@@ -21,6 +23,20 @@ from ui.styles import inject_css, inject_ui_controls
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
 logger.setLevel(logging.INFO)
+
+_FEEDBACK_LOG = Path(__file__).resolve().parent / "logs" / "feedback.jsonl"
+
+
+def _log_feedback(vote: str, source: str, query: str, answer: str, best_score: float) -> None:
+    _append_jsonl(_FEEDBACK_LOG, {
+        "ts":         datetime.datetime.utcnow().isoformat() + "Z",
+        "source":     source,
+        "query":      query,
+        "answer":     answer[:200],
+        "best_score": best_score if best_score != float("inf") else None,
+        "vote":       vote,
+    })
+
 
 # ── Social media links ────────────────────────────────────────────────────────
 # Fill in your organization's profile URLs. Leave empty ("") to hide that icon.
@@ -292,12 +308,12 @@ with _btn_col:
         st.rerun()
 
 # ── Chat history ──────────────────────────────────────────────────────────────
-for message in st.session_state.messages:
+for _msg_idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=message.get("is_welcome", False))
         # Show source citation if stored in the message
         if message["role"] == "assistant":
-            srcs       = sorted({os.path.basename(s) for s in (message.get("sources") or []) if s})[:3]
+            srcs       = sorted({s for s in (message.get("sources") or []) if s})[:3]
             msg_score  = message.get("best_score", float("inf"))
             msg_lang   = detect_language(message.get("content", ""))
             if srcs and msg_score <= settings.min_score_to_show_source:
@@ -313,6 +329,21 @@ for message in st.session_state.messages:
                     f'{t("general_knowledge_note", msg_lang)}</p>',
                     unsafe_allow_html=True,
                 )
+            # Feedback thumbs (skip welcome message)
+            if not message.get("is_welcome"):
+                _fb_key = f"feedback_{_msg_idx}"
+                _fb_logged_key = f"fb_logged_{_msg_idx}"
+                _vote = st.feedback("thumbs", key=_fb_key)
+                if _vote is not None and not st.session_state.get(_fb_logged_key):
+                    st.session_state[_fb_logged_key] = True
+                    _log_feedback(
+                        vote=_vote,
+                        source=current_source,
+                        query=message.get("query", ""),
+                        answer=message.get("content", ""),
+                        best_score=message.get("best_score", float("inf")),
+                    )
+                    st.toast("شكراً لملاحظتك / Thanks for your feedback")
 
 # Scroll to bottom after a new response (flag set before st.rerun())
 if st.session_state.pop("scroll_to_bottom", False):
@@ -478,6 +509,7 @@ if user_query and clean_query:
             "content":    response,
             "sources":    source_docs,
             "best_score": getattr(engine, "last_best_score", float("inf")),
+            "query":      clean_query,
         })
 
     if len(st.session_state.messages) > settings.max_history_messages:

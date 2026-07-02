@@ -50,39 +50,40 @@ def _get_embeddings(model_name: str):
     )
 
 
-# ── Unanswered query logging ──────────────────────────────────────────────────
+# ── Shared JSONL append helper ────────────────────────────────────────────────
 _MAX_LOG_LINES = 500
 
 
-def _log_unanswered_query(query: str, source: str) -> None:
-    """Append the unmatched query to logs/unanswered_{source}.jsonl.
+def _append_jsonl(path: Path, entry: dict, max_lines: int = 500) -> None:
+    """Append *entry* as a JSON line to *path*, rotating when full.
 
     Never raises — failures are logged at WARNING and silently ignored.
-    Rotates by trimming to the newest _MAX_LOG_LINES entries when full.
     """
     try:
-        logs_dir = Path(__file__).resolve().parent.parent / "logs"
-        logs_dir.mkdir(parents=True, exist_ok=True)
-        log_file = logs_dir / f"unanswered_{source}.jsonl"
-
-        entry = json.dumps({
-            "ts": datetime.datetime.utcnow().isoformat() + "Z",
-            "query": query,
-            "source": source,
-        }, ensure_ascii=False)
-
-        # Rotate if at capacity
-        if log_file.exists():
-            lines = log_file.read_text(encoding="utf-8").splitlines()
-            if len(lines) >= _MAX_LOG_LINES:
-                lines = lines[-((_MAX_LOG_LINES - 1)):]
-                log_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-        with log_file.open("a", encoding="utf-8") as f:
-            f.write(entry + "\n")
-
+        path.parent.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(entry, ensure_ascii=False)
+        if path.exists():
+            lines = path.read_text(encoding="utf-8").splitlines()
+            if len(lines) >= max_lines:
+                lines = lines[-(max_lines - 1):]
+                path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        with path.open("a", encoding="utf-8") as f:
+            f.write(line + "\n")
     except Exception:
-        logger.warning("Failed to log unanswered query for source=%s", source)
+        logger.warning("Failed to append to %s", path)
+
+
+def _log_unanswered_query(query: str, source: str) -> None:
+    """Append the unmatched query to logs/unanswered_{source}.jsonl."""
+    logs_dir = Path(__file__).resolve().parent.parent / "logs"
+    _append_jsonl(
+        logs_dir / f"unanswered_{source}.jsonl",
+        {
+            "ts":     datetime.datetime.utcnow().isoformat() + "Z",
+            "query":  query,
+            "source": source,
+        },
+    )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
