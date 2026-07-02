@@ -121,7 +121,7 @@ def _to_csv(rows: list[dict]) -> bytes:
 
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_unans, tab_fb = st.tabs(["❓ الأسئلة غير المجابة", "💬 التقييمات"])
+tab_unans, tab_fb, tab_settings = st.tabs(["❓ الأسئلة غير المجابة", "💬 التقييمات", "⚙️ الإعدادات / Settings"])
 
 # ── Tab 1: Unanswered ─────────────────────────────────────────────────────────
 with tab_unans:
@@ -139,10 +139,10 @@ with tab_unans:
 
     if filtered_u:
         import pandas as pd
-        df_u = pd.DataFrame(filtered_u)[["created_at", "source", "question"]].rename(columns={
-            "created_at": "Timestamp",
-            "source":     "Source",
-            "question":   "Question",
+        df_u = pd.DataFrame(filtered_u)[["ts", "source", "question"]].rename(columns={
+            "ts":       "Timestamp",
+            "source":   "Source",
+            "question": "Question",
         })
         st.dataframe(df_u, use_container_width=True, hide_index=True)
 
@@ -174,9 +174,9 @@ with tab_fb:
     if filtered_f:
         import pandas as pd
         df_f = pd.DataFrame(filtered_f)[
-            ["created_at", "source", "question", "answer_preview", "best_score", "vote"]
+            ["ts", "source", "question", "answer_preview", "best_score", "vote"]
         ].rename(columns={
-            "created_at":     "Timestamp",
+            "ts":             "Timestamp",
             "source":         "Source",
             "question":       "Question",
             "answer_preview": "Answer preview",
@@ -196,3 +196,32 @@ with tab_fb:
         )
     else:
         st.info("No feedback entries found for this filter.")
+
+# ── Tab 3: Settings ───────────────────────────────────────────────────────────
+with tab_settings:
+    from core.settings_store import get_enabled_sources, set_enabled_sources, _ALL_SOURCES
+
+    st.subheader("Source Visibility / ظهور المصادر")
+    st.caption("Enable or disable each knowledge source. Disabled sources are hidden from users.")
+
+    _SOURCE_LABELS = {
+        "company":  "🏢  Company Policy / سياسة الشركة",
+        "dubai_hr": "🏙️  Dubai HR Law / قانون العمل دبي",
+    }
+
+    current_enabled = get_enabled_sources()
+    new_selection: list[str] = []
+
+    for src in _ALL_SOURCES:
+        label = _SOURCE_LABELS.get(src, src)
+        checked = st.toggle(label, value=(src in current_enabled), key=f"toggle_{src}")
+        if checked:
+            new_selection.append(src)
+
+    st.write("")  # spacer
+    if st.button("💾 Save / حفظ", type="primary"):
+        err = set_enabled_sources(new_selection)
+        if err:
+            st.error(err)
+        else:
+            st.success("Settings saved! Changes will appear for users within 60 seconds.")

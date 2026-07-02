@@ -164,16 +164,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ── Source visibility (admin-controlled) ──────────────────────────────────────
+from core.settings_store import get_enabled_sources as _get_enabled_sources
+_enabled_sources = _get_enabled_sources()
+
 # ── Source selection ──────────────────────────────────────────────────────────
 if "knowledge_source" not in st.session_state:
-    st.session_state.knowledge_source = "company"
+    st.session_state.knowledge_source = _enabled_sources[0] if _enabled_sources else "company"
+
+# If the active source was disabled by admin, switch to first enabled
+if st.session_state.knowledge_source not in _enabled_sources and _enabled_sources:
+    st.session_state.knowledge_source = _enabled_sources[0]
+    st.session_state.messages = []
 
 current_source = st.session_state.knowledge_source
-
-st.markdown(
-    '<p class="source-selector-label" data-i18n="src_label">SELECT KNOWLEDGE SOURCE</p>',
-    unsafe_allow_html=True,
-)
 
 @st.dialog(" ")
 def _confirm_switch(target_source: str) -> None:
@@ -194,61 +198,65 @@ def _confirm_switch(target_source: str) -> None:
             st.rerun()
 
 
-col1, col2 = st.columns(2)
+# Only show the label + cards if more than one source is enabled
+if len(_enabled_sources) > 1:
+    st.markdown(
+        '<p class="source-selector-label" data-i18n="src_label">SELECT KNOWLEDGE SOURCE</p>',
+        unsafe_allow_html=True,
+    )
 
-with col1:
-    c_sel = "selected" if current_source == "company" else ""
-    st.markdown(f"""
-<div class="source-card company {c_sel}" data-cr="1" aria-label="Company Policy">
+    _card_cols = st.columns(len(_enabled_sources))
+    _card_defs = {
+        "company": {
+            "css_class": "company",
+            "aria": "Company Policy",
+            "icon": "🏢",
+            "title_i18n": "src_co_t",
+            "title": "Company Policy",
+            "desc_i18n": "src_co_d",
+            "desc": "Answers based on your organization's internal HR policies.",
+            "welcome": "welcome_company",
+        },
+        "dubai_hr": {
+            "css_class": "dubai",
+            "aria": "Dubai HR Policy",
+            "icon": '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg>',
+            "title_i18n": "src_dxb_t",
+            "title": "Dubai HR Policy",
+            "desc_i18n": "src_dxb_d",
+            "desc": "Answers based on Dubai labor regulations and UAE HR policies.",
+            "welcome": "welcome_dubai",
+        },
+    }
+
+    for _col, _src in zip(_card_cols, _enabled_sources):
+        _cd = _card_defs[_src]
+        _sel = "selected" if current_source == _src else ""
+        with _col:
+            st.markdown(f"""
+<div class="source-card {_cd['css_class']} {_sel}" data-cr="1" aria-label="{_cd['aria']}">
   <div class="source-card-header">
-    <span class="source-card-icon">🏢</span>
+    <span class="source-card-icon">{_cd['icon']}</span>
     <div class="source-card-check">&#x2713;</div>
   </div>
-  <div class="source-card-title" data-i18n="src_co_t">Company Policy</div>
-  <div class="source-card-desc" data-i18n="src_co_d">Answers based on your organization's internal HR policies.</div>
+  <div class="source-card-title" data-i18n="{_cd['title_i18n']}">{_cd['title']}</div>
+  <div class="source-card-desc" data-i18n="{_cd['desc_i18n']}">{_cd['desc']}</div>
 </div>""", unsafe_allow_html=True)
-    if st.button(
-        "✓ Active" if current_source == "company" else "Select",
-        key="btn_company",
-        use_container_width=True,
-        type="primary" if current_source == "company" else "secondary",
-    ):
-        if current_source != "company":
-            if len(st.session_state.get("messages", [])) > 1:
-                _confirm_switch("company")
-            else:
-                st.session_state.knowledge_source = "company"
-                st.session_state.messages = [
-                    {"role": "assistant", "content": _welcome("welcome_company"), "is_welcome": True}
-                ]
-                st.rerun()
-
-with col2:
-    d_sel = "selected" if current_source == "dubai_hr" else ""
-    st.markdown(f"""
-<div class="source-card dubai {d_sel}" data-cr="1" aria-label="Dubai HR Policy">
-  <div class="source-card-header">
-    <span class="source-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg></span>
-    <div class="source-card-check">&#x2713;</div>
-  </div>
-  <div class="source-card-title" data-i18n="src_dxb_t">Dubai HR Policy</div>
-  <div class="source-card-desc" data-i18n="src_dxb_d">Answers based on Dubai labor regulations and UAE HR policies.</div>
-</div>""", unsafe_allow_html=True)
-    if st.button(
-        "✓ Active" if current_source == "dubai_hr" else "Select",
-        key="btn_dubai",
-        use_container_width=True,
-        type="primary" if current_source == "dubai_hr" else "secondary",
-    ):
-        if current_source != "dubai_hr":
-            if len(st.session_state.get("messages", [])) > 1:
-                _confirm_switch("dubai_hr")
-            else:
-                st.session_state.knowledge_source = "dubai_hr"
-                st.session_state.messages = [
-                    {"role": "assistant", "content": _welcome("welcome_dubai"), "is_welcome": True}
-                ]
-                st.rerun()
+            if st.button(
+                "✓ Active" if current_source == _src else "Select",
+                key=f"btn_{_src}",
+                use_container_width=True,
+                type="primary" if current_source == _src else "secondary",
+            ):
+                if current_source != _src:
+                    if len(st.session_state.get("messages", [])) > 1:
+                        _confirm_switch(_src)
+                    else:
+                        st.session_state.knowledge_source = _src
+                        st.session_state.messages = [
+                            {"role": "assistant", "content": _welcome(_cd["welcome"]), "is_welcome": True}
+                        ]
+                        st.rerun()
 
 # ── Directories ───────────────────────────────────────────────────────────────
 settings.docs_dir.mkdir(parents=True, exist_ok=True)
