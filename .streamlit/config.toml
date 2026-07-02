@@ -8,6 +8,7 @@ textColor = "#3a3a3a"
 [server]
 maxUploadSize = 50
 enableXsrfProtection = true
+fileWatcherType = "none"
 
 [browser]
 gatherUsageStats = false
