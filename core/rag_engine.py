@@ -481,6 +481,6 @@ class RagEngine:
             if not yielded:
                 yield t("system_error", lang)
 
-        except Exception:
-            logger.exception("[%s] Stream query failed.", self._source)
-            yield t("system_error", lang)
+        except Exception as _exc:
+            logger.exception("[%s] Stream query failed: %s", self._source, _exc)
+            yield t("system_error", lang) + f"\n\n`{type(_exc).__name__}: {_exc}`"
