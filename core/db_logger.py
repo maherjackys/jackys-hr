@@ -82,12 +82,32 @@ def _local_append(path: Path, entry: dict, max_lines: int = 500) -> None:
 
 # ── Supabase insert ───────────────────────────────────────────────────────────
 
+def _clean_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Convert any numpy/non-serialisable scalars to native Python types.
+
+    FAISS returns scores as numpy.float32 which the Supabase JSON encoder
+    rejects. Any object with an `.item()` method (numpy scalar protocol) is
+    converted; everything else is left untouched.
+    """
+    cleaned = {}
+    for k, v in row.items():
+        if v is None:
+            cleaned[k] = None
+        elif hasattr(v, "item"):          # numpy scalar → native Python
+            cleaned[k] = v.item()
+        elif isinstance(v, float) and (v != v or v == float("inf") or v == float("-inf")):
+            cleaned[k] = None             # NaN / inf → NULL
+        else:
+            cleaned[k] = v
+    return cleaned
+
+
 def _supabase_insert(row: dict[str, Any]) -> None:
     client = _get_client()
     if client is None:
         return
     try:
-        client.table("logs").insert(row).execute()
+        client.table("logs").insert(_clean_row(row)).execute()
     except Exception as exc:
         logger.warning("db_logger: Supabase insert failed (%s: %s) — row dropped.", type(exc).__name__, exc)
 

@@ -373,7 +373,7 @@ class RagEngine:
             _log_unanswered_query(query, self._source)
             return None
 
-        self._last_best_score = relevant[0][1]  # lowest (best) L2 score
+        self._last_best_score = float(relevant[0][1])  # cast numpy.float32 → Python float
         context     = "\n\n---\n\n".join(doc.page_content for doc, _ in relevant)
         source_docs = [self._fmt_source(doc) for doc, _ in relevant]
         self._last_source_docs = source_docs
