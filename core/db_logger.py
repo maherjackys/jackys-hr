@@ -193,7 +193,7 @@ def fetch_logs(log_type: str | None = None, limit: int = 200) -> tuple[list[dict
         q = client.table("logs").select("*")
         if log_type:                          # never pass .eq() when filtering all
             q = q.eq("log_type", log_type)
-        q = q.order("created_at", desc=True).limit(limit)
+        q = q.order("ts", desc=True).limit(limit)
         response = q.execute()
         return response.data or [], None
     except Exception as exc:
