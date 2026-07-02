@@ -482,5 +482,13 @@ class RagEngine:
                 yield t("system_error", lang)
 
         except Exception as _exc:
+            _exc_type = type(_exc).__name__
+            _exc_msg  = str(_exc)
             logger.exception("[%s] Stream query failed: %s", self._source, _exc)
-            yield t("system_error", lang) + f"\n\n`{type(_exc).__name__}: {_exc}`"
+            if "rate_limit" in _exc_msg.lower() or "429" in _exc_msg:
+                import re as _re
+                _wait = _re.search(r"try again in ([\d]+m[\d.]+s|[\d.]+s)", _exc_msg)
+                _wait_str = f" ({_wait.group(1)})" if _wait else ""
+                yield t("rate_limit_error", lang).replace("{wait}", _wait_str)
+            else:
+                yield t("system_error", lang)

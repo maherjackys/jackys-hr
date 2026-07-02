@@ -1,5 +1,5 @@
 """
-UI helpers: CSS injection + Theme/Language controls via st.components.v1.html()
+UI helpers: CSS injection + Theme/Language controls via st.html()
 
 Language toggle: single-click button cycles EN ↔ AR (no dropdown = no clipping).
 Theme toggle: single-click cycles Dark ↔ Light.
@@ -8,7 +8,6 @@ Both store preference in localStorage and post to parent Streamlit window.
 from __future__ import annotations
 from pathlib import Path
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 _UI_JS = """
@@ -409,4 +408,4 @@ def inject_css(css_path: Path) -> None:
 
 def inject_ui_controls() -> None:
     """Inject the floating controls bar (single iframe, no dropdown)."""
-    components.html(_UI_JS, height=70, scrolling=False)
+    st.html(_UI_JS)

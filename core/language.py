@@ -110,6 +110,10 @@ STRINGS: dict[str, dict[str, str]] = {
         LANG_AR: "⚠️ حدث خطأ غير متوقع. تم تسجيله وسنعمل على حله.",
         LANG_EN: "⚠️ An unexpected error occurred. It has been logged for review.",
     },
+    "rate_limit_error": {
+        LANG_AR: "⚠️ تم الوصول إلى الحد اليومي للطلبات{wait}. يرجى المحاولة لاحقاً.",
+        LANG_EN: "⚠️ Daily request limit reached{wait}. Please try again later.",
+    },
     "init_error": {
         LANG_AR: "⚠️ تعذّر تهيئة النظام. تأكد من صحة مفتاح API والاتصال بالإنترنت.",
         LANG_EN: "⚠️ System initialization failed. Check your API key and internet connection.",
