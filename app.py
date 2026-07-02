@@ -302,28 +302,47 @@ with _btn_col:
         ]
         st.rerun()
 
+# ── Citation helpers (shared by history loop and fresh-answer path) ──────────
+def _unique_sources(raw: list[str]) -> list[str]:
+    """Deduplicate and cap source labels at 3, preserving insertion order."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for s in raw:
+        if s and s not in seen:
+            seen.add(s)
+            out.append(s)
+            if len(out) == 3:
+                break
+    return out
+
+
+def _render_citations(srcs: list[str], score: float, lang: str, is_welcome: bool) -> None:
+    """Render source citations and/or the general-knowledge note."""
+    if srcs and score <= settings.min_score_to_show_source:
+        with st.expander(t("source_label", lang)):
+            for s in srcs:
+                st.markdown(f"- `{s}`")
+    elif srcs:
+        src_html = " · ".join(f"📄 {s}" for s in srcs)
+        st.markdown(f'<div class="source-citation">{src_html}</div>', unsafe_allow_html=True)
+    elif not is_welcome:
+        st.markdown(
+            f'<p style="font-size:0.75rem;color:var(--color-muted,#888);font-style:italic;margin:4px 0 0">'
+            f'{t("general_knowledge_note", lang)}</p>',
+            unsafe_allow_html=True,
+        )
+
+
 # ── Chat history ──────────────────────────────────────────────────────────────
 for _msg_idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=message.get("is_welcome", False))
         # Show source citation if stored in the message
         if message["role"] == "assistant":
-            srcs       = sorted({s for s in (message.get("sources") or []) if s})[:3]
-            msg_score  = message.get("best_score", float("inf"))
-            msg_lang   = detect_language(message.get("content", ""))
-            if srcs and msg_score <= settings.min_score_to_show_source:
-                with st.expander(t("source_label", msg_lang)):
-                    for s in srcs:
-                        st.markdown(f"- `{s}`")
-            elif srcs:
-                src_html = " · ".join(f"📄 {s}" for s in srcs)
-                st.markdown(f'<div class="source-citation">{src_html}</div>', unsafe_allow_html=True)
-            elif not message.get("is_welcome"):
-                st.markdown(
-                    f'<p style="font-size:0.75rem;color:var(--color-muted,#888);font-style:italic;margin:4px 0 0">'
-                    f'{t("general_knowledge_note", msg_lang)}</p>',
-                    unsafe_allow_html=True,
-                )
+            msg_srcs  = _unique_sources(message.get("sources") or [])
+            msg_score = message.get("best_score", float("inf"))
+            msg_lang  = detect_language(message.get("content", ""))
+            _render_citations(msg_srcs, msg_score, msg_lang, message.get("is_welcome", False))
             # Feedback thumbs (skip welcome message)
             if not message.get("is_welcome"):
                 _fb_key = f"feedback_{_msg_idx}"
@@ -499,23 +518,9 @@ if user_query and clean_query:
                         thinking_slot.empty()
 
                     source_docs = list(engine.last_source_docs or [])
-                    unique_sources = sorted({s for s in source_docs if s})[:3]
-                    best_score    = getattr(engine, "last_best_score", float("inf"))
-
-                    if unique_sources and best_score <= settings.min_score_to_show_source:
-                        with st.expander(t("source_label", lang)):
-                            for s in unique_sources:
-                                st.markdown(f"- `{s}`")
-                    elif unique_sources:
-                        src_html = " · ".join(f"📄 {s}" for s in unique_sources)
-                        st.markdown(f'<div class="source-citation">{src_html}</div>',
-                                    unsafe_allow_html=True)
-                    else:
-                        st.markdown(
-                            f'<p style="font-size:0.75rem;color:var(--color-muted,#888);font-style:italic;margin:4px 0 0">'
-                            f'{t("general_knowledge_note", lang)}</p>',
-                            unsafe_allow_html=True,
-                        )
+                    best_score  = getattr(engine, "last_best_score", float("inf"))
+                    unique_sources = _unique_sources(source_docs)
+                    _render_citations(unique_sources, best_score, lang, is_welcome=False)
 
                 except Exception:
                     logger.exception("Query failed: %r", clean_query)

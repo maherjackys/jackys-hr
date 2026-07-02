@@ -352,10 +352,17 @@ class RagEngine:
     # ── Shared retrieval ──────────────────────────────────────────────────────
     @staticmethod
     def _fmt_source(doc) -> str:
-        """Format a retrieved document's source as 'filename.pdf — p.N'."""
-        raw  = doc.metadata.get("source", "")
-        name = Path(raw).name if raw else "unknown"
-        page = doc.metadata.get("page", 0)
+        """Format a retrieved document's source as 'filename.pdf — p.N'.
+
+        Uses os.path.basename (more reliable than Path.name across OS path
+        formats). Casts page to int to avoid float leakage (e.g. 3.0 → 'p.4').
+        """
+        import os
+        raw  = doc.metadata.get("source", "") or ""
+        name = os.path.basename(raw) if raw else "unknown"
+        if not name:
+            name = "unknown"
+        page = int(doc.metadata.get("page", 0))
         return f"{name} — p.{page + 1}"
 
     def _retrieve(self, query: str) -> tuple[str, list[str], str] | None:
@@ -374,8 +381,16 @@ class RagEngine:
             return None
 
         self._last_best_score = float(relevant[0][1])  # cast numpy.float32 → Python float
-        context     = "\n\n---\n\n".join(doc.page_content for doc, _ in relevant)
-        source_docs = [self._fmt_source(doc) for doc, _ in relevant]
+        context = "\n\n---\n\n".join(doc.page_content for doc, _ in relevant)
+
+        # Deduplicate by (name, page) — multiple chunks from the same page collapse
+        seen: set[str] = set()
+        source_docs: list[str] = []
+        for doc, _ in relevant:
+            label = self._fmt_source(doc)
+            if label not in seen:
+                seen.add(label)
+                source_docs.append(label)
         self._last_source_docs = source_docs
 
         source_label = (
