@@ -508,4 +508,4 @@ class RagEngine:
                 _wait_str = f" ({_wait.group(1)})" if _wait else ""
                 yield t("rate_limit_error", lang).replace("{wait}", _wait_str)
             else:
-                yield t("system_error", lang)
+                yield t("system_error", lang) + f"\n\n`{type(_exc).__name__}: {_exc}`"
