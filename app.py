@@ -5,16 +5,15 @@ Streaming responses | Thinking animation | Source citations
 """
 from __future__ import annotations
 
-import datetime
 import logging
-from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
 
 from config import get_groq_api_key, get_settings
 from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
-from core.rag_engine import RagEngine, _append_jsonl, format_history
+from core.db_logger import log_feedback as _db_log_feedback
+from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
 from ui.styles import inject_css, inject_ui_controls
@@ -23,18 +22,14 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s | %(levelname)s |
 logger = logging.getLogger("hr_assistant")
 logger.setLevel(logging.INFO)
 
-_FEEDBACK_LOG = Path(__file__).resolve().parent / "logs" / "feedback.jsonl"
-
-
 def _log_feedback(vote: str, source: str, query: str, answer: str, best_score: float) -> None:
-    _append_jsonl(_FEEDBACK_LOG, {
-        "ts":         datetime.datetime.utcnow().isoformat() + "Z",
-        "source":     source,
-        "query":      query,
-        "answer":     answer[:200],
-        "best_score": best_score if best_score != float("inf") else None,
-        "vote":       vote,
-    })
+    _db_log_feedback(
+        source=source,
+        question=query,
+        answer_preview=answer,
+        best_score=best_score,
+        vote=vote,
+    )
 
 
 # ── Social media links ────────────────────────────────────────────────────────

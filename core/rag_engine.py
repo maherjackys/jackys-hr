@@ -13,9 +13,7 @@ and general HR expertise instead of refusing to respond.
 """
 from __future__ import annotations
 
-import datetime
 import functools
-import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,40 +48,13 @@ def _get_embeddings(model_name: str):
     )
 
 
-# ── Shared JSONL append helper ────────────────────────────────────────────────
-_MAX_LOG_LINES = 500
-
-
-def _append_jsonl(path: Path, entry: dict, max_lines: int = 500) -> None:
-    """Append *entry* as a JSON line to *path*, rotating when full.
-
-    Never raises — failures are logged at WARNING and silently ignored.
-    """
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(entry, ensure_ascii=False)
-        if path.exists():
-            lines = path.read_text(encoding="utf-8").splitlines()
-            if len(lines) >= max_lines:
-                lines = lines[-(max_lines - 1):]
-                path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        with path.open("a", encoding="utf-8") as f:
-            f.write(line + "\n")
-    except Exception:
-        logger.warning("Failed to append to %s", path)
-
-
 def _log_unanswered_query(query: str, source: str) -> None:
-    """Append the unmatched query to logs/unanswered_{source}.jsonl."""
-    logs_dir = Path(__file__).resolve().parent.parent / "logs"
-    _append_jsonl(
-        logs_dir / f"unanswered_{source}.jsonl",
-        {
-            "ts":     datetime.datetime.utcnow().isoformat() + "Z",
-            "query":  query,
-            "source": source,
-        },
-    )
+    """Route unmatched queries to db_logger (Supabase or local fallback)."""
+    try:
+        from core.db_logger import log_unanswered
+        log_unanswered(query, source)
+    except Exception:
+        logger.warning("Failed to log unanswered query for source=%s", source)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

@@ -7,3 +7,4 @@ langchain-core
 sentence-transformers
 pypdf
 faiss-cpu
+supabase>=2.0.0
