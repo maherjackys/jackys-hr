@@ -622,7 +622,7 @@ span  { color: inherit !important; }
 }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) [data-testid="chatAvatarIcon-assistant"] {
-  background: linear-gradient(135deg, #E5E7EB, #F3F4F6) !important;
+  background: linear-gradient(135deg, var(--bg-surface-hover), var(--bg-surface-2)) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--border-default) !important;
 }

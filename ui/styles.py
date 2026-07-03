@@ -391,7 +391,7 @@ html, body {
 
 _DARK_CSS = """
 <style>
-/* ── Dark mode: CSS variable overrides (no JS needed) ── */
+/* ── Dark mode: CSS variable overrides ── */
 :root {
   --bg-app:               #0D1117;
   --bg-surface:           #161B22;
@@ -429,28 +429,158 @@ _DARK_CSS = """
   --bg-dubai-badge:       rgba(77,214,135,0.1);
   --border-chat-user:     rgba(255,112,96,0.22);
 }
-.hr-header-icon svg circle, .hr-header-icon svg path { opacity:1 !important; }
+
+/* ── App & page background ── */
+[data-testid="stApp"],
+[data-testid="stMain"],
+.main, section.main, .block-container,
+[data-testid="stAppViewContainer"] {
+  background-color: #0D1117 !important;
+  color: #E6EDF3 !important;
+}
+
+/* ── Chat bubbles — explicit overrides (Streamlit injects its own bg) ── */
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+  background: #2D1B18 !important;
+  border-color: rgba(255,112,96,0.22) !important;
+}
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+  background: #161B22 !important;
+  border-color: #30363D !important;
+}
+[data-testid="stChatMessage"] p,
+[data-testid="stChatMessage"] span,
+[data-testid="stChatMessage"] li,
+[data-testid="stChatMessage"] strong {
+  color: #E6EDF3 !important;
+  -webkit-text-fill-color: #E6EDF3 !important;
+}
+[data-testid="stChatMessage"] code {
+  background: #1C2128 !important;
+  color: #FF7060 !important;
+}
+/* Assistant avatar — override hardcoded light gradient */
+[data-testid="chatAvatarIcon-assistant"] {
+  background: linear-gradient(135deg,#21262D,#30363D) !important;
+  border-color: #30363D !important;
+}
+
+/* ── Chat input ── */
+[data-testid="stChatInput"],
+[data-testid="stChatInputContainer"] {
+  background: #1C2128 !important;
+  border-color: #30363D !important;
+}
+[data-testid="stChatInput"] textarea {
+  background: transparent !important;
+  color: #E6EDF3 !important;
+  -webkit-text-fill-color: #E6EDF3 !important;
+}
+[data-testid="stChatInput"] textarea::placeholder { color: #7D8590 !important; }
+[data-testid="stChatInput"] button { background: #E74C3C !important; }
+[data-testid="stChatInput"] button:hover { background: #C0392B !important; }
+
+/* ── Expanders (source + suggestions) ── */
+[data-testid="stExpander"],
+[data-testid="stExpanderDetails"] {
+  background: #161B22 !important;
+  border-color: #30363D !important;
+  color: #E6EDF3 !important;
+}
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] p,
+[data-testid="stExpander"] span {
+  color: #8B949E !important;
+  -webkit-text-fill-color: #8B949E !important;
+}
+[data-testid="stExpander"] svg { fill: #8B949E !important; }
+
+/* ── Buttons (secondary) ── */
+[data-testid="stBaseButton-secondary"] {
+  background: #1C2128 !important;
+  color: #8B949E !important;
+  border-color: #30363D !important;
+}
+[data-testid="stBaseButton-secondary"]:hover {
+  background: #21262D !important;
+  border-color: #FF7060 !important;
+  color: #E6EDF3 !important;
+}
+
+/* ── Source badge & active pill ── */
+.active-source-badge {
+  background: #2D1B18 !important;
+  border-color: rgba(255,112,96,0.35) !important;
+  color: #FF7060 !important;
+  -webkit-text-fill-color: #FF7060 !important;
+}
+
+/* ── Source cards ── */
+.source-card {
+  background: #161B22 !important;
+  border-color: #30363D !important;
+}
+.source-card-title { color: #E6EDF3 !important; -webkit-text-fill-color: #E6EDF3 !important; }
+.source-card-desc  { color: #8B949E !important; -webkit-text-fill-color: #8B949E !important; }
+.source-card:hover { background: #1C2128 !important; border-color: rgba(255,112,96,0.5) !important; }
+.source-card.selected { background: #2D1B18 !important; border-color: #FF7060 !important; }
+.source-card.selected .source-card-check { color:#FFFFFF; }
+.source-card.dubai.selected { border-color: #4DD687; }
+.source-card.dubai::before { background: linear-gradient(90deg,#1a7a43,#4DD687); }
+
+/* ── Suggestions ── */
+.suggestion-chip {
+  background: #1C2128 !important;
+  border-color: #30363D !important;
+  color: #8B949E !important;
+  -webkit-text-fill-color: #8B949E !important;
+}
+.suggestion-chip:hover {
+  background: #2D1B18 !important;
+  border-color: #FF7060 !important;
+  color: #FF7060 !important;
+  -webkit-text-fill-color: #FF7060 !important;
+}
+
+/* ── Footer & source citation ── */
+.hr-footer, .hr-footer strong, .hr-footer-meta, .hr-footer a {
+  color: #7D8590 !important;
+  -webkit-text-fill-color: #7D8590 !important;
+}
+.hr-footer { border-top-color: #21262D !important; }
+.source-citation {
+  color: #7D8590 !important;
+  -webkit-text-fill-color: #7D8590 !important;
+  border-color: #21262D !important;
+}
+
+/* ── Typography ── */
+h1,h2,h3,h4,h5,h6 { color: #E6EDF3 !important; -webkit-text-fill-color: #E6EDF3 !important; }
+p, li { color: #8B949E !important; }
+a { color: #FF7060 !important; }
+a:hover { color: #E74C3C !important; }
 .main-title {
   background: linear-gradient(135deg,#E74C3C 0%,#FF6B5B 100%);
-  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent !important;
 }
-.source-card.selected .source-card-check { color:#FFFFFF; }
-.source-card.dubai.selected { border-color:var(--color-dubai); }
-.source-card.dubai::before { background:linear-gradient(90deg,#1a7a43,var(--color-dubai)); }
-[data-testid="stSpinner"] { color:var(--text-brand) !important; }
-[data-testid="stAlert"] { background:var(--bg-surface-2)!important; color:var(--text-primary)!important; border-color:var(--border-default)!important; }
-a { color:var(--text-brand)!important; }
-a:hover { color:var(--brand-primary-light)!important; }
-[data-testid="stChatInput"] button { background:var(--brand-primary-light)!important; }
-[data-testid="stChatInput"] button:hover { background:var(--brand-primary)!important; }
-.mini-header { -webkit-text-fill-color:var(--text-primary)!important; background:var(--bg-surface)!important; border-bottom-color:var(--border-default)!important; }
-.suggestion-chip { background:var(--bg-surface-2); border-color:var(--border-default); color:var(--text-secondary)!important; -webkit-text-fill-color:var(--text-secondary)!important; }
-.suggestion-chip:hover { background:var(--bg-card-selected); border-color:var(--border-card-selected); color:var(--text-brand)!important; -webkit-text-fill-color:var(--text-brand)!important; }
-code, pre { background:var(--bg-surface-2)!important; border-color:var(--border-default)!important; color:var(--text-primary)!important; }
-.social-link { background:var(--bg-surface-2); border-color:var(--border-default); }
-.social-link:hover { box-shadow:0 6px 20px rgba(0,0,0,0.5); }
-.thinking-dot { background:var(--brand-primary-light); }
-.source-citation { color:var(--text-muted); -webkit-text-fill-color:var(--text-muted); border-color:var(--border-subtle); }
+code, pre { background: #1C2128 !important; border-color: #30363D !important; color: #FF7060 !important; }
+
+/* ── Alerts / spinners ── */
+[data-testid="stAlert"] { background:#1C2128!important; color:#E6EDF3!important; border-color:#30363D!important; }
+[data-testid="stSpinner"] { color: #FF7060 !important; }
+
+/* ── Social links ── */
+.social-link { background: #1C2128; border-color: #30363D; }
+.social-link:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+
+/* ── Misc ── */
+.mini-header { background: #161B22 !important; border-bottom-color: #30363D !important; color: #E6EDF3 !important; -webkit-text-fill-color: #E6EDF3 !important; }
+.hr-header-icon svg circle, .hr-header-icon svg path { opacity:1 !important; }
+.thinking-dot { background: #E74C3C; }
+[data-testid="stFeedback"] button { color: #8B949E !important; background: #1C2128 !important; border-color: #30363D !important; }
+[data-testid="stFeedback"] button[aria-pressed="true"]:first-child { color:#27AE60!important; background:rgba(39,174,96,0.14)!important; border-color:rgba(39,174,96,0.5)!important; }
+[data-testid="stFeedback"] button[aria-pressed="true"]:last-child { color:#FF7060!important; background:rgba(255,112,96,0.14)!important; border-color:rgba(255,112,96,0.5)!important; }
+[data-testid="stToggle"] label { color: #8B949E !important; }
 </style>
 """
 
