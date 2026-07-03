@@ -96,41 +96,50 @@ inject_css(settings.css_path)
 # ── Theme & Language state ────────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
-# Version bump: resets stale LANG_AR sessions to LANG_EN once per session.
-# Bump "_ui_v" whenever the default needs to change.
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = LANG_EN
+# One-time migration: old sessions may have LANG_AR from pre-v3 defaults.
 if st.session_state.get("_ui_v") != "3":
-    st.session_state.ui_lang = LANG_EN
+    if "ui_lang" not in st.session_state or st.session_state.get("_ui_v") is None:
+        st.session_state.ui_lang = LANG_EN
     st.session_state["_ui_v"] = "3"
-elif "ui_lang" not in st.session_state:
-    st.session_state.ui_lang = LANG_EN
 
-# Single source of truth — computed once here, reused everywhere below.
-_ui_lang = st.session_state.ui_lang
+# ── Single source of truth for UI language ────────────────────────────────────
+# _ui_lang is the authoritative value for ALL string renders this run.
+# It is only ever changed by the explicit language button (below) or by
+# auto-detect when the user submits a query — never silently anywhere else.
+_ui_lang: str = st.session_state.ui_lang
 
 if st.session_state.theme == "dark":
     inject_dark_mode()
 
-# Sync .msg-en / .msg-ar span visibility with the Python-side ui_lang.
-# This controls the bilingual welcome message without needing JS or [dir].
+# Sync .msg-en / .msg-ar visibility with Python-side ui_lang (no JS needed).
 if _ui_lang == LANG_AR:
     st.markdown(
         "<style>.msg-en{display:none!important}.msg-ar{display:inline!important}</style>",
         unsafe_allow_html=True,
     )
+else:
+    st.markdown(
+        "<style>.msg-ar{display:none!important}.msg-en{display:inline!important}</style>",
+        unsafe_allow_html=True,
+    )
 
-# Theme/language controls — native st.button generates stable .st-key-btn_theme
-# / .st-key-btn_lang CSS classes; style.css positions them fixed top-right.
-# The st.columns row is collapsed to height:0 via :has() CSS so no white strip.
-_ctrl_cols = st.columns([6, 1, 1])
-with _ctrl_cols[1]:
+# ── Control bar ───────────────────────────────────────────────────────────────
+# Two native st.button calls in a 2-column row (no spacer).
+# style.css makes the stHorizontalBlock itself position:fixed via :has(),
+# so the WHOLE row floats — buttons stay clickable at their viewport position.
+_cb1, _cb2 = st.columns(2)
+with _cb1:
     _theme_icon = "☀️" if st.session_state.theme == "dark" else "🌙"
     if st.button(_theme_icon, key="btn_theme", use_container_width=True):
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
         st.rerun()
-with _ctrl_cols[2]:
+with _cb2:
     _lang_label = "EN" if _ui_lang == LANG_AR else "AR"
     if st.button(_lang_label, key="btn_lang", use_container_width=True):
         st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
+        st.session_state["_lang_manual"] = True  # lock: disable auto-detect override
         st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
@@ -477,9 +486,10 @@ if user_query:
         user_query = None
 
 if user_query and clean_query:
-    # Update suggestion language preference based on what the user typed
+    # Auto-switch UI language from query script — only when the user has NOT
+    # manually toggled the language button this session.
     _, _conf = detect_language_confidence(clean_query)
-    if _conf >= 0.7:
+    if _conf >= 0.7 and not st.session_state.get("_lang_manual"):
         st.session_state.ui_lang = lang
 
     history_text = format_history(st.session_state.messages, settings.history_turns_for_context)

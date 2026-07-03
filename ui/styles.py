@@ -615,6 +615,9 @@ code, pre { background: #1C2128 !important; border-color: #30363D !important; co
 }
 
 /* ── Floating control bar (dark) ── */
+[data-testid="stHorizontalBlock"]:has(.st-key-btn_theme) {
+  background: transparent !important;
+}
 .st-key-btn_theme button,
 .st-key-btn_lang  button {
   background: #1C2128 !important;
@@ -624,6 +627,7 @@ code, pre { background: #1C2128 !important; border-color: #30363D !important; co
 }
 .st-key-btn_theme button:hover,
 .st-key-btn_lang  button:hover {
+  background: #21262D !important;
   border-color: #FF7060 !important;
   color: #E6EDF3 !important;
   -webkit-text-fill-color: #E6EDF3 !important;
