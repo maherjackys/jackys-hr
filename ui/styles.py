@@ -466,30 +466,24 @@ _DARK_CSS = """
 }
 
 /* ── Chat input ── */
-[data-testid="stBottomBlockContainer"],
-[data-testid="stBottom"] {
-  background: #0D1117 !important;
+[data-testid="stChatInput"] {
+  background-color: #0D1117 !important;
+  border-top: 1px solid #30363D !important;
 }
-[data-testid="stChatInput"],
-[data-testid="stChatInputContainer"],
-[data-testid="stChatInputContainer"] > div,
-div[class*="chatInput"],
-div[class*="ChatInput"] {
-  background: #1C2128 !important;
-  background-color: #1C2128 !important;
+[data-testid="stChatInput"] .e1vtqrcf1 {
+  background-color: #161B22 !important;
   border-color: #30363D !important;
 }
-[data-testid="stChatInput"] textarea,
-[data-testid="stChatInputContainer"] textarea,
-textarea[data-testid="stChatInputTextArea"],
 [data-testid="stChatInputTextArea"] {
-  background: #1C2128 !important;
-  background-color: #1C2128 !important;
+  background-color: transparent !important;
   color: #E6EDF3 !important;
   -webkit-text-fill-color: #E6EDF3 !important;
+  caret-color: #E6EDF3 !important;
 }
-[data-testid="stChatInput"] textarea::placeholder,
-[data-testid="stChatInputContainer"] textarea::placeholder { color: #7D8590 !important; }
+[data-testid="stChatInputTextArea"]::placeholder {
+  color: #8B949E !important;
+  opacity: 1 !important;
+}
 [data-testid="stChatInput"] button { background: #E74C3C !important; }
 [data-testid="stChatInput"] button:hover { background: #C0392B !important; }
 
@@ -601,14 +595,16 @@ code, pre { background: #1C2128 !important; border-color: #30363D !important; co
   -webkit-text-fill-color: #FFFFFF !important;
 }
 
-/* ── Floating control bar links (dark) ── */
-div[style*="position:fixed"] a {
-  border-color: #30363D !important;
+/* ── Floating control bar (dark) ── */
+.st-key-btn_theme button,
+.st-key-btn_lang  button {
   background: #1C2128 !important;
+  border-color: #30363D !important;
   color: #8B949E !important;
   -webkit-text-fill-color: #8B949E !important;
 }
-div[style*="position:fixed"] a:hover {
+.st-key-btn_theme button:hover,
+.st-key-btn_lang  button:hover {
   border-color: #FF7060 !important;
   color: #E6EDF3 !important;
   -webkit-text-fill-color: #E6EDF3 !important;

@@ -890,34 +890,24 @@ span  { color: inherit !important; }
 
 /* ============================================================
    FLOATING CONTROL BAR (Theme + Language buttons)
-   Stays fixed at top-right at all scroll positions.
+   Uses stable .st-key-{key} classes that Streamlit generates from key=.
    ============================================================ */
-.hr-ctrl-bar {
-  position: fixed;
-  top: 0.55rem;
-  right: 1rem;
-  z-index: 99999;
-  display: flex;
-  gap: 0.4rem;
-  align-items: center;
-  pointer-events: none; /* clicks pass through the wrapper */
+.st-key-btn_theme,
+.st-key-btn_lang {
+  position: fixed !important;
+  top: 0.6rem !important;
+  z-index: 99999 !important;
 }
-.hr-ctrl-bar > * { pointer-events: auto; }
 
-/* Hide the invisible spacer column that fills the left gap */
-.hr-ctrl-bar [data-testid="column"]:first-child { display: none !important; }
+.st-key-btn_theme { right: 6rem !important; }
+.st-key-btn_lang  { right: 0.5rem !important; }
 
-/* Make the button columns tight */
-.hr-ctrl-bar [data-testid="column"] {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-}
+.st-key-btn_theme .stButton,
+.st-key-btn_lang  .stButton { margin: 0 !important; }
 
 /* Style the buttons inside the bar */
-.hr-ctrl-bar [data-testid="stBaseButton-secondary"],
-.hr-ctrl-bar button {
+.st-key-btn_theme button,
+.st-key-btn_lang  button {
   padding: 0.25rem 0.65rem !important;
   font-size: 0.78rem !important;
   min-height: 0 !important;
@@ -928,7 +918,8 @@ span  { color: inherit !important; }
   color: var(--text-secondary) !important;
   box-shadow: var(--shadow-xs) !important;
 }
-.hr-ctrl-bar button:hover {
+.st-key-btn_theme button:hover,
+.st-key-btn_lang  button:hover {
   border-color: var(--border-focus) !important;
   color: var(--text-primary) !important;
 }

@@ -99,42 +99,22 @@ if "theme" not in st.session_state:
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = LANG_EN  # default: English
 
-# Handle control bar clicks via query params (HTML <a> links set ?theme=&lang=)
-_qp = st.query_params
-if "theme" in _qp and _qp["theme"] in ("dark", "light"):
-    st.session_state.theme = _qp["theme"]
-if "lang" in _qp and _qp["lang"] in (LANG_AR, LANG_EN):
-    st.session_state.ui_lang = _qp["lang"]
-
 if st.session_state.theme == "dark":
     inject_dark_mode()
 
-# Render control bar as position:fixed HTML — st.columns can't be truly fixed
-# because Streamlit's own scroll container breaks position:fixed on children.
-_t          = st.session_state.theme
-_l          = st.session_state.ui_lang
-_theme_next = "light" if _t == "dark" else "dark"
-_lang_next  = LANG_AR if _l == LANG_EN else LANG_EN
-_theme_icon = "☀️" if _t == "dark" else "🌙"
-_lang_label = "AR" if _l == LANG_EN else "EN"
-_btn_style  = (
-    "display:inline-flex;align-items:center;padding:0.3rem 0.7rem;"
-    "border-radius:999px;font-size:0.82rem;font-weight:700;"
-    "text-decoration:none !important;cursor:pointer;"
-    "border:1.5px solid var(--border-default,#D1D5DB);"
-    "background:var(--bg-surface,#FFFFFF);"
-    "color:var(--text-secondary,#555) !important;"
-    "-webkit-text-fill-color:var(--text-secondary,#555) !important;"
-    "box-shadow:0 1px 4px rgba(0,0,0,0.12);"
-    "font-family:'Cairo','Inter',sans-serif;line-height:1.2;"
-)
-st.markdown(f"""
-<div style="position:fixed;top:0.6rem;right:1rem;z-index:99999;
-            display:flex;gap:0.45rem;align-items:center;pointer-events:auto">
-  <a href="?theme={_theme_next}&lang={_l}" style="{_btn_style}">{_theme_icon}</a>
-  <a href="?theme={_t}&lang={_lang_next}" style="{_btn_style}">{_lang_label}</a>
-</div>
-""", unsafe_allow_html=True)
+# Theme/language controls — rendered as native st.button so Streamlit generates
+# stable .st-key-btn_theme / .st-key-btn_lang CSS classes that we position:fixed.
+_ctrl_cols = st.columns([6, 1, 1])
+with _ctrl_cols[1]:
+    _theme_label = "☀️" if st.session_state.theme == "dark" else "🌙"
+    if st.button(_theme_label, key="btn_theme", use_container_width=True):
+        st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+        st.rerun()
+with _ctrl_cols[2]:
+    _lang_label = "EN" if st.session_state.ui_lang == LANG_AR else "AR"
+    if st.button(_lang_label, key="btn_lang", use_container_width=True):
+        st.session_state.ui_lang = LANG_EN if st.session_state.ui_lang == LANG_AR else LANG_AR
+        st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""
