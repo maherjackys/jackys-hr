@@ -74,6 +74,10 @@ STRINGS: dict[str, dict[str, str]] = {
         LANG_AR: "مرحباً في مساعد سياسات دبي للموارد البشرية 🇦🇪\nاسألني عن أنظمة العمل في دبي والإمارات.",
         LANG_EN: "Welcome to Dubai HR Policy Assistant! Ask me about Dubai labor regulations and UAE HR policies.",
     },
+    "active_pfx": {
+        LANG_AR: "المصدر النشط:",
+        LANG_EN: "Active:",
+    },
     "source_company": {
         LANG_AR: "سياسة الشركة",
         LANG_EN: "Company Policy",
@@ -149,6 +153,14 @@ STRINGS: dict[str, dict[str, str]] = {
     "new_chat_btn": {
         LANG_AR: "🗑️ محادثة جديدة",
         LANG_EN: "🗑️ New Chat",
+    },
+    "try_asking": {
+        LANG_AR: "جرب أن تسأل:",
+        LANG_EN: "Try asking:",
+    },
+    "suggestions_label": {
+        LANG_AR: "💡 اقتراحات",
+        LANG_EN: "💡 Suggestions",
     },
 }
 

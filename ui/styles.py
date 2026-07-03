@@ -581,6 +581,33 @@ code, pre { background: #1C2128 !important; border-color: #30363D !important; co
 [data-testid="stFeedback"] button[aria-pressed="true"]:first-child { color:#27AE60!important; background:rgba(39,174,96,0.14)!important; border-color:rgba(39,174,96,0.5)!important; }
 [data-testid="stFeedback"] button[aria-pressed="true"]:last-child { color:#FF7060!important; background:rgba(255,112,96,0.14)!important; border-color:rgba(255,112,96,0.5)!important; }
 [data-testid="stToggle"] label { color: #8B949E !important; }
+
+/* ── Suggestion chips — ensure white text on red buttons in dark mode ── */
+[data-testid="stButton"] > button {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* ── Floating control bar (dark) ── */
+.hr-ctrl-bar [data-testid="stBaseButton-secondary"],
+.hr-ctrl-bar button {
+  background: #1C2128 !important;
+  border-color: #30363D !important;
+  color: #8B949E !important;
+}
+.hr-ctrl-bar button:hover {
+  border-color: #FF7060 !important;
+  color: #E6EDF3 !important;
+}
+
+/* ── Loading spinner (dark) ── */
+[data-testid="stSpinner"] > div,
+[data-testid="stSpinnerContainer"],
+div[aria-live="polite"] > div {
+  background: #161B22 !important;
+  color: #E6EDF3 !important;
+}
+[data-testid="stSpinner"] { color: #FF7060 !important; }
 </style>
 """
 

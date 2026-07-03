@@ -102,17 +102,22 @@ if "ui_lang" not in st.session_state:
 if st.session_state.theme == "dark":
     inject_dark_mode()
 
-_, _ctrl_theme, _ctrl_lang = st.columns([6, 1, 1])
-with _ctrl_theme:
-    _theme_label = "☀️ Light" if st.session_state.theme == "dark" else "🌙 Dark"
+# Theme/language controls rendered in a fixed top-right container via CSS.
+# We use a 3-column layout: wide spacer + two narrow button columns.
+# The entire block is wrapped in a sticky div via the injected CSS class.
+st.markdown('<div class="hr-ctrl-bar">', unsafe_allow_html=True)
+_ctrl_cols = st.columns([6, 1, 1])
+with _ctrl_cols[1]:
+    _theme_label = "☀️" if st.session_state.theme == "dark" else "🌙"
     if st.button(_theme_label, key="btn_theme", use_container_width=True):
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
         st.rerun()
-with _ctrl_lang:
+with _ctrl_cols[2]:
     _lang_label = "EN" if st.session_state.ui_lang == LANG_AR else "AR"
     if st.button(_lang_label, key="btn_lang", use_container_width=True):
         st.session_state.ui_lang = LANG_EN if st.session_state.ui_lang == LANG_AR else LANG_AR
         st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""
@@ -292,19 +297,20 @@ if "messages" not in st.session_state:
     ]
 
 # ── Active source badge + New Chat ───────────────────────────────────────────
-src_i18n = "src_dxb_t" if current_source == "dubai_hr" else "src_co_t"
-src_name_en = t("source_dubai", LANG_EN) if current_source == "dubai_hr" else t("source_company", LANG_EN)
+_ui_lang    = st.session_state.get("ui_lang", LANG_AR)
+_src_key    = "source_dubai" if current_source == "dubai_hr" else "source_company"
+_src_name   = t(_src_key, _ui_lang)
+_active_pfx = t("active_pfx", _ui_lang)
 badge_class = "active-source-badge dubai-badge" if current_source == "dubai_hr" else "active-source-badge"
 
 _badge_col, _btn_col = st.columns([4, 1])
 with _badge_col:
     st.markdown(
-        f'<div class="{badge_class}"><span data-i18n="active_pfx">Active:</span> <span data-i18n="{src_i18n}">{src_name_en}</span></div>',
+        f'<div class="{badge_class}">{_active_pfx} {_src_name}</div>',
         unsafe_allow_html=True,
     )
 with _btn_col:
-    _nc_lang = st.session_state.get("ui_lang", LANG_AR)
-    if st.button(t("new_chat_btn", _nc_lang), key="btn_new_chat", use_container_width=True):
+    if st.button(t("new_chat_btn", _ui_lang), key="btn_new_chat", use_container_width=True):
         welcome_key = "welcome_dubai" if current_source == "dubai_hr" else "welcome_company"
         st.session_state.messages = [
             {"role": "assistant", "content": _welcome(welcome_key), "is_welcome": True}
@@ -430,10 +436,10 @@ if engine and engine.is_ready:
                         st.rerun()
 
     if not has_history:
-        st.markdown('<p class="suggestions-label">💡 <span data-i18n="try_asking">Try asking:</span></p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="suggestions-label">{t("try_asking", _ui_lang)}</p>', unsafe_allow_html=True)
         _render_suggestions(sugg_list, "sugg")
     else:
-        with st.expander("💡 اقتراحات / Suggestions", expanded=False):
+        with st.expander(t("suggestions_label", _ui_lang), expanded=False):
             _render_suggestions(sugg_list, "sugg_ex")
 
 # ── Chat input ────────────────────────────────────────────────────────────────

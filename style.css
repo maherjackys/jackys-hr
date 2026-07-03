@@ -889,6 +889,60 @@ span  { color: inherit !important; }
 }
 
 /* ============================================================
+   FLOATING CONTROL BAR (Theme + Language buttons)
+   Stays fixed at top-right at all scroll positions.
+   ============================================================ */
+.hr-ctrl-bar {
+  position: fixed;
+  top: 0.55rem;
+  right: 1rem;
+  z-index: 99999;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  pointer-events: none; /* clicks pass through the wrapper */
+}
+.hr-ctrl-bar > * { pointer-events: auto; }
+
+/* Hide the invisible spacer column that fills the left gap */
+.hr-ctrl-bar [data-testid="column"]:first-child { display: none !important; }
+
+/* Make the button columns tight */
+.hr-ctrl-bar [data-testid="column"] {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+}
+
+/* Style the buttons inside the bar */
+.hr-ctrl-bar [data-testid="stBaseButton-secondary"],
+.hr-ctrl-bar button {
+  padding: 0.25rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  min-height: 0 !important;
+  height: 2rem !important;
+  border-radius: 999px !important;
+  border: 1.5px solid var(--border-default) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+.hr-ctrl-bar button:hover {
+  border-color: var(--border-focus) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Loading spinner — theme-aware */
+[data-testid="stSpinner"] > div,
+[data-testid="stSpinnerContainer"],
+div[aria-live="polite"] > div {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* ============================================================
    SIDEBAR — hide completely including all toggle/header controls
    ============================================================ */
 [data-testid="stSidebarCollapsedControl"],
