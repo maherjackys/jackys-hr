@@ -98,22 +98,22 @@ if "theme" not in st.session_state:
     st.session_state.theme = "light"
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = LANG_EN
-# One-time migration: old sessions may have LANG_AR from pre-v3 defaults.
-if st.session_state.get("_ui_v") != "3":
-    if "ui_lang" not in st.session_state or st.session_state.get("_ui_v") is None:
-        st.session_state.ui_lang = LANG_EN
-    st.session_state["_ui_v"] = "3"
 
-# ── Single source of truth for UI language ────────────────────────────────────
-# _ui_lang is the authoritative value for ALL string renders this run.
-# It is only ever changed by the explicit language button (below) or by
-# auto-detect when the user submits a query — never silently anywhere else.
+# Read query params set by the fixed HTML control bar links.
+_qp = st.query_params
+if _qp.get("theme") in ("dark", "light"):
+    st.session_state.theme = _qp["theme"]
+if _qp.get("lang") in (LANG_AR, LANG_EN):
+    st.session_state.ui_lang = _qp["lang"]
+    st.session_state["_lang_manual"] = True
+
 _ui_lang: str = st.session_state.ui_lang
+_theme:   str = st.session_state.theme
 
-if st.session_state.theme == "dark":
+if _theme == "dark":
     inject_dark_mode()
 
-# Sync .msg-en / .msg-ar visibility with Python-side ui_lang (no JS needed).
+# Sync .msg-en / .msg-ar visibility (bilingual welcome spans).
 if _ui_lang == LANG_AR:
     st.markdown(
         "<style>.msg-en{display:none!important}.msg-ar{display:inline!important}</style>",
@@ -125,22 +125,30 @@ else:
         unsafe_allow_html=True,
     )
 
-# ── Control bar ───────────────────────────────────────────────────────────────
-# Two native st.button calls in a 2-column row (no spacer).
-# style.css makes the stHorizontalBlock itself position:fixed via :has(),
-# so the WHOLE row floats — buttons stay clickable at their viewport position.
-_cb1, _cb2 = st.columns(2)
-with _cb1:
-    _theme_icon = "☀️" if st.session_state.theme == "dark" else "🌙"
-    if st.button(_theme_icon, key="btn_theme", use_container_width=True):
-        st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
-        st.rerun()
-with _cb2:
-    _lang_label = "EN" if _ui_lang == LANG_AR else "AR"
-    if st.button(_lang_label, key="btn_lang", use_container_width=True):
-        st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
-        st.session_state["_lang_manual"] = True  # lock: disable auto-detect override
-        st.rerun()
+# ── Fixed control bar (pure HTML — guaranteed clickable at fixed position) ────
+_theme_next = "light" if _theme == "dark" else "dark"
+_lang_next  = LANG_AR if _ui_lang == LANG_EN else LANG_EN
+_theme_icon = "☀️"   if _theme == "dark"    else "🌙"
+_lang_label = "AR"   if _ui_lang == LANG_EN  else "EN"
+_is_dark = _theme == "dark"
+_btn_s = (
+    "display:inline-flex;align-items:center;justify-content:center;"
+    "padding:0.22rem 0.8rem;border-radius:999px;"
+    "font-size:0.8rem;font-weight:600;line-height:1.4;"
+    "text-decoration:none;cursor:pointer;min-width:2.4rem;height:2rem;"
+    "font-family:'Cairo','Inter',sans-serif;"
+    f"border:1.5px solid {'#30363D' if _is_dark else '#D1D5DB'};"
+    f"background:{'#1C2128' if _is_dark else '#FFFFFF'};"
+    f"color:{'#C9D1D9' if _is_dark else '#374151'};"
+)
+st.markdown(
+    f'<div style="position:fixed;top:0.55rem;right:0.75rem;z-index:99999;'
+    f'display:flex;gap:0.35rem;align-items:center">'
+    f'<a href="?theme={_theme_next}&lang={_ui_lang}" style="{_btn_s}">{_theme_icon}</a>'
+    f'<a href="?theme={_theme}&lang={_lang_next}" style="{_btn_s}">{_lang_label}</a>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""

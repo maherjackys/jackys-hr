@@ -897,68 +897,9 @@ span  { color: inherit !important; }
 }
 
 /* ============================================================
-   FLOATING CONTROL BAR (Theme + Language buttons)
-
-   KEY APPROACH: make the stHorizontalBlock ITSELF position:fixed
-   so the whole row floats. Individual button columns inherit their
-   position naturally — no pointer-event issues, no height:0 hacks.
-   :has() is supported in Chrome 105+, Safari 15.4+, Firefox 121+.
+   FLOATING CONTROL BAR — pure HTML <a> links rendered via st.markdown
+   No CSS tricks needed; position:fixed is on the div itself in Python.
    ============================================================ */
-
-/* Float the ENTIRE ctrl-bar row at top-right */
-[data-testid="stHorizontalBlock"]:has(.st-key-btn_theme) {
-  position: fixed !important;
-  top: 0.55rem !important;
-  right: 0.75rem !important;
-  left: auto !important;
-  z-index: 99999 !important;
-  width: auto !important;
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 0.35rem !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  min-height: 0 !important;
-  box-shadow: none !important;
-}
-
-/* Auto-shrink columns to button content */
-[data-testid="stHorizontalBlock"]:has(.st-key-btn_theme) > [data-testid="stColumn"] {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-}
-
-/* Pill button style */
-.st-key-btn_theme button,
-.st-key-btn_lang  button {
-  padding: 0.22rem 0.75rem !important;
-  font-size: 0.8rem !important;
-  font-weight: 600 !important;
-  line-height: 1.3 !important;
-  min-height: 0 !important;
-  height: 2rem !important;
-  width: auto !important;
-  border-radius: 999px !important;
-  border: 1.5px solid var(--border-default) !important;
-  background: var(--bg-surface) !important;
-  color: var(--text-secondary) !important;
-  -webkit-text-fill-color: var(--text-secondary) !important;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.12) !important;
-  white-space: nowrap !important;
-  transition: border-color 0.15s, color 0.15s, background 0.15s !important;
-}
-.st-key-btn_theme button:hover,
-.st-key-btn_lang  button:hover {
-  border-color: var(--border-focus) !important;
-  color: var(--text-primary) !important;
-  -webkit-text-fill-color: var(--text-primary) !important;
-  background: var(--bg-surface-hover) !important;
-  box-shadow: 0 2px 8px rgba(192,57,43,0.15) !important;
-}
 
 /* ── Primary buttons (✓ Active, Yes/No dialogs) — always white text ── */
 [data-testid="stBaseButton-primary"] > button,
