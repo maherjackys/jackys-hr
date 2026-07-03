@@ -96,24 +96,41 @@ inject_css(settings.css_path)
 # ── Theme & Language state ────────────────────────────────────────────────────
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
-if "ui_lang" not in st.session_state:
-    st.session_state.ui_lang = LANG_EN  # default: English
+# Version bump: resets stale LANG_AR sessions to LANG_EN once per session.
+# Bump "_ui_v" whenever the default needs to change.
+if st.session_state.get("_ui_v") != "3":
+    st.session_state.ui_lang = LANG_EN
+    st.session_state["_ui_v"] = "3"
+elif "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = LANG_EN
+
+# Single source of truth — computed once here, reused everywhere below.
+_ui_lang = st.session_state.ui_lang
 
 if st.session_state.theme == "dark":
     inject_dark_mode()
 
-# Theme/language controls — rendered as native st.button so Streamlit generates
-# stable .st-key-btn_theme / .st-key-btn_lang CSS classes that we position:fixed.
+# Sync .msg-en / .msg-ar span visibility with the Python-side ui_lang.
+# This controls the bilingual welcome message without needing JS or [dir].
+if _ui_lang == LANG_AR:
+    st.markdown(
+        "<style>.msg-en{display:none!important}.msg-ar{display:inline!important}</style>",
+        unsafe_allow_html=True,
+    )
+
+# Theme/language controls — native st.button generates stable .st-key-btn_theme
+# / .st-key-btn_lang CSS classes; style.css positions them fixed top-right.
+# The st.columns row is collapsed to height:0 via :has() CSS so no white strip.
 _ctrl_cols = st.columns([6, 1, 1])
 with _ctrl_cols[1]:
-    _theme_label = "☀️" if st.session_state.theme == "dark" else "🌙"
-    if st.button(_theme_label, key="btn_theme", use_container_width=True):
+    _theme_icon = "☀️" if st.session_state.theme == "dark" else "🌙"
+    if st.button(_theme_icon, key="btn_theme", use_container_width=True):
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
         st.rerun()
 with _ctrl_cols[2]:
-    _lang_label = "EN" if st.session_state.ui_lang == LANG_AR else "AR"
+    _lang_label = "EN" if _ui_lang == LANG_AR else "AR"
     if st.button(_lang_label, key="btn_lang", use_container_width=True):
-        st.session_state.ui_lang = LANG_EN if st.session_state.ui_lang == LANG_AR else LANG_AR
+        st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
         st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
@@ -184,7 +201,7 @@ current_source = st.session_state.knowledge_source
 
 @st.dialog(" ")
 def _confirm_switch(target_source: str) -> None:
-    ui_lang = st.session_state.get("ui_lang", LANG_AR)
+    ui_lang = st.session_state.get("ui_lang", LANG_EN)
     st.markdown(f"### {t('confirm_switch_title', ui_lang)}")
     st.markdown(t("confirm_switch_body", ui_lang))
     col_yes, col_no = st.columns(2)
@@ -246,7 +263,7 @@ if len(_enabled_sources) > 1:
   <div class="source-card-desc" data-i18n="{_cd['desc_i18n']}">{_cd['desc']}</div>
 </div>""", unsafe_allow_html=True)
             if st.button(
-                "✓ Active" if current_source == _src else "Select",
+                t("card_active", _ui_lang) if current_source == _src else t("card_select", _ui_lang),
                 key=f"btn_{_src}",
                 use_container_width=True,
                 type="primary" if current_source == _src else "secondary",
@@ -294,7 +311,6 @@ if "messages" not in st.session_state:
     ]
 
 # ── Active source badge + New Chat ───────────────────────────────────────────
-_ui_lang    = st.session_state.get("ui_lang", LANG_AR)
 _src_key    = "source_dubai" if current_source == "dubai_hr" else "source_company"
 _src_name   = t(_src_key, _ui_lang)
 _active_pfx = t("active_pfx", _ui_lang)

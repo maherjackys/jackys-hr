@@ -162,6 +162,14 @@ STRINGS: dict[str, dict[str, str]] = {
         LANG_AR: "💡 اقتراحات",
         LANG_EN: "💡 Suggestions",
     },
+    "card_active": {
+        LANG_AR: "✓ نشط",
+        LANG_EN: "✓ Active",
+    },
+    "card_select": {
+        LANG_AR: "اختر",
+        LANG_EN: "Select",
+    },
 }
 
 

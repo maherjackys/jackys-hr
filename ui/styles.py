@@ -530,10 +530,29 @@ _DARK_CSS = """
 .source-card-title { color: #E6EDF3 !important; -webkit-text-fill-color: #E6EDF3 !important; }
 .source-card-desc  { color: #8B949E !important; -webkit-text-fill-color: #8B949E !important; }
 .source-card:hover { background: #1C2128 !important; border-color: rgba(255,112,96,0.5) !important; }
-.source-card.selected { background: #2D1B18 !important; border-color: #FF7060 !important; }
+.source-card:not(.selected) { opacity: 0.78 !important; }
+.source-card.selected {
+  background: #2D1B18 !important;
+  border: 3px solid #FF7060 !important;
+  border-bottom: none !important;
+  box-shadow: 0 0 0 4px rgba(255,112,96,0.15), 0 4px 16px rgba(0,0,0,0.4) !important;
+  opacity: 1 !important;
+  transform: translateY(-2px);
+}
 .source-card.selected .source-card-check { color:#FFFFFF; }
-.source-card.dubai.selected { border-color: #4DD687; }
+.source-card.dubai.selected {
+  border-color: #4DD687 !important;
+  box-shadow: 0 0 0 4px rgba(77,214,135,0.15), 0 4px 16px rgba(0,0,0,0.4) !important;
+}
 .source-card.dubai::before { background: linear-gradient(90deg,#1a7a43,#4DD687); }
+
+/* ── Primary buttons — white text ── */
+[data-testid="stBaseButton-primary"] > button,
+[data-testid="stBaseButton-primary"] > button p,
+[data-testid="stBaseButton-primary"] > button span {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
 
 /* ── Suggestions ── */
 .suggestion-chip {
