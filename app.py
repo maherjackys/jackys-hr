@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from config import get_groq_api_key, get_settings
 from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
@@ -17,7 +16,7 @@ from core.db_logger import log_feedback as _db_log_feedback
 from core.rag_engine import RagEngine, format_history
 from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
-from ui.styles import inject_css, inject_ui_controls
+from ui.styles import inject_css, inject_dark_mode
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
@@ -93,25 +92,27 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 inject_css(settings.css_path)
-inject_ui_controls()
 
-st.markdown("""
-<style>
-iframe[title="st.iframe"] {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 70px !important;
-    z-index: 9999999 !important;
-    pointer-events: none !important;
-    border: none !important;
-    background: transparent !important;
-    overflow: visible !important;
-    clip-path: none !important;
-}
-</style>
-""", unsafe_allow_html=True)
+# ── Theme & Language (native Streamlit — no JS iframe needed) ─────────────────
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = LANG_AR
+
+if st.session_state.theme == "dark":
+    inject_dark_mode()
+
+_, _ctrl_theme, _ctrl_lang = st.columns([6, 1, 1])
+with _ctrl_theme:
+    _theme_label = "☀️ Light" if st.session_state.theme == "dark" else "🌙 Dark"
+    if st.button(_theme_label, key="btn_theme", use_container_width=True):
+        st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+        st.rerun()
+with _ctrl_lang:
+    _lang_label = "EN" if st.session_state.ui_lang == LANG_AR else "AR"
+    if st.button(_lang_label, key="btn_lang", use_container_width=True):
+        st.session_state.ui_lang = LANG_EN if st.session_state.ui_lang == LANG_AR else LANG_AR
+        st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""
@@ -368,17 +369,7 @@ for _msg_idx, message in enumerate(st.session_state.messages):
                     st.toast("شكراً لملاحظتك / Thanks for your feedback")
 
 # Scroll to bottom after a new response (flag set before st.rerun())
-if st.session_state.pop("scroll_to_bottom", False):
-    components.html("""
-<script>
-(function(){
-  try {
-    var p = window.parent;
-    p.scrollTo({ top: p.document.body.scrollHeight, behavior: 'smooth' });
-  } catch(e) {}
-})();
-</script>
-""", height=0, scrolling=False)
+st.session_state.pop("scroll_to_bottom", False)  # flag consumed; scroll handled by browser
 
 # ── Suggested questions (empty state) ────────────────────────────────────────
 _SUGGESTIONS: dict[str, dict[str, list[str]]] = {
@@ -420,9 +411,6 @@ _SUGGESTIONS: dict[str, dict[str, list[str]]] = {
     },
 }
 
-# ui_lang tracks the preferred language for suggestions — defaults by source
-if "ui_lang" not in st.session_state:
-    st.session_state.ui_lang = LANG_AR if current_source == "dubai_hr" else LANG_EN
 
 if engine and engine.is_ready:
     sugg_lang = st.session_state.ui_lang

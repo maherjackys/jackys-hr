@@ -1,17 +1,9 @@
-"""
-UI helpers: CSS injection + Theme/Language controls.
-
-Language toggle: single-click button cycles EN ↔ AR (no dropdown = no clipping).
-Theme toggle: single-click cycles Dark ↔ Light.
-Both store preference in localStorage and post to parent Streamlit window.
-"""
+"""UI helpers: CSS injection + native Dark/Light and Language controls."""
 from __future__ import annotations
 from pathlib import Path
 import streamlit as st
-import streamlit.components.v1 as components
 
-
-_UI_JS = """
+_UI_JS_UNUSED = """
 <style>
 html, body {
   background: transparent !important;
@@ -397,6 +389,72 @@ html, body {
 """.strip()
 
 
+_DARK_CSS = """
+<style>
+/* ── Dark mode: CSS variable overrides (no JS needed) ── */
+:root {
+  --bg-app:               #0D1117;
+  --bg-surface:           #161B22;
+  --bg-surface-2:         #1C2128;
+  --bg-surface-hover:     #21262D;
+  --bg-chat-user:         #2D1B18;
+  --bg-chat-bot:          #161B22;
+  --bg-card:              #161B22;
+  --bg-card-hover:        #1C2128;
+  --bg-card-selected:     #2D1B18;
+  --bg-input:             #1C2128;
+  --bg-badge:             #2D1B18;
+  --text-primary:         #E6EDF3;
+  --text-secondary:       #8B949E;
+  --text-muted:           #7D8590;
+  --text-inverse:         #0D1117;
+  --text-brand:           #FF7060;
+  --border-default:       #30363D;
+  --border-subtle:        #21262D;
+  --border-focus:         #FF7060;
+  --border-card:          #30363D;
+  --border-card-selected: #FF7060;
+  --border-input:         #484F58;
+  --shadow-xs:            0 1px 3px rgba(0,0,0,0.3);
+  --shadow-sm:            0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md:            0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg:            0 12px 40px rgba(0,0,0,0.65);
+  --shadow-focus:         0 0 0 3px rgba(231,76,60,0.25);
+  --shadow-card-hover:    0 8px 28px rgba(0,0,0,0.55);
+  --scrollbar-track:      #161B22;
+  --scrollbar-thumb:      #30363D;
+  --scrollbar-thumb-hover:#484F58;
+  --color-dubai:          #4DD687;
+  --color-dubai-border:   rgba(77,214,135,0.35);
+  --bg-dubai-badge:       rgba(77,214,135,0.1);
+  --border-chat-user:     rgba(255,112,96,0.22);
+}
+.hr-header-icon svg circle, .hr-header-icon svg path { opacity:1 !important; }
+.main-title {
+  background: linear-gradient(135deg,#E74C3C 0%,#FF6B5B 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+.source-card.selected .source-card-check { color:#FFFFFF; }
+.source-card.dubai.selected { border-color:var(--color-dubai); }
+.source-card.dubai::before { background:linear-gradient(90deg,#1a7a43,var(--color-dubai)); }
+[data-testid="stSpinner"] { color:var(--text-brand) !important; }
+[data-testid="stAlert"] { background:var(--bg-surface-2)!important; color:var(--text-primary)!important; border-color:var(--border-default)!important; }
+a { color:var(--text-brand)!important; }
+a:hover { color:var(--brand-primary-light)!important; }
+[data-testid="stChatInput"] button { background:var(--brand-primary-light)!important; }
+[data-testid="stChatInput"] button:hover { background:var(--brand-primary)!important; }
+.mini-header { -webkit-text-fill-color:var(--text-primary)!important; background:var(--bg-surface)!important; border-bottom-color:var(--border-default)!important; }
+.suggestion-chip { background:var(--bg-surface-2); border-color:var(--border-default); color:var(--text-secondary)!important; -webkit-text-fill-color:var(--text-secondary)!important; }
+.suggestion-chip:hover { background:var(--bg-card-selected); border-color:var(--border-card-selected); color:var(--text-brand)!important; -webkit-text-fill-color:var(--text-brand)!important; }
+code, pre { background:var(--bg-surface-2)!important; border-color:var(--border-default)!important; color:var(--text-primary)!important; }
+.social-link { background:var(--bg-surface-2); border-color:var(--border-default); }
+.social-link:hover { box-shadow:0 6px 20px rgba(0,0,0,0.5); }
+.thinking-dot { background:var(--brand-primary-light); }
+.source-citation { color:var(--text-muted); -webkit-text-fill-color:var(--text-muted); border-color:var(--border-subtle); }
+</style>
+"""
+
+
 def inject_css(css_path: Path) -> None:
     """Inject the main stylesheet into Streamlit."""
     try:
@@ -407,6 +465,12 @@ def inject_css(css_path: Path) -> None:
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 
+def inject_dark_mode() -> None:
+    """Inject dark-mode CSS overrides (no JS required)."""
+    st.markdown(_DARK_CSS, unsafe_allow_html=True)
+
+
 def inject_ui_controls() -> None:
-    """Inject the floating controls bar (single iframe, no dropdown)."""
-    components.html(_UI_JS, height=70, scrolling=False)
+    """Render Dark/Light and Language toggles using native Streamlit buttons."""
+    # Handled directly in app.py via st.columns
+    pass
