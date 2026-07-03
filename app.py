@@ -99,14 +99,6 @@ if "theme" not in st.session_state:
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = LANG_EN
 
-# Read query params set by the fixed HTML control bar links.
-_qp = st.query_params
-if _qp.get("theme") in ("dark", "light"):
-    st.session_state.theme = _qp["theme"]
-if _qp.get("lang") in (LANG_AR, LANG_EN):
-    st.session_state.ui_lang = _qp["lang"]
-    st.session_state["_lang_manual"] = True
-
 _ui_lang: str = st.session_state.ui_lang
 _theme:   str = st.session_state.theme
 
@@ -125,30 +117,22 @@ else:
         unsafe_allow_html=True,
     )
 
-# ── Fixed control bar (pure HTML — guaranteed clickable at fixed position) ────
-_theme_next = "light" if _theme == "dark" else "dark"
-_lang_next  = LANG_AR if _ui_lang == LANG_EN else LANG_EN
-_theme_icon = "☀️"   if _theme == "dark"    else "🌙"
-_lang_label = "AR"   if _ui_lang == LANG_EN  else "EN"
-_is_dark = _theme == "dark"
-_btn_s = (
-    "display:inline-flex;align-items:center;justify-content:center;"
-    "padding:0.22rem 0.8rem;border-radius:999px;"
-    "font-size:0.8rem;font-weight:600;line-height:1.4;"
-    "text-decoration:none;cursor:pointer;min-width:2.4rem;height:2rem;"
-    "font-family:'Cairo','Inter',sans-serif;"
-    f"border:1.5px solid {'#30363D' if _is_dark else '#D1D5DB'};"
-    f"background:{'#1C2128' if _is_dark else '#FFFFFF'};"
-    f"color:{'#C9D1D9' if _is_dark else '#374151'};"
-)
-st.markdown(
-    f'<div style="position:fixed;top:0.55rem;right:0.75rem;z-index:99999;'
-    f'display:flex;gap:0.35rem;align-items:center">'
-    f'<a href="?theme={_theme_next}&lang={_ui_lang}" style="{_btn_s}">{_theme_icon}</a>'
-    f'<a href="?theme={_theme}&lang={_lang_next}" style="{_btn_s}">{_lang_label}</a>'
-    f'</div>',
-    unsafe_allow_html=True,
-)
+# ── Control bar ───────────────────────────────────────────────────────────────
+# st.container(key=) adds class st-key-ctrl_bar — targeted directly in CSS
+# with position:sticky so buttons stay in document flow (always clickable).
+with st.container(key="ctrl_bar"):
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        _theme_icon = "☀️" if _theme == "dark" else "🌙"
+        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
+            st.session_state.theme = "light" if _theme == "dark" else "dark"
+            st.rerun()
+    with _c2:
+        _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
+        if st.button(_lang_label, key="btn_lang", use_container_width=True):
+            st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
+            st.session_state["_lang_manual"] = True
+            st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
 st.markdown("""

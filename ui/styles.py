@@ -614,8 +614,8 @@ code, pre { background: #1C2128 !important; border-color: #30363D !important; co
   -webkit-text-fill-color: #FFFFFF !important;
 }
 
-/* ── Floating control bar (dark) ── */
-[data-testid="stHorizontalBlock"]:has(.st-key-btn_theme) {
+/* ── Control bar (dark) ── */
+.st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
   background: transparent !important;
 }
 .st-key-btn_theme button,

@@ -897,9 +897,63 @@ span  { color: inherit !important; }
 }
 
 /* ============================================================
-   FLOATING CONTROL BAR — pure HTML <a> links rendered via st.markdown
-   No CSS tricks needed; position:fixed is on the div itself in Python.
+   CONTROL BAR (Theme + Language buttons)
+   st.container(key="ctrl_bar") → class .st-key-ctrl_bar
+   position:sticky keeps buttons in document flow → always clickable.
    ============================================================ */
+
+/* Sticky row that hugs the top-right */
+.st-key-ctrl_bar {
+  position: sticky !important;
+  top: 0.4rem !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: auto !important;
+}
+.st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  gap: 0.45rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+.st-key-ctrl_bar [data-testid="stColumn"] {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+}
+
+/* Buttons — bigger pill style */
+.st-key-btn_theme button,
+.st-key-btn_lang  button {
+  padding: 0.4rem 1.25rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  height: 2.5rem !important;
+  min-width: 3.2rem !important;
+  border-radius: 999px !important;
+  border: 1.5px solid var(--border-default) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12) !important;
+  white-space: nowrap !important;
+  transition: border-color 0.15s, color 0.15s, background 0.15s !important;
+}
+.st-key-btn_theme button:hover,
+.st-key-btn_lang  button:hover {
+  border-color: var(--border-focus) !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background: var(--bg-surface-hover) !important;
+  box-shadow: 0 2px 8px rgba(192,57,43,0.15) !important;
+}
 
 /* ── Primary buttons (✓ Active, Yes/No dialogs) — always white text ── */
 [data-testid="stBaseButton-primary"] > button,
