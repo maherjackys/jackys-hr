@@ -1313,3 +1313,22 @@ header[data-testid="stHeader"] {
   font-size: 0.7rem;
 }
 [dir="rtl"] .suggestion-chip { direction: rtl; }
+
+/* ── Feedback thumbs ──────────────────────────────────────────────────────── */
+[data-testid="stFeedback"] button {
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+[data-testid="stFeedback"] button[aria-pressed="true"][aria-label*="up"],
+[data-testid="stFeedback"] button[aria-pressed="true"]:first-child {
+  color: #27AE60 !important;
+  -webkit-text-fill-color: #27AE60 !important;
+  background: rgba(39,174,96,0.14) !important;
+  border-color: rgba(39,174,96,0.5) !important;
+}
+[data-testid="stFeedback"] button[aria-pressed="true"][aria-label*="down"],
+[data-testid="stFeedback"] button[aria-pressed="true"]:last-child {
+  color: #C0392B !important;
+  -webkit-text-fill-color: #C0392B !important;
+  background: rgba(192,57,43,0.12) !important;
+  border-color: rgba(192,57,43,0.5) !important;
+}
