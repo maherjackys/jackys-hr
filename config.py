@@ -41,7 +41,7 @@ class Settings:
     embedding_model: str = "intfloat/multilingual-e5-small"
     llm_model: str = "llama-3.3-70b-versatile"
     llm_fallback_model: str = "llama-3.1-8b-instant"  # used when primary hits rate limit
-    llm_temperature: float = 0.35
+    llm_temperature: float = 0.45
     llm_max_tokens: int = 2048
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
