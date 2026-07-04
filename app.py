@@ -18,9 +18,10 @@ from core.rate_limiter import is_rate_limited
 from core.security import sanitize_input
 from ui.styles import inject_css, inject_dark_mode
 
-logging.basicConfig(level=logging.WARNING, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
 logger.setLevel(logging.INFO)
+logger.info("APP_TOP — entry-point script started")
 
 def _log_feedback(vote: str, source: str, query: str, answer: str, best_score: float) -> None:
     _db_log_feedback(
@@ -186,8 +187,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Source visibility (admin-controlled) ──────────────────────────────────────
-from core.settings_store import get_enabled_sources as _get_enabled_sources
-_enabled_sources = _get_enabled_sources()
+logger.info("APP_SOURCES — fetching enabled_sources from Supabase (or cache)")
+try:
+    from core.settings_store import get_enabled_sources as _get_enabled_sources
+    _enabled_sources = _get_enabled_sources()
+except Exception as _src_exc:
+    logger.warning("APP_SOURCES — get_enabled_sources failed (%s) — defaulting to all.", _src_exc)
+    _enabled_sources = ["company", "dubai_hr"]
+logger.info("APP_SOURCES_DONE — enabled=%s", _enabled_sources)
 
 # ── Source selection ──────────────────────────────────────────────────────────
 if "knowledge_source" not in st.session_state:

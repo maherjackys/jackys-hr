@@ -11,8 +11,10 @@ local _append_jsonl fallback so nothing is lost.
 """
 from __future__ import annotations
 
+import concurrent.futures as _cf
 import datetime
 import logging
+import os as _os
 from pathlib import Path
 from typing import Any
 
@@ -32,30 +34,55 @@ _supabase_ready  = False   # True only after a successful client creation
 def _get_client():
     """Return a Supabase client or None if secrets are unavailable.
 
-    Does NOT permanently cache failure — secrets may not be loaded on the
-    very first call (e.g. during engine init before Streamlit runtime is up).
-    Once the client is successfully created it is cached for the process.
+    create_client() can block the main thread: supabase-py's GoTrue auth
+    initialisation may probe the auth endpoint with no timeout of its own.
+    We read credentials in the main thread (st.secrets is not thread-safe),
+    then run create_client() in a worker thread with a hard 5-second wall-
+    clock deadline so a slow / unreachable Supabase never hangs the UI.
     """
     global _supabase_client, _supabase_ready
     if _supabase_ready:
         return _supabase_client
     try:
-        import streamlit as st
-        url = st.secrets.get("SUPABASE_URL", "")
-        key = st.secrets.get("SUPABASE_KEY", "")
+        # ── Read credentials in the main thread ───────────────────────────────
+        url, key = "", ""
+        try:
+            import streamlit as _st
+            url = _st.secrets.get("SUPABASE_URL", "")
+            key = _st.secrets.get("SUPABASE_KEY", "")
+        except Exception:
+            pass
+        # Community Cloud also injects secrets as env vars — use as fallback
+        if not url:
+            url = _os.environ.get("SUPABASE_URL", "")
+        if not key:
+            key = _os.environ.get("SUPABASE_KEY", "")
+
         if not url or not key:
-            logger.info("db_logger: SUPABASE_URL/KEY not in secrets — local JSONL fallback active.")
+            logger.info("db_logger: SUPABASE_URL/KEY not configured — JSONL fallback active.")
             return None
-        from supabase import create_client, ClientOptions
-        _supabase_client = create_client(
-            url, key,
-            options=ClientOptions(postgrest_client_timeout=8),
-        )
-        _supabase_ready  = True
-        logger.info("db_logger: Supabase client initialised (%s).", url[:40])
+
+        # ── create_client() in a worker thread with hard timeout ──────────────
+        def _make_client():
+            from supabase import create_client, ClientOptions
+            return create_client(
+                url, key,
+                options=ClientOptions(postgrest_client_timeout=5),
+            )
+
+        with _cf.ThreadPoolExecutor(max_workers=1) as _pool:
+            _fut = _pool.submit(_make_client)
+            try:
+                _supabase_client = _fut.result(timeout=5)
+            except _cf.TimeoutError:
+                logger.warning("db_logger: create_client() timed out after 5 s — JSONL fallback.")
+                return None
+
+        _supabase_ready = True
+        logger.info("db_logger: Supabase client ready (%s…).", url[:40])
         return _supabase_client
     except Exception as exc:
-        logger.warning("db_logger: Supabase client init failed (%s: %s) — local fallback.", type(exc).__name__, exc)
+        logger.warning("db_logger: client init failed (%s: %s) — JSONL fallback.", type(exc).__name__, exc)
         return None
 
 
