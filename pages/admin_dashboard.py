@@ -138,30 +138,36 @@ with tab_settings:
     st.subheader("Source Visibility / ظهور المصادر")
     st.caption("Enable or disable each knowledge source.")
 
-    try:
-        from core.settings_store import get_enabled_sources, set_enabled_sources, _ALL_SOURCES
+    if st.button("📂 Load current settings", key="load_settings"):
+        st.session_state["_settings_loaded"] = True
 
-        _SOURCE_LABELS = {
-            "company":  "🏢  Company Policy / سياسة الشركة",
-            "dubai_hr": "🏙️  Dubai HR Law / قانون العمل دبي",
-        }
-        current_enabled = get_enabled_sources()
-        new_selection: list[str] = []
+    if st.session_state.get("_settings_loaded"):
+        try:
+            from core.settings_store import get_enabled_sources, set_enabled_sources, _ALL_SOURCES
 
-        for src in _ALL_SOURCES:
-            checked = st.toggle(_SOURCE_LABELS.get(src, src),
-                                value=(src in current_enabled),
-                                key=f"toggle_{src}")
-            if checked:
-                new_selection.append(src)
+            _SOURCE_LABELS = {
+                "company":  "🏢  Company Policy / سياسة الشركة",
+                "dubai_hr": "🏙️  Dubai HR Law / قانون العمل دبي",
+            }
+            current_enabled = get_enabled_sources()
+            new_selection: list[str] = []
 
-        st.write("")
-        if st.button("💾 Save", type="primary"):
-            err = set_enabled_sources(new_selection)
-            if err:
-                st.error(err)
-            else:
-                st.success("Saved! Changes apply within 60 seconds.")
+            for src in _ALL_SOURCES:
+                checked = st.toggle(_SOURCE_LABELS.get(src, src),
+                                    value=(src in current_enabled),
+                                    key=f"toggle_{src}")
+                if checked:
+                    new_selection.append(src)
 
-    except Exception as exc:
-        st.error(f"Settings unavailable: {exc}")
+            st.write("")
+            if st.button("💾 Save", type="primary"):
+                err = set_enabled_sources(new_selection)
+                if err:
+                    st.error(err)
+                else:
+                    st.success("Saved! Changes apply within 60 seconds.")
+
+        except Exception as exc:
+            st.error(f"Settings unavailable: {exc}")
+    else:
+        st.info("Press **Load current settings** to fetch from Supabase.")

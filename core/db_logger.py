@@ -46,8 +46,11 @@ def _get_client():
         if not url or not key:
             logger.info("db_logger: SUPABASE_URL/KEY not in secrets — local JSONL fallback active.")
             return None
-        from supabase import create_client
-        _supabase_client = create_client(url, key)
+        from supabase import create_client, ClientOptions
+        _supabase_client = create_client(
+            url, key,
+            options=ClientOptions(postgrest_client_timeout=8),
+        )
         _supabase_ready  = True
         logger.info("db_logger: Supabase client initialised (%s).", url[:40])
         return _supabase_client
