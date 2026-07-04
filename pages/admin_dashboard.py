@@ -68,10 +68,18 @@ st.markdown('<p class="admin-sub">HR Policy Assistant — Supabase Logs</p>', un
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 from core.db_logger import fetch_logs, get_logging_mode
+import concurrent.futures
 
 @st.cache_data(ttl=60)
 def _load(log_type: str | None, limit: int) -> tuple[list[dict], str | None]:
-    return fetch_logs(log_type=log_type, limit=limit)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(fetch_logs, log_type=log_type, limit=limit)
+            return future.result(timeout=10)
+    except concurrent.futures.TimeoutError:
+        return [], "Supabase query timed out (10s) — check connection."
+    except Exception as exc:
+        return [], str(exc)
 
 all_rows, fetch_error = _load(None, 500)
 unanswered    = [r for r in all_rows if r.get("log_type") == "unanswered"]
