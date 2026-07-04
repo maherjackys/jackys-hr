@@ -4,26 +4,55 @@ Multi-source | Dark/Light Mode | Language Switcher (AR/EN + RTL/LTR)
 Streaming responses | Thinking animation | Source citations
 """
 from __future__ import annotations
+import sys as _sys_dbg
+
+# ── BISECT IMPORTS — each print confirms the PREVIOUS import didn't hang ──────
+print("APP_BISECT_0: __future__ OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_0: __future__ OK", flush=True)
 
 import logging
+print("APP_BISECT_1: logging OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_1: logging OK", flush=True)
 
 import streamlit as st
+print("APP_BISECT_2: streamlit OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_2: streamlit OK", flush=True)
 
 from config import get_groq_api_key, get_settings
+print("APP_BISECT_3: config OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_3: config OK", flush=True)
+
 from core.language import LANG_AR, LANG_EN, detect_language, detect_language_confidence, is_greeting, t
+print("APP_BISECT_4: core.language OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_4: core.language OK", flush=True)
+
 from core.db_logger import get_logging_mode as _logging_mode
 from core.db_logger import log_feedback as _db_log_feedback
+print("APP_BISECT_5: core.db_logger OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_5: core.db_logger OK", flush=True)
+
 from core.rag_engine import RagEngine, format_history
+print("APP_BISECT_6: core.rag_engine OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_6: core.rag_engine OK", flush=True)
+
 from core.rate_limiter import is_rate_limited
+print("APP_BISECT_7: core.rate_limiter OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_7: core.rate_limiter OK", flush=True)
+
 from core.security import sanitize_input
+print("APP_BISECT_8: core.security OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_8: core.security OK", flush=True)
+
 from ui.styles import inject_css, inject_dark_mode
+print("APP_BISECT_9: ui.styles OK", flush=True, file=_sys_dbg.stderr)
+print("APP_BISECT_9: ui.styles OK", flush=True)
+# ─────────────────────────────────────────────────────────────────────────────
 
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
 logger.setLevel(logging.INFO)
-import sys as _sys
-print("APP_TOP: entry-point script started", flush=True)
-print("APP_TOP: entry-point script started", flush=True, file=_sys.stderr)
+print("APP_TOP: all imports done, script running", flush=True, file=_sys_dbg.stderr)
+print("APP_TOP: all imports done, script running", flush=True)
 
 def _log_feedback(vote: str, source: str, query: str, answer: str, best_score: float) -> None:
     _db_log_feedback(
