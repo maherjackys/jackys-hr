@@ -303,7 +303,8 @@ def load_engine(_api_key: str, source: str) -> RagEngine | None:
         return None
 
 
-engine = load_engine(api_key, current_source)
+# Engine loads lazily on first user query — keeps page load instant for admin too.
+engine: RagEngine | None = None
 
 # ── Conversation state ────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
@@ -432,7 +433,7 @@ _SUGGESTIONS: dict[str, dict[str, list[str]]] = {
 }
 
 
-if engine and engine.is_ready:
+if True:  # suggestions always visible; engine loads lazily on first query
     sugg_lang = st.session_state.ui_lang
     sugg_list = _SUGGESTIONS.get(current_source, {}).get(sugg_lang, [])
     has_history = len(st.session_state.messages) > 1
@@ -513,6 +514,9 @@ if user_query and clean_query:
         with st.chat_message("assistant"):
             response    = ""
             source_docs = []
+
+            # Lazy engine load — happens only on first real query, not on page open.
+            engine = load_engine(api_key, current_source)
 
             if engine is None:
                 response = t("init_error", lang)
