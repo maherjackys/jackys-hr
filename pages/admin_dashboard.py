@@ -1,7 +1,7 @@
 """
 Admin Dashboard — HR Policy Assistant
-Displays Supabase logs (unanswered queries + feedback votes).
-Protected by ADMIN_PASSWORD secret. Not linked from the main app.
+Protected by ADMIN_PASSWORD. Not linked from the main app.
+Data loads on-demand (button click) — page always opens instantly.
 """
 from __future__ import annotations
 
@@ -19,19 +19,12 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Brand font ────────────────────────────────────────────────────────────────
-st.markdown(
-    '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">',
-    unsafe_allow_html=True,
-)
-st.markdown("""
-<style>
+st.markdown("""<style>
 html, body, [class*="css"] { font-family: 'Cairo', sans-serif; }
 .admin-header { color: #C0392B; font-size: 1.6rem; font-weight: 700; margin-bottom: 0; }
-.admin-sub    { color: #888; font-size: 0.9rem; margin-top: 0; margin-bottom: 1.5rem; }
+.admin-sub    { color: #888;    font-size: 0.9rem;  margin-top: 0;  margin-bottom: 1.5rem; }
 .block-container { padding-top: 2rem; }
-</style>
-""", unsafe_allow_html=True)
+</style>""", unsafe_allow_html=True)
 
 # ── Password gate ─────────────────────────────────────────────────────────────
 def _check_password() -> bool:
@@ -41,7 +34,7 @@ def _check_password() -> bool:
         correct = ""
 
     if not correct:
-        st.error("⛔ ADMIN_PASSWORD is not configured in Streamlit secrets.")
+        st.error("⛔ ADMIN_PASSWORD not configured in Streamlit secrets.")
         st.stop()
 
     if st.session_state.get("admin_authed"):
@@ -49,15 +42,15 @@ def _check_password() -> bool:
 
     with st.form("admin_login"):
         st.markdown("### 🔒 Admin Login")
-        pwd = st.text_input("Password", type="password", placeholder="Enter admin password")
-        submitted = st.form_submit_button("Login")
-        if submitted:
+        pwd = st.text_input("Password", type="password")
+        if st.form_submit_button("Login"):
             if pwd == correct:
                 st.session_state["admin_authed"] = True
                 st.rerun()
             else:
                 st.error("Incorrect password.")
     return False
+
 
 if not _check_password():
     st.stop()
@@ -66,170 +59,109 @@ if not _check_password():
 st.markdown('<p class="admin-header">📊 Admin Dashboard</p>', unsafe_allow_html=True)
 st.markdown('<p class="admin-sub">HR Policy Assistant — Supabase Logs</p>', unsafe_allow_html=True)
 
-# ── Load data ─────────────────────────────────────────────────────────────────
-from core.db_logger import fetch_logs, get_logging_mode
-import concurrent.futures
-
-@st.cache_data(ttl=60)
-def _load(log_type: str | None, limit: int) -> tuple[list[dict], str | None]:
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-            future = ex.submit(fetch_logs, log_type=log_type, limit=limit)
-            return future.result(timeout=10)
-    except concurrent.futures.TimeoutError:
-        return [], "Supabase query timed out (10s) — check connection."
-    except Exception as exc:
-        return [], str(exc)
-
-all_rows, fetch_error = _load(None, 500)
-unanswered    = [r for r in all_rows if r.get("log_type") == "unanswered"]
-feedback_rows = [r for r in all_rows if r.get("log_type") == "feedback"]
-
-# ── Debug banner ──────────────────────────────────────────────────────────────
-with st.expander("🔍 Debug info", expanded=bool(fetch_error)):
-    st.caption(f"Logging mode : `{get_logging_mode()}`")
-    st.caption(f"Total rows fetched : `{len(all_rows)}`")
-    st.caption(f"Unanswered : `{len(unanswered)}`  |  Feedback : `{len(feedback_rows)}`")
-    if fetch_error:
-        st.error(f"fetch_logs error: {fetch_error}")
-    else:
-        st.success("fetch_logs OK — no errors.")
-
-col_refresh = st.columns([6, 1])[1]
-with col_refresh:
-    if st.button("🔄 Refresh", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-# ── KPI row ───────────────────────────────────────────────────────────────────
-thumbs_up   = sum(1 for r in feedback_rows if r.get("vote") == "thumbs_up")
-thumbs_down = sum(1 for r in feedback_rows if r.get("vote") == "thumbs_down")
-pct_up      = round(100 * thumbs_up / len(feedback_rows)) if feedback_rows else 0
-
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("❓ Unanswered / غير مجابة", len(unanswered))
-k2.metric("💬 Feedback votes / تقييمات", len(feedback_rows))
-k3.metric("👍 Thumbs-up / إيجابية", f"{pct_up}%")
-k4.metric("👎 Thumbs-down / سلبية", f"{100 - pct_up}%" if feedback_rows else "—")
-
-st.divider()
-
-
-# ── CSV helper ────────────────────────────────────────────────────────────────
-def _to_csv(rows: list[dict]) -> bytes:
-    """Return UTF-8 with BOM so Arabic opens correctly in Excel."""
-    if not rows:
-        return "﻿".encode("utf-8")
-    import csv
-    buf = io.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=list(rows[0].keys()), extrasaction="ignore")
-    writer.writeheader()
-    writer.writerows(rows)
-    return ("﻿" + buf.getvalue()).encode("utf-8")
-
-
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_unans, tab_fb, tab_settings = st.tabs(["❓ الأسئلة غير المجابة", "💬 التقييمات", "⚙️ الإعدادات / Settings"])
+tab_logs, tab_settings = st.tabs(["📋 Logs", "⚙️ Settings"])
 
-# ── Tab 1: Unanswered ─────────────────────────────────────────────────────────
-with tab_unans:
-    src_filter = st.selectbox(
-        "Source / المصدر",
-        ["all", "company", "dubai_hr"],
-        key="unans_src",
-    )
-    filtered_u = (
-        unanswered if src_filter == "all"
-        else [r for r in unanswered if r.get("source") == src_filter]
-    )
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 1 — LOGS (on-demand load)
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_logs:
+    col_a, col_b = st.columns([3, 1])
+    with col_a:
+        src_filter  = st.selectbox("Source", ["all", "company", "dubai_hr"], key="src_f")
+        vote_filter = st.selectbox("Vote",   ["all", "thumbs_up 👍", "thumbs_down 👎"], key="vote_f")
+    with col_b:
+        st.write("")
+        st.write("")
+        load_btn = st.button("🔄 Load / Refresh", use_container_width=True, type="primary")
 
-    st.caption(f"{len(filtered_u)} rows")
+    if load_btn or st.session_state.get("_logs_loaded"):
+        st.session_state["_logs_loaded"] = True
+        try:
+            from core.db_logger import fetch_logs, get_logging_mode
+            all_rows, fetch_error = fetch_logs(log_type=None, limit=500)
+        except Exception as exc:
+            all_rows, fetch_error = [], str(exc)
 
-    if filtered_u:
-        import pandas as pd
-        df_u = pd.DataFrame(filtered_u)[["ts", "source", "question"]].rename(columns={
-            "ts":       "Timestamp",
-            "source":   "Source",
-            "question": "Question",
-        })
-        st.dataframe(df_u, use_container_width=True, hide_index=True)
+        if fetch_error:
+            st.error(f"⚠️ {fetch_error}")
 
-        st.download_button(
-            "⬇️ Download CSV",
-            data=_to_csv(filtered_u),
-            file_name="unanswered_queries.csv",
-            mime="text/csv",
-            key="dl_unans",
-        )
-    else:
-        st.info("No unanswered queries found for this filter.")
+        unanswered    = [r for r in all_rows if r.get("log_type") == "unanswered"]
+        feedback_rows = [r for r in all_rows if r.get("log_type") == "feedback"]
 
-# ── Tab 2: Feedback ───────────────────────────────────────────────────────────
-with tab_fb:
-    vote_filter = st.selectbox(
-        "Vote / التقييم",
-        ["all", "thumbs_up 👍", "thumbs_down 👎"],
-        key="fb_vote",
-    )
-    vote_map = {"thumbs_up 👍": "thumbs_up", "thumbs_down 👎": "thumbs_down"}
-    filtered_f = (
-        feedback_rows if vote_filter == "all"
-        else [r for r in feedback_rows if r.get("vote") == vote_map.get(vote_filter)]
-    )
+        # ── KPI row ───────────────────────────────────────────────────────────
+        thumbs_up   = sum(1 for r in feedback_rows if r.get("vote") == "thumbs_up")
+        thumbs_down = sum(1 for r in feedback_rows if r.get("vote") == "thumbs_down")
+        pct_up = round(100 * thumbs_up / len(feedback_rows)) if feedback_rows else 0
 
-    st.caption(f"{len(filtered_f)} rows")
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("❓ Unanswered",   len(unanswered))
+        k2.metric("💬 Feedback",     len(feedback_rows))
+        k3.metric("👍 Positive",     f"{pct_up}%")
+        k4.metric("👎 Negative",     f"{100 - pct_up}%" if feedback_rows else "—")
 
-    if filtered_f:
-        import pandas as pd
-        df_f = pd.DataFrame(filtered_f)[
-            ["ts", "source", "question", "answer_preview", "best_score", "vote"]
-        ].rename(columns={
-            "ts":             "Timestamp",
-            "source":         "Source",
-            "question":       "Question",
-            "answer_preview": "Answer preview",
-            "best_score":     "Score",
-            "vote":           "Vote",
-        })
-        # Render emoji vote
-        df_f["Vote"] = df_f["Vote"].map({"thumbs_up": "👍", "thumbs_down": "👎"}).fillna(df_f["Vote"])
-        st.dataframe(df_f, use_container_width=True, hide_index=True)
+        st.divider()
 
-        st.download_button(
-            "⬇️ Download CSV",
-            data=_to_csv(filtered_f),
-            file_name="feedback_votes.csv",
-            mime="text/csv",
-            key="dl_fb",
-        )
-    else:
-        st.info("No feedback entries found for this filter.")
+        # ── Filter & show ─────────────────────────────────────────────────────
+        vote_map = {"thumbs_up 👍": "thumbs_up", "thumbs_down 👎": "thumbs_down"}
 
-# ── Tab 3: Settings ───────────────────────────────────────────────────────────
-with tab_settings:
-    from core.settings_store import get_enabled_sources, set_enabled_sources, _ALL_SOURCES
-
-    st.subheader("Source Visibility / ظهور المصادر")
-    st.caption("Enable or disable each knowledge source. Disabled sources are hidden from users.")
-
-    _SOURCE_LABELS = {
-        "company":  "🏢  Company Policy / سياسة الشركة",
-        "dubai_hr": "🏙️  Dubai HR Law / قانون العمل دبي",
-    }
-
-    current_enabled = get_enabled_sources()
-    new_selection: list[str] = []
-
-    for src in _ALL_SOURCES:
-        label = _SOURCE_LABELS.get(src, src)
-        checked = st.toggle(label, value=(src in current_enabled), key=f"toggle_{src}")
-        if checked:
-            new_selection.append(src)
-
-    st.write("")  # spacer
-    if st.button("💾 Save / حفظ", type="primary"):
-        err = set_enabled_sources(new_selection)
-        if err:
-            st.error(err)
+        if src_filter == "all":
+            display_rows = all_rows
         else:
-            st.success("Settings saved! Changes will appear for users within 60 seconds.")
+            display_rows = [r for r in all_rows if r.get("source") == src_filter]
+
+        if vote_filter != "all":
+            display_rows = [r for r in display_rows if r.get("vote") == vote_map.get(vote_filter)]
+
+        st.caption(f"{len(display_rows)} row(s)")
+
+        if display_rows:
+            import pandas as pd
+            df = pd.DataFrame(display_rows)
+            # Keep only useful columns that exist
+            cols = [c for c in ["ts", "log_type", "source", "question", "answer_preview", "best_score", "vote"] if c in df.columns]
+            st.dataframe(df[cols], use_container_width=True, hide_index=True)
+
+            # CSV export (UTF-8 BOM so Arabic opens in Excel)
+            csv_bytes = ("﻿" + df[cols].to_csv(index=False)).encode("utf-8")
+            st.download_button("⬇️ Download CSV", data=csv_bytes,
+                               file_name="hr_logs.csv", mime="text/csv")
+        else:
+            st.info("No rows match the current filter.")
+    else:
+        st.info("Press **Load / Refresh** to fetch logs from Supabase.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 2 — SETTINGS
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_settings:
+    st.subheader("Source Visibility / ظهور المصادر")
+    st.caption("Enable or disable each knowledge source.")
+
+    try:
+        from core.settings_store import get_enabled_sources, set_enabled_sources, _ALL_SOURCES
+
+        _SOURCE_LABELS = {
+            "company":  "🏢  Company Policy / سياسة الشركة",
+            "dubai_hr": "🏙️  Dubai HR Law / قانون العمل دبي",
+        }
+        current_enabled = get_enabled_sources()
+        new_selection: list[str] = []
+
+        for src in _ALL_SOURCES:
+            checked = st.toggle(_SOURCE_LABELS.get(src, src),
+                                value=(src in current_enabled),
+                                key=f"toggle_{src}")
+            if checked:
+                new_selection.append(src)
+
+        st.write("")
+        if st.button("💾 Save", type="primary"):
+            err = set_enabled_sources(new_selection)
+            if err:
+                st.error(err)
+            else:
+                st.success("Saved! Changes apply within 60 seconds.")
+
+    except Exception as exc:
+        st.error(f"Settings unavailable: {exc}")
