@@ -35,17 +35,9 @@ class AnswerResult:
 # ── Embeddings cache ──────────────────────────────────────────────────────────
 @functools.lru_cache(maxsize=2)
 def _get_embeddings(model_name: str):
-    """Return a cached HuggingFaceEmbeddings singleton per model name.
-
-    lru_cache(maxsize=2) covers both knowledge sources sharing the same model
-    without re-downloading weights on every Streamlit rerun.
-    """
-    from langchain_huggingface import HuggingFaceEmbeddings
-    return HuggingFaceEmbeddings(
-        model_name=model_name,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    """Return a cached FastEmbedEmbeddings singleton per model name (ONNX, no PyTorch)."""
+    from langchain_community.embeddings import FastEmbedEmbeddings
+    return FastEmbedEmbeddings(model_name=model_name)
 
 
 def _log_unanswered_query(query: str, source: str) -> None:
@@ -262,7 +254,7 @@ class RagEngine:
         return getattr(self, "_last_best_score", float("inf"))
 
     # ── Index building ────────────────────────────────────────────────────────
-    _INDEX_VERSION = 3  # v3: switched to multilingual-e5-small + passage/query prefixes
+    _INDEX_VERSION = 4  # v4: switched to FastEmbedEmbeddings (ONNX, no PyTorch)
 
     def _build_index(self) -> None:
         try:
