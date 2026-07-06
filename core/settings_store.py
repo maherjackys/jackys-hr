@@ -13,23 +13,26 @@ Table schema (run once in Supabase SQL editor):
 Functions:
     get_enabled_sources() -> list[str]   — cached 60 s
     set_enabled_sources(sources)         — writes to Supabase, invalidates cache
+    register_source(key)                 — appends new source key, idempotent
+    is_valid_source_key(key)             — slug validation (lowercase, alnum, _)
 """
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+import re
 
 import streamlit as st
 
-from config import KnowledgeSource
-
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger(__name__)
 
-_ALL_SOURCES: list[str] = list(KnowledgeSource.__args__)  # type: ignore[attr-defined]
 _SETTINGS_KEY = "enabled_sources"
+_FALLBACK_SOURCES = ["company", "dubai_hr"]
+_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+
+
+def is_valid_source_key(key: str) -> bool:
+    """Return True when *key* is a valid source slug: lowercase, alphanumeric + underscore."""
+    return bool(_SLUG_RE.match(key))
 
 
 # ── Supabase client (reuse db_logger's) ──────────────────────────────────────
@@ -43,26 +46,32 @@ def _client():
 
 @st.cache_data(ttl=60)
 def get_enabled_sources() -> list[str]:
-    """Return list of enabled source keys. Falls back to all sources on any error."""
+    """Return list of enabled source keys from Supabase, or fallback on any error.
+
+    No longer filters against a hardcoded allowlist — new sources registered
+    via register_source() will appear here.
+    """
     try:
         c = _client()
         if c is None:
-            return list(_ALL_SOURCES)
+            return list(_FALLBACK_SOURCES)
         resp = c.table("app_settings").select("value").eq("key", _SETTINGS_KEY).execute()
         if resp.data:
             val = resp.data[0]["value"]
             if isinstance(val, list) and val:
-                # Validate: only keep known sources
-                return [s for s in val if s in _ALL_SOURCES] or list(_ALL_SOURCES)
-        return list(_ALL_SOURCES)
+                # Only basic sanity: non-empty strings
+                valid = [s for s in val if isinstance(s, str) and s.strip()]
+                if valid:
+                    return valid
+        return list(_FALLBACK_SOURCES)
     except Exception as exc:
-        logger.warning("settings_store: get_enabled_sources failed (%s) — returning all.", exc)
-        return list(_ALL_SOURCES)
+        logger.warning("settings_store: get_enabled_sources failed (%s) — returning fallback.", exc)
+        return list(_FALLBACK_SOURCES)
 
 
 def set_enabled_sources(sources: list[str]) -> str | None:
     """Persist enabled sources. Returns error string or None on success."""
-    valid = [s for s in sources if s in _ALL_SOURCES]
+    valid = [s for s in sources if isinstance(s, str) and s.strip()]
     if not valid:
         return "At least one source must be enabled."
     try:
@@ -73,8 +82,24 @@ def set_enabled_sources(sources: list[str]) -> str | None:
             {"key": _SETTINGS_KEY, "value": valid},
             on_conflict="key",
         ).execute()
-        get_enabled_sources.clear()  # bust cache
+        get_enabled_sources.clear()
         return None
     except Exception as exc:
         logger.warning("settings_store: set_enabled_sources failed (%s).", exc)
+        return f"{type(exc).__name__}: {exc}"
+
+
+def register_source(key: str) -> str | None:
+    """Append *key* to enabled_sources in Supabase (idempotent).
+
+    Returns None on success, error string on failure.
+    """
+    if not is_valid_source_key(key):
+        return f"Invalid source key '{key}'. Use lowercase letters, digits, and underscores only."
+    try:
+        current = get_enabled_sources()
+        if key in current:
+            return None  # already registered — not an error
+        return set_enabled_sources(current + [key])
+    except Exception as exc:
         return f"{type(exc).__name__}: {exc}"

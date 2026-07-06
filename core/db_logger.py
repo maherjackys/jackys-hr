@@ -206,6 +206,33 @@ def log_feedback(
         logger.warning("db_logger: log_feedback failed (%s: %s).", type(exc).__name__, exc)
 
 
+def log_admin_action(action: str, source: str, filename: str = "") -> None:
+    """Log an admin action (upload / delete / rebuild / add_source) to the logs table."""
+    try:
+        detail = f"{action}: {filename}" if filename else action
+        client = _get_client()
+        if client is not None:
+            _supabase_insert({
+                "log_type":       "admin_action",
+                "source":         source,
+                "question":       detail[:500],
+                "answer_preview": None,
+                "best_score":     None,
+                "vote":           None,
+            })
+        else:
+            _local_append(
+                _LOGS_DIR / "admin_actions.jsonl",
+                {
+                    "ts":      datetime.datetime.utcnow().isoformat() + "Z",
+                    "action":  detail,
+                    "source":  source,
+                },
+            )
+    except Exception as exc:
+        logger.warning("db_logger: log_admin_action failed (%s: %s).", type(exc).__name__, exc)
+
+
 def fetch_logs(log_type: str | None = None, limit: int = 200) -> tuple[list[dict], str | None]:
     """Fetch rows from the logs table, newest first.
 

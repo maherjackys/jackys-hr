@@ -199,6 +199,7 @@ def _confirm_switch(target_source: str) -> None:
     with col_yes:
         if st.button(t("confirm_yes", ui_lang), type="primary", use_container_width=True):
             welcome_key = "welcome_dubai" if target_source == "dubai_hr" else "welcome_company"
+            # welcome_company is the generic fallback for any new source
             st.session_state.knowledge_source = target_source
             st.session_state.messages = [
                 {"role": "assistant", "content": _welcome(welcome_key), "is_welcome": True}
@@ -216,7 +217,9 @@ if len(_enabled_sources) > 1:
     )
 
     _card_cols = st.columns(len(_enabled_sources))
-    _card_defs = {
+
+    # Built-in source card definitions
+    _CARD_DEFS: dict[str, dict] = {
         "company": {
             "css_class": "company",
             "aria": "Company Policy",
@@ -239,8 +242,24 @@ if len(_enabled_sources) > 1:
         },
     }
 
+    def _get_card_def(src: str) -> dict:
+        if src in _CARD_DEFS:
+            return _CARD_DEFS[src]
+        # Generic fallback for any dynamically added source
+        _label = src.replace("_", " ").title()
+        return {
+            "css_class": "company",
+            "aria": _label,
+            "icon": "📋",
+            "title_i18n": f"src_{src}_t",
+            "title": _label,
+            "desc_i18n": f"src_{src}_d",
+            "desc": f"{_label} knowledge base.",
+            "welcome": "welcome_company",
+        }
+
     for _col, _src in zip(_card_cols, _enabled_sources):
-        _cd = _card_defs[_src]
+        _cd = _get_card_def(_src)
         _sel = "selected" if current_source == _src else ""
         with _col:
             st.markdown(f"""
@@ -268,11 +287,9 @@ if len(_enabled_sources) > 1:
                         ]
                         st.rerun()
 
-# ── Directories ───────────────────────────────────────────────────────────────
-settings.docs_dir.mkdir(parents=True, exist_ok=True)
-settings.dubai_docs_dir.mkdir(parents=True, exist_ok=True)
-settings.db_dir.mkdir(parents=True, exist_ok=True)
-settings.dubai_db_dir.mkdir(parents=True, exist_ok=True)
+# ── Directories — create for all enabled sources ──────────────────────────────
+for _src_key in _enabled_sources:
+    settings.docs_dir_for(_src_key).mkdir(parents=True, exist_ok=True)
 
 # ── API key ───────────────────────────────────────────────────────────────────
 api_key = get_groq_api_key()

@@ -50,21 +50,26 @@ def _log_unanswered_query(query: str, source: str) -> None:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-def _load_pdf_docs(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 200):
-    """Load and split all PDFs in *docs_dir* into Document chunks with metadata.
+_SUPPORTED_EXTS = {".pdf", ".docx", ".txt", ".md"}
 
-    Returns list[Document] so that page numbers and source filenames survive
-    into the FAISS index via from_documents().
+
+def _load_docs(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 200):
+    """Load and split all supported documents in *docs_dir*.
+
+    Supported: PDF, DOCX, TXT, MD.
+    Returns list[Document] with source metadata.
     """
     try:
-        from langchain_community.document_loaders import PyPDFLoader
         from langchain_text_splitters import RecursiveCharacterTextSplitter
     except ImportError as e:
         logger.error("Missing dependency: %s", e)
         return []
 
-    pdf_files = list(docs_dir.glob("*.pdf"))
-    if not pdf_files:
+    files = [
+        f for f in docs_dir.iterdir()
+        if f.is_file() and f.suffix.lower() in _SUPPORTED_EXTS
+    ]
+    if not files:
         return []
 
     splitter = RecursiveCharacterTextSplitter(
@@ -73,19 +78,66 @@ def _load_pdf_docs(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 
         separators=["\n\n", "\n", ".", "،", "؟", "؛", " ", ""],
     )
     docs = []
-    for pdf in pdf_files:
+    for f in files:
         try:
-            loader = PyPDFLoader(str(pdf))
+            ext = f.suffix.lower()
+            if ext == ".pdf":
+                from langchain_community.document_loaders import PyPDFLoader
+                loader = PyPDFLoader(str(f))
+            elif ext == ".docx":
+                from langchain_community.document_loaders import Docx2txtLoader
+                loader = Docx2txtLoader(str(f))
+            else:  # .txt / .md
+                from langchain_community.document_loaders import TextLoader
+                loader = TextLoader(str(f), encoding="utf-8", autodetect_encoding=True)
+
             pages  = loader.load()
             chunks = splitter.split_documents(pages)
             for c in chunks:
                 if c.page_content.strip():
-                    # e5 models require "passage: " prefix on indexed text
                     c.page_content = "passage: " + c.page_content
                     docs.append(c)
         except Exception:
-            logger.exception("Failed to load PDF: %s", pdf.name)
+            logger.exception("Failed to load document: %s", f.name)
     return docs
+
+
+# Keep old name as alias so any external callers don't break
+_load_pdf_docs = _load_docs
+
+
+def build_source_index(settings, source: str) -> tuple[bool, str]:
+    """Build (or rebuild) the FAISS index for *source* without needing an LLM key.
+
+    Returns (success: bool, message: str).
+    Called from the admin dashboard to rebuild on demand.
+    """
+    try:
+        from langchain_community.vectorstores import FAISS
+
+        docs_dir  = settings.docs_dir_for(source)
+        db_dir    = settings.db_dir_for(source)
+        embeddings = _get_embeddings(settings.embedding_model)
+
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        docs = _load_docs(docs_dir, settings.chunk_size, settings.chunk_overlap)
+
+        if not docs:
+            return False, f"No supported documents found in {docs_dir.resolve()}"
+
+        index = FAISS.from_documents(docs, embeddings)
+        db_dir.mkdir(parents=True, exist_ok=True)
+        index.save_local(str(db_dir))
+        (db_dir / "pdf_count.txt").write_text(
+            str(len([f for f in docs_dir.iterdir() if f.suffix.lower() in _SUPPORTED_EXTS]))
+        )
+        (db_dir / "index_version.txt").write_text(str(RagEngine._INDEX_VERSION))
+
+        return True, f"Built {len(docs)} chunks from {docs_dir.name}/ → {db_dir.name}/"
+
+    except Exception as exc:
+        logger.exception("build_source_index failed for source=%s", source)
+        return False, f"{type(exc).__name__}: {exc}"
 
 
 def format_history(messages: list[dict], turns: int) -> str:

@@ -8,3 +8,5 @@ faiss-cpu>=1.7
 pypdf>=4.0
 supabase>=2.0.0
 groq>=0.9
+docx2txt>=0.8
+pandas>=2.0

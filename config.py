@@ -10,19 +10,19 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING  # noqa: F401  (kept for any runtime type checks)
 
 import streamlit as st
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# Knowledge source type — extensible for future sources
-KnowledgeSource = Literal["company", "dubai_hr"]
+# Kept as str alias — no longer a Literal so new sources can be added at runtime
+KnowledgeSource = str
 
 
 @dataclass(frozen=True)
 class Settings:
-    # ── Document directories ──────────────────────────────────────────────────
+    # ── Document directories (named dirs for the two built-in sources) ────────
     docs_dir: Path = field(default_factory=lambda: BASE_DIR / "hr_documents")
     dubai_docs_dir: Path = field(default_factory=lambda: BASE_DIR / "dubai_hr_documents")
 
@@ -66,13 +66,29 @@ class Settings:
     # ── Rate limiting ─────────────────────────────────────────────────────────
     max_requests_per_minute: int = 12
 
-    def docs_dir_for(self, source: KnowledgeSource) -> Path:
-        """Return the correct documents directory for the given source."""
-        return self.dubai_docs_dir if source == "dubai_hr" else self.docs_dir
+    def docs_dir_for(self, source: str) -> Path:
+        """Return the documents directory for *source*.
 
-    def db_dir_for(self, source: KnowledgeSource) -> Path:
-        """Return the correct FAISS DB directory for the given source."""
-        return self.dubai_db_dir if source == "dubai_hr" else self.db_dir
+        Built-in sources use their legacy named dirs.
+        Any new source "foo" gets BASE_DIR/foo_documents/.
+        """
+        if source == "company":
+            return self.docs_dir
+        if source == "dubai_hr":
+            return self.dubai_docs_dir
+        return BASE_DIR / f"{source}_documents"
+
+    def db_dir_for(self, source: str) -> Path:
+        """Return the FAISS index directory for *source*.
+
+        Built-in sources use their legacy named dirs.
+        Any new source "foo" gets BASE_DIR/foo_faiss_db/.
+        """
+        if source == "company":
+            return self.db_dir
+        if source == "dubai_hr":
+            return self.dubai_db_dir
+        return BASE_DIR / f"{source}_faiss_db"
 
 
 def get_settings() -> Settings:
