@@ -17,8 +17,10 @@ Tabs (post-login):
 from __future__ import annotations
 
 import datetime
+import hmac
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -496,6 +498,219 @@ with tab_add:
                     for k in ("new_source_key", "new_source_display"):
                         st.session_state.pop(k, None)
                     st.rerun()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Delete Source (inside tab_add, below a divider)
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.subheader("🗑️ Delete Source")
+    st.caption(
+        "Permanently remove a knowledge source, its documents folder, its FAISS index, "
+        "and its entry in Supabase. This action **cannot be undone**."
+    )
+
+    # ── 1. Source selector ────────────────────────────────────────────────────
+    try:
+        from core.settings_store import get_enabled_sources as _ges_del
+        _del_sources = _ges_del()
+    except Exception:
+        _del_sources = []
+
+    if not _del_sources:
+        st.info("No sources registered yet.")
+    else:
+        _del_src = st.selectbox(
+            "Source to delete",
+            options=_del_sources,
+            key="del_src_select",
+            format_func=lambda k: f"{k}  ({k.replace('_', ' ').title()})",
+        )
+
+        from config import get_settings as _gs_del
+        _cfg_del   = _gs_del()
+        _del_docs  = _cfg_del.docs_dir_for(_del_src)
+        _del_index = _cfg_del.db_dir_for(_del_src)
+
+        # Enumerate what will be removed so the admin knows exactly what is at stake
+        _doc_files_del: list[Path] = []
+        if _del_docs.exists():
+            _doc_files_del = [
+                f for f in _del_docs.iterdir()
+                if f.is_file() and f.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}
+            ]
+        _idx_exists = (_del_index / "index.faiss").exists()
+
+        st.markdown(
+            f"""
+**What will be permanently deleted for source `{_del_src}`:**
+- 📁 Docs folder: `{_del_docs.resolve()}`
+  - {len(_doc_files_del)} document file(s): {', '.join(f.name for f in _doc_files_del) or '*(none)*'}
+- 🗄️ FAISS index dir: `{_del_index.resolve()}` {'*(exists)*' if _idx_exists else '*(not present)*'}
+- 🔗 Supabase `app_settings.enabled_sources` entry for `{_del_src}`
+""",
+            unsafe_allow_html=False,
+        )
+
+        # Remaining sources after deletion (safety check)
+        _remaining = [s for s in _del_sources if s != _del_src]
+        if not _remaining:
+            st.error(
+                "⛔ Cannot delete — this is the **only** source. "
+                "Add another source first, then delete this one."
+            )
+        else:
+            # ── 2. Show danger button → open confirmation form ─────────────────
+            st.markdown(
+                "<style>.danger-btn button{background:#c0392b!important;"
+                "color:#fff!important;border-color:#c0392b!important;}</style>",
+                unsafe_allow_html=True,
+            )
+            _show_confirm = st.session_state.get("del_confirm_open") == _del_src
+
+            col_del_btn, _ = st.columns([1, 3])
+            with col_del_btn:
+                with st.container(key="danger-btn"):
+                    if st.button(
+                        f"🗑️ Delete `{_del_src}`",
+                        key="del_src_open_btn",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        st.session_state["del_confirm_open"] = _del_src
+                        st.session_state.pop("del_confirm_done", None)
+                        st.rerun()
+
+            # ── 3. Two-step confirmation form ──────────────────────────────────
+            if _show_confirm:
+                st.warning(
+                    f"⚠️ You are about to **permanently delete** source `{_del_src}` "
+                    f"and all its data. This cannot be undone.",
+                    icon="🚨",
+                )
+
+                with st.form("del_src_confirm_form", clear_on_submit=True):
+                    st.markdown("**Step 1 of 2** — Type the source key to confirm:")
+                    _typed_key = st.text_input(
+                        f"Type `{_del_src}` to confirm",
+                        key="del_confirm_key_input",
+                        placeholder=_del_src,
+                    )
+                    st.markdown("**Step 2 of 2** — Re-enter your admin password:")
+                    _confirm_pwd = st.text_input(
+                        "Admin password",
+                        type="password",
+                        key="del_confirm_pwd_input",
+                    )
+                    col_yes, col_cancel = st.columns(2)
+                    with col_yes:
+                        _confirmed = st.form_submit_button(
+                            "🗑️ Confirm — Delete Source",
+                            type="primary",
+                            use_container_width=True,
+                        )
+                    with col_cancel:
+                        _cancelled = st.form_submit_button(
+                            "Cancel",
+                            use_container_width=True,
+                        )
+
+                if _cancelled:
+                    st.session_state.pop("del_confirm_open", None)
+                    st.rerun()
+
+                if _confirmed:
+                    # ── Validate key match ─────────────────────────────────────
+                    if _typed_key != _del_src:
+                        st.error(
+                            f"Key mismatch: you typed `{_typed_key}` "
+                            f"but the source key is `{_del_src}`. Deletion aborted."
+                        )
+                    else:
+                        # ── Validate password (constant-time) ──────────────────
+                        _admin_pwd_correct = _get_secret("ADMIN_PASSWORD")
+                        _pwd_match = (
+                            bool(_admin_pwd_correct)
+                            and hmac.compare_digest(
+                                _confirm_pwd.encode("utf-8"),
+                                _admin_pwd_correct.encode("utf-8"),
+                            )
+                        )
+                        if not _pwd_match:
+                            st.error("Incorrect admin password. Deletion aborted.")
+                        else:
+                            # ── Perform deletion ───────────────────────────────
+                            _del_errors: list[str] = []
+                            _del_log_parts: list[str] = []
+
+                            with st.spinner(f"Deleting source `{_del_src}`…"):
+
+                                # 4a. Remove docs folder
+                                try:
+                                    if _del_docs.exists():
+                                        _del_log_parts.append(
+                                            f"docs_folder={_del_docs.name} "
+                                            f"({len(_doc_files_del)} files)"
+                                        )
+                                        shutil.rmtree(_del_docs)
+                                    else:
+                                        _del_log_parts.append("docs_folder=missing(skipped)")
+                                except Exception as _exc:
+                                    _del_errors.append(f"Docs folder: {_exc}")
+
+                                # 4b. Remove FAISS index dir
+                                try:
+                                    if _del_index.exists():
+                                        _del_log_parts.append(f"faiss_dir={_del_index.name}")
+                                        shutil.rmtree(_del_index)
+                                    else:
+                                        _del_log_parts.append("faiss_dir=missing(skipped)")
+                                except Exception as _exc:
+                                    _del_errors.append(f"FAISS dir: {_exc}")
+
+                                # 4c. Remove from Supabase enabled_sources
+                                _sb_err: str | None = None
+                                try:
+                                    from core.settings_store import set_enabled_sources
+                                    _sb_err = set_enabled_sources(_remaining)
+                                    if _sb_err:
+                                        _del_errors.append(f"Supabase update: {_sb_err}")
+                                    else:
+                                        _del_log_parts.append("supabase_entry=removed")
+                                except Exception as _exc:
+                                    _del_errors.append(f"Supabase update: {_exc}")
+
+                                # 4d. Log the action (never log the password)
+                                try:
+                                    from core.db_logger import log_admin_action
+                                    log_admin_action(
+                                        "delete_source",
+                                        _del_src,
+                                        "; ".join(_del_log_parts),
+                                    )
+                                except Exception:
+                                    pass  # logging failure must not block the operation
+
+                            # ── Report outcome ─────────────────────────────────
+                            if _del_errors:
+                                st.error(
+                                    "Deletion completed with errors:\n"
+                                    + "\n".join(f"- {e}" for e in _del_errors)
+                                )
+                                st.warning(
+                                    "The Supabase entry may or may not have been removed. "
+                                    "Check the Logs tab for the audit record."
+                                )
+                            else:
+                                st.success(
+                                    f"✅ Source `{_del_src}` deleted successfully. "
+                                    f"Remaining sources: {_remaining}"
+                                )
+
+                            # Bust caches so dropdowns refresh immediately
+                            st.cache_data.clear()
+                            st.cache_resource.clear()
+                            st.session_state.pop("del_confirm_open", None)
+                            st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
