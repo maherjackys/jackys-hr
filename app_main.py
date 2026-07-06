@@ -74,14 +74,6 @@ def _welcome(key: str) -> str:
 
 settings = get_settings()
 
-st.set_page_config(
-    page_title="HR Policy Assistant | المساعد المعرفي للموارد البشرية",
-    page_icon="🏢",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-    menu_items={"About": "HR Policy Assistant — Powered by Groq + LangChain"},
-)
-
 # ── Fonts ─────────────────────────────────────────────────────────────────────
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">

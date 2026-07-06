@@ -41,14 +41,6 @@ def _require_password() -> bool:
     return False
 
 
-# ── Page config (only when this page is active via st.navigation) ─────────────
-st.set_page_config(
-    page_title="Admin Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
 print("ADMIN_PAGE_LOADED", flush=True, file=sys.stderr)
 
 if not _require_password():

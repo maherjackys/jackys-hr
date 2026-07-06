@@ -9,6 +9,14 @@ Fix: app.py is now a 3-line hub.  Each page gets its own clean script.
 """
 import streamlit as st
 
+st.set_page_config(
+    page_title="HR Policy Assistant | المساعد المعرفي للموارد البشرية",
+    page_icon="🏢",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+    menu_items={"About": "HR Policy Assistant — Powered by Groq + LangChain"},
+)
+
 pg = st.navigation(
     [
         st.Page("app_main.py",              title="HR Policy Assistant", icon="🏢", default=True),
