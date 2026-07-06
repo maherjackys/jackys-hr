@@ -108,12 +108,13 @@ def _index_status(db_dir: Path, docs_dir: Path) -> tuple[str, str]:
 _cookie_token = _read_session_cookie()
 
 if _cookie_token and not st.session_state.get("admin_authed"):
-    from core.auth import verify_session as _vs
+    from core.auth import verify_session as _vs, get_user_role as _gur
     _restored_user = _vs(_cookie_token)
     if _restored_user:
-        st.session_state.admin_authed       = True
-        st.session_state.admin_username     = _restored_user
+        st.session_state.admin_authed        = True
+        st.session_state.admin_username      = _restored_user
         st.session_state.admin_session_token = _cookie_token
+        st.session_state.admin_role          = _gur(_restored_user)
     else:
         # Token expired / revoked in DB — remove stale cookie
         _delete_session_cookie()
@@ -123,7 +124,7 @@ if _cookie_token and not st.session_state.get("admin_authed"):
 
 def _show_login() -> None:
     """Render login form.  Sets session_state + cookie on success."""
-    from core.auth import check_login, create_session, bootstrap_admin_user
+    from core.auth import check_login, create_session, bootstrap_admin_user, get_user_role
 
     bootstrap_admin_user()   # create DB row from secret if first time
 
@@ -147,6 +148,7 @@ def _show_login() -> None:
                     st.session_state.admin_authed        = True
                     st.session_state.admin_username      = uname
                     st.session_state.admin_session_token = token
+                    st.session_state.admin_role          = get_user_role(uname)
                     _write_session_cookie(token)
                     st.rerun()
                 else:
@@ -227,9 +229,9 @@ with st.sidebar:
 # ── Main admin UI ─────────────────────────────────────────────────────────────
 st.title("📊 Admin Dashboard")
 
-tab_logs, tab_docs, tab_add, tab_settings, tab_account, tab_debug = st.tabs([
+tab_logs, tab_docs, tab_add, tab_settings, tab_users, tab_account, tab_debug = st.tabs([
     "📋 Logs", "📁 Manage Docs", "➕ Add Source",
-    "⚙️ Settings", "🔑 Account", "🐛 Debug",
+    "⚙️ Settings", "👥 Users", "🔑 Account", "🐛 Debug",
 ])
 
 
@@ -766,6 +768,279 @@ with tab_settings:
                         st.info(f"No index for {_src3}.")
     except Exception as exc:
         st.error(f"Index management error: {exc}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Users
+# ─────────────────────────────────────────────────────────────────────────────
+with tab_users:
+    from core.auth import (
+        VALID_ROLES as _VALID_ROLES,
+        can_manage_user as _can_manage,
+        get_all_users as _get_all_users,
+        create_admin_user as _create_admin_user,
+        update_admin_user as _update_admin_user,
+        delete_admin_user as _delete_admin_user,
+        force_logout_user as _force_logout_user,
+        update_password as _upd_pw,
+        validate_new_password as _val_pw,
+    )
+    from core.db_logger import log_admin_action as _log_um
+
+    _cur_role = st.session_state.get("admin_role", "super_admin")
+    _cur_user = st.session_state.get("admin_username", "admin")
+
+    if _cur_role not in ("super_admin", "admin"):
+        st.warning("⚠️ You need Admin or Super Admin role to manage users.")
+    else:
+        # ── Stats ─────────────────────────────────────────────────────────────
+        _all_users = _get_all_users()
+        _total     = len(_all_users)
+        _active    = sum(1 for u in _all_users if u.get("is_active", True))
+        _by_role: dict[str, int] = {}
+        for _u0 in _all_users:
+            _r0 = _u0.get("role", "admin")
+            _by_role[_r0] = _by_role.get(_r0, 0) + 1
+        _role_summary = "  ·  ".join(f"{r}: {n}" for r, n in _by_role.items()) or "—"
+
+        _sm1, _sm2, _sm3, _sm4 = st.columns(4)
+        _sm1.metric("Total Users", _total)
+        _sm2.metric("Active", _active)
+        _sm3.metric("Disabled", _total - _active)
+        _sm4.metric("By Role", _role_summary)
+
+        st.divider()
+
+        # ── Create User ───────────────────────────────────────────────────────
+        with st.expander("➕ Create New User"):
+            with st.form("create_user_form", clear_on_submit=True):
+                _cu_uname   = st.text_input("Username", key="cu_uname")
+                _cu_display = st.text_input("Display Name (optional)", key="cu_display")
+                _cu_email   = st.text_input("Email (optional)", key="cu_email")
+                _cu_pw      = st.text_input("Password", type="password", key="cu_pw")
+                _cu_pw2     = st.text_input("Confirm Password", type="password", key="cu_pw2")
+                # Super admin may create any role; admin may only create lower roles
+                _cu_role_opts = (
+                    list(_VALID_ROLES) if _cur_role == "super_admin"
+                    else [r for r in _VALID_ROLES if r not in ("super_admin", "admin")]
+                )
+                _cu_role  = st.selectbox("Role", options=_cu_role_opts, key="cu_role")
+                _cu_sub   = st.form_submit_button("Create User", type="primary",
+                                                  use_container_width=True)
+
+            if _cu_sub:
+                _pw_err = _val_pw(_cu_pw, _cu_pw2)
+                if not _cu_uname:
+                    st.error("Username is required.")
+                elif _pw_err:
+                    st.error(_pw_err)
+                else:
+                    _cerr = _create_admin_user(_cu_uname, _cu_pw, _cu_role, _cu_email, _cu_display)
+                    if _cerr:
+                        st.error(f"Failed: {_cerr}")
+                    else:
+                        _log_um("create_user", _cu_uname, _cu_role)
+                        st.success(f"User **{_cu_uname}** created with role `{_cu_role}`.")
+                        st.rerun()
+
+        st.divider()
+
+        # ── User List ─────────────────────────────────────────────────────────
+        st.subheader("User List")
+
+        _col_srch, _col_rfilt = st.columns([3, 1])
+        with _col_srch:
+            _usr_search = st.text_input(
+                "Search", key="um_search",
+                placeholder="Search username or email…",
+                label_visibility="collapsed",
+            )
+        with _col_rfilt:
+            _role_filt = st.selectbox(
+                "Role", options=["all"] + list(_VALID_ROLES),
+                key="um_role_filter", label_visibility="collapsed",
+            )
+
+        _filtered_users = _all_users
+        if _usr_search:
+            _q = _usr_search.lower()
+            _filtered_users = [
+                u for u in _filtered_users
+                if _q in u.get("username", "").lower()
+                or _q in (u.get("email") or "").lower()
+                or _q in (u.get("display_name") or "").lower()
+            ]
+        if _role_filt != "all":
+            _filtered_users = [u for u in _filtered_users if u.get("role") == _role_filt]
+
+        if not _filtered_users:
+            st.info("No users found.")
+
+        _role_badge = {
+            "super_admin": "🔴 super_admin",
+            "admin":       "🟠 admin",
+            "moderator":   "🟡 moderator",
+            "user":        "🟢 user",
+        }
+
+        for _usr in _filtered_users:
+            _un      = _usr["username"]
+            _ur      = _usr.get("role", "admin")
+            _ua      = _usr.get("is_active", True)
+            _uemail  = _usr.get("email") or ""
+            _udisp   = _usr.get("display_name") or ""
+            _ull     = str(_usr.get("last_login_at") or "Never")[:19]
+            _is_self = (_un == _cur_user)
+            _manageable = _can_manage(_cur_role, _ur) and not _is_self
+
+            with st.container():
+                _lc, _rc = st.columns([3, 2])
+                with _lc:
+                    _badge  = _role_badge.get(_ur, f"⚪ {_ur}")
+                    _status = "✅" if _ua else "🚫 disabled"
+                    st.markdown(f"**{_un}** &nbsp; {_badge} &nbsp; {_status}")
+                    _meta = "  ·  ".join(filter(None, [_udisp, _uemail]))
+                    if _meta:
+                        st.caption(_meta)
+                    st.caption(f"Last login: {_ull}")
+                with _rc:
+                    if _manageable:
+                        _bc1, _bc2, _bc3, _bc4 = st.columns(4)
+                        with _bc1:
+                            if st.button("✏️", key=f"um_edit_{_un}", help="Edit"):
+                                st.session_state[f"um_action_{_un}"] = "edit"
+                        with _bc2:
+                            _thelp = "Disable" if _ua else "Enable"
+                            _ticon = "🚫" if _ua else "✅"
+                            if st.button(_ticon, key=f"um_toggle_{_un}", help=_thelp):
+                                st.session_state[f"um_action_{_un}"] = "toggle"
+                        with _bc3:
+                            if st.button("🔑", key=f"um_resetpw_{_un}", help="Reset Password"):
+                                st.session_state[f"um_action_{_un}"] = "reset_pw"
+                        with _bc4:
+                            if st.button("🗑️", key=f"um_del_{_un}", help="Delete"):
+                                st.session_state[f"um_action_{_un}"] = "delete"
+                    elif _is_self:
+                        st.caption("*(you — use Account tab)*")
+                    else:
+                        st.caption("—")
+
+            # ── Action panels ──────────────────────────────────────────────────
+            _action = st.session_state.get(f"um_action_{_un}")
+
+            if _action == "edit" and _manageable:
+                with st.form(f"um_edit_form_{_un}", clear_on_submit=False):
+                    _ed_disp  = st.text_input("Display Name", value=_udisp, key=f"ed_disp_{_un}")
+                    _ed_email = st.text_input("Email", value=_uemail, key=f"ed_email_{_un}")
+                    _ed_role_opts = (
+                        list(_VALID_ROLES) if _cur_role == "super_admin"
+                        else [r for r in _VALID_ROLES if r not in ("super_admin", "admin")]
+                    )
+                    _ed_role_idx = (
+                        _ed_role_opts.index(_ur) if _ur in _ed_role_opts else 0
+                    )
+                    _ed_role = st.selectbox("Role", options=_ed_role_opts,
+                                            index=_ed_role_idx, key=f"ed_role_{_un}")
+                    _ed_save, _ed_cancel = st.columns(2)
+                    with _ed_save:
+                        _ed_sub = st.form_submit_button("Save", type="primary",
+                                                        use_container_width=True)
+                    with _ed_cancel:
+                        _ed_canc = st.form_submit_button("Cancel", use_container_width=True)
+
+                if _ed_canc:
+                    st.session_state.pop(f"um_action_{_un}", None)
+                    st.rerun()
+                if _ed_sub:
+                    _err = _update_admin_user(
+                        _un, role=_ed_role,
+                        email=_ed_email, display_name=_ed_disp,
+                    )
+                    if _err:
+                        st.error(f"Update failed: {_err}")
+                    else:
+                        _log_um("edit_user", _un, f"role={_ed_role}")
+                        st.session_state.pop(f"um_action_{_un}", None)
+                        st.success(f"User **{_un}** updated.")
+                        st.rerun()
+
+            elif _action == "toggle" and _manageable:
+                _new_active = not _ua
+                _verb = "Enable" if _new_active else "Disable"
+                st.warning(f"{_verb} user **{_un}**?")
+                _tcy, _tcn = st.columns(2)
+                with _tcy:
+                    if st.button("Confirm", key=f"um_tconf_{_un}", type="primary"):
+                        _err = _update_admin_user(_un, is_active=_new_active)
+                        if not _new_active:
+                            _force_logout_user(_un)
+                        if _err:
+                            st.error(f"Failed: {_err}")
+                        else:
+                            _log_um("disable_user" if not _new_active else "enable_user", _un)
+                            st.session_state.pop(f"um_action_{_un}", None)
+                            st.rerun()
+                with _tcn:
+                    if st.button("Cancel", key=f"um_tcanc_{_un}"):
+                        st.session_state.pop(f"um_action_{_un}", None)
+                        st.rerun()
+
+            elif _action == "reset_pw" and _manageable:
+                with st.form(f"um_resetpw_form_{_un}", clear_on_submit=True):
+                    _rp1 = st.text_input("New Password", type="password", key=f"rp1_{_un}")
+                    _rp2 = st.text_input("Confirm", type="password", key=f"rp2_{_un}")
+                    _rp_save, _rp_cancel = st.columns(2)
+                    with _rp_save:
+                        _rp_sub = st.form_submit_button("Set Password", type="primary",
+                                                        use_container_width=True)
+                    with _rp_cancel:
+                        _rp_canc = st.form_submit_button("Cancel", use_container_width=True)
+
+                if _rp_canc:
+                    st.session_state.pop(f"um_action_{_un}", None)
+                    st.rerun()
+                if _rp_sub:
+                    _err = _val_pw(_rp1, _rp2)
+                    if _err:
+                        st.error(_err)
+                    else:
+                        _dberr = _upd_pw(_un, _rp1)
+                        if _dberr:
+                            st.error(f"Failed: {_dberr}")
+                        else:
+                            _log_um("reset_password", _un)
+                            st.session_state.pop(f"um_action_{_un}", None)
+                            st.success(f"Password reset for **{_un}**.")
+                            st.rerun()
+
+            elif _action == "delete" and _manageable:
+                st.error(
+                    f"⚠️ Permanently delete user **{_un}**? "
+                    "All their sessions will also be removed."
+                )
+                _dcy, _dcn = st.columns(2)
+                with _dcy:
+                    if st.button("Delete", key=f"um_dconf_{_un}", type="primary"):
+                        _err = _delete_admin_user(_un)
+                        if _err:
+                            st.error(f"Failed: {_err}")
+                        else:
+                            _log_um("delete_user", _un)
+                            st.session_state.pop(f"um_action_{_un}", None)
+                            st.success(f"User **{_un}** deleted.")
+                            st.rerun()
+                with _dcn:
+                    if st.button("Cancel", key=f"um_dcanc_{_un}"):
+                        st.session_state.pop(f"um_action_{_un}", None)
+                        st.rerun()
+
+            st.divider()
+
+        # ── Migration notice ──────────────────────────────────────────────────
+        st.caption(
+            "ℹ️ If role/is_active columns are missing, run "
+            "`migrations/001_user_management.sql` in Supabase SQL Editor first."
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
