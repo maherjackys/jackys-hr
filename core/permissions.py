@@ -1,28 +1,25 @@
 """
 Centralized RBAC permission middleware for the Admin Dashboard.
 
-Never duplicate role checks — import from here.
-
-Roles (lowest → highest):
-    user (1) → moderator (2) → admin (3) → super_admin (4)
+This module provides both role-level checks (has_role / require_role) and
+fine-grained permission checks (has_permission / require_permission) backed
+by the role_permissions Supabase table (migration 003).
 
 Usage:
-    from core.permissions import has_role, require_role, current_role
+    from core.permissions import has_role, require_role
+    from core.permissions import has_permission, require_permission
 
-    # Silently check
-    if has_role("admin"):
-        do_something()
-
-    # Show 403 and return False if denied (use inside a tab body)
-    if not require_role("admin"):
-        st.stop()   # or just return — st.stop() exits the whole script
-
-    # Get current role
-    role = current_role()
+    if has_role("admin"):              ...  # role-level hierarchy check
+    if has_permission("users.create"): ...  # DB-backed permission check
 """
 from __future__ import annotations
 
 from core.auth import _ROLE_LEVEL
+from core.rbac import (  # noqa: F401  (re-exported for convenience)
+    has_permission,
+    require_permission,
+    load_session_permissions,
+)
 
 _ROLE_LABELS = {
     "super_admin": "Super Admin",
@@ -33,10 +30,7 @@ _ROLE_LABELS = {
 
 
 def current_role() -> str:
-    """Return the current admin user's role from Streamlit session_state.
-
-    Returns 'user' (lowest privilege) when the role is not set — safe default.
-    """
+    """Return the current admin user's role. Defaults to 'user' when unset."""
     try:
         import streamlit as st
         return st.session_state.get("admin_role") or "user"
@@ -50,18 +44,7 @@ def has_role(min_role: str) -> bool:
 
 
 def require_role(min_role: str) -> bool:
-    """Render a 403 Access Denied block and return False if permission denied.
-
-    Returns True when the current user meets the requirement.
-    Call at the top of any tab section or action block.
-
-    Example:
-        with tab_settings:
-            if not require_role("admin"):
-                pass  # 403 already shown — nothing else will render
-            else:
-                # ... tab content
-    """
+    """Render a 403 block and return False if the role requirement is not met."""
     if has_role(min_role):
         return True
     try:
@@ -79,5 +62,5 @@ def require_role(min_role: str) -> bool:
     return False
 
 
-# Alias — more readable in `with` contexts
+# Alias — more readable in guard contexts
 guard = require_role
