@@ -243,8 +243,9 @@ def set_role_permissions(
             return "Database not available."
         c.table("role_permissions").delete().eq("role", role).execute()
         if permissions:
-            c.table("role_permissions").insert(
-                [{"role": role, "permission": p} for p in permissions]
+            c.table("role_permissions").upsert(
+                [{"role": role, "permission": p} for p in permissions],
+                on_conflict="role,permission",
             ).execute()
         return None
     except Exception as exc:
