@@ -493,8 +493,10 @@ def check_login(password: str, username: str = "admin") -> tuple[bool, str]:
         if verify_password(password, user["password_hash"]):
             _clear_failures(username)
             _update_last_login(username)
+            _log_login(username, True)
             return True, ""
         _record_failure(username)
+        _log_login(username, False)
         return False, "Incorrect username or password."
 
     # 2. Fallback: plain-text secret
@@ -506,10 +508,21 @@ def check_login(password: str, username: str = "admin") -> tuple[bool, str]:
         _auto_migrate(username, password)
         _clear_failures(username)
         _update_last_login(username)
+        _log_login(username, True)
         return True, ""
 
     _record_failure(username)
+    _log_login(username, False)
     return False, "Incorrect username or password."
+
+
+def _log_login(username: str, success: bool) -> None:
+    """Fire-and-forget login attempt log — never raises."""
+    try:
+        from core.db_logger import log_login_attempt
+        log_login_attempt(username, success)
+    except Exception:
+        pass
 
 
 def _auto_migrate(username: str, plain: str) -> None:

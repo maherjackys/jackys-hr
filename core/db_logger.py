@@ -206,7 +206,7 @@ def log_feedback(
         logger.warning("db_logger: log_feedback failed (%s: %s).", type(exc).__name__, exc)
 
 
-def log_admin_action(action: str, source: str, filename: str = "") -> None:
+def log_admin_action(action: str, source: str, filename: str = "", actor: str = "") -> None:
     """Log an admin action (upload / delete / rebuild / add_source) to the logs table."""
     try:
         detail = f"{action}: {filename}" if filename else action
@@ -216,7 +216,7 @@ def log_admin_action(action: str, source: str, filename: str = "") -> None:
                 "log_type":       "admin_action",
                 "source":         source,
                 "query":          detail[:500],
-                "answer_preview": None,
+                "answer_preview": actor[:100] if actor else None,
                 "score":          None,
                 "vote":           None,
             })
@@ -227,30 +227,93 @@ def log_admin_action(action: str, source: str, filename: str = "") -> None:
                     "ts":      datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     "action":  detail,
                     "source":  source,
+                    "actor":   actor,
                 },
             )
     except Exception as exc:
         logger.warning("db_logger: log_admin_action failed (%s: %s).", type(exc).__name__, exc)
 
 
-def fetch_logs(log_type: str | None = None, limit: int = 200) -> tuple[list[dict], str | None]:
+def log_login_attempt(username: str, success: bool) -> None:
+    """Log a login attempt to the login_history table (migration 005)."""
+    try:
+        client = _get_client()
+        if client is not None:
+            client.table("login_history").insert({
+                "username": username[:100],
+                "success":  success,
+            }).execute()
+        else:
+            _local_append(
+                _LOGS_DIR / "login_history.jsonl",
+                {
+                    "ts":       datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "username": username,
+                    "success":  success,
+                },
+            )
+    except Exception as exc:
+        logger.warning("db_logger: log_login_attempt failed (%s: %s).", type(exc).__name__, exc)
+
+
+def fetch_login_history(
+    username: str | None = None,
+    limit: int = 50,
+) -> tuple[list[dict], str | None]:
+    """Fetch login history rows, newest first. Requires migration 005."""
+    try:
+        client = _get_client()
+        if client is None:
+            return [], "Supabase not available."
+        q = client.table("login_history").select("*")
+        if username:
+            q = q.eq("username", username)
+        q = q.order("created_at", desc=True).limit(limit)
+        resp = q.execute()
+        return resp.data or [], None
+    except Exception as exc:
+        msg = f"{type(exc).__name__}: {exc}"
+        logger.warning("db_logger: fetch_login_history failed (%s).", msg)
+        return [], msg
+
+
+def fetch_logs(
+    log_type: str | None = None,
+    limit: int = 200,
+    date_from: "datetime.date | None" = None,
+    date_to: "datetime.date | None" = None,
+    search: str | None = None,
+    offset: int = 0,
+) -> tuple[list[dict], str | None]:
     """Fetch rows from the logs table, newest first.
 
     Args:
-        log_type: 'unanswered', 'feedback', or None for all rows.
-        limit: max rows to return.
+        log_type:  'unanswered', 'feedback', 'admin_action', or None for all.
+        limit:     max rows to return.
+        date_from: include only rows with ts >= this date (UTC).
+        date_to:   include only rows with ts <= this date + 1 day (UTC).
+        search:    case-insensitive substring filter on the query column.
+        offset:    skip this many rows (for pagination).
 
     Returns (rows, error_message). rows=[] and error_message set on any failure.
-    Correct PostgREST builder order: select → filter → order → limit → execute.
     """
     try:
         client = _get_client()
         if client is None:
             return [], "Supabase client is None — check SUPABASE_URL/KEY secrets."
         q = client.table("logs").select("*")
-        if log_type:                          # never pass .eq() when filtering all
+        if log_type:
             q = q.eq("log_type", log_type)
+        if date_from:
+            q = q.gte("ts", date_from.isoformat())
+        if date_to:
+            _end = date_to + datetime.timedelta(days=1)
+            q = q.lt("ts", _end.isoformat())
+        if search and search.strip():
+            q = q.ilike("query", f"%{search.strip()}%")
         q = q.order("ts", desc=True).limit(limit)
+        if offset:
+            q = q.range(offset, offset + limit - 1)
         response = q.execute()
         return response.data or [], None
     except Exception as exc:

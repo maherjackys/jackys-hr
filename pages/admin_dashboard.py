@@ -247,14 +247,18 @@ if not st.session_state.get("admin_authed"):
 from core.rbac import has_permission as _hp  # noqa: E402
 
 _TABS_DEF = [
-    ("📋 Logs",        "logs",     "dashboard.logs"),
-    ("📁 Manage Docs", "docs",     "documents.view"),
-    ("➕ Add Source",  "add",      "sources.view"),
-    ("⚙️ Settings",   "settings", "settings.view"),
-    ("👥 Users",       "users",    "users.view"),
-    ("🔐 Roles",       "roles",    "roles.view"),
-    ("🔑 Account",     "account",  None),
-    ("🐛 Debug",       "debug",    "dashboard.debug"),
+    ("🏠 Overview",     "overview",  "dashboard.view"),
+    ("📊 Analytics",    "analytics", "dashboard.analytics"),
+    ("📋 Logs",         "logs",      "dashboard.logs"),
+    ("🔍 Audit Trail",  "audit",     "audit.view"),
+    ("🛡️ Security",    "security",  "security.view"),
+    ("📁 Documents",    "docs",      "documents.view"),
+    ("🗄️ Sources",     "add",       "sources.view"),
+    ("⚙️ Settings",    "settings",  "settings.view"),
+    ("👥 Users",        "users",     "users.view"),
+    ("🔐 Roles",        "roles",     "roles.view"),
+    ("🔑 Account",      "account",   None),
+    ("🐛 Debug",        "debug",     "dashboard.debug"),
 ]
 
 _vis_defs   = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
@@ -294,6 +298,57 @@ with st.sidebar:
         st.rerun()
 
 
+# ── Enterprise CSS ────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* ── Admin dashboard enterprise styles ─── */
+.adm-metric-row { display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }
+.adm-kpi {
+    flex:1; min-width:140px; background:var(--bg-surface,#fff);
+    border:1px solid var(--color-border,#e5e7eb); border-radius:10px;
+    padding:1rem 1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.adm-kpi-label { font-size:.72rem; color:var(--color-muted,#6b7280); text-transform:uppercase; letter-spacing:.05em; }
+.adm-kpi-value { font-size:1.75rem; font-weight:700; color:var(--color-text,#111); line-height:1.2; }
+.adm-kpi-sub   { font-size:.78rem; color:var(--color-muted,#6b7280); margin-top:.2rem; }
+.adm-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; }
+.adm-badge-green  { background:#dcfce7; color:#166534; }
+.adm-badge-red    { background:#fee2e2; color:#991b1b; }
+.adm-badge-yellow { background:#fef9c3; color:#854d0e; }
+.adm-badge-blue   { background:#dbeafe; color:#1e40af; }
+.adm-badge-gray   { background:#f3f4f6; color:#374151; }
+.adm-activity-row {
+    display:flex; align-items:flex-start; gap:.6rem;
+    padding:.5rem .75rem; border-radius:6px; margin:.2rem 0;
+    border-left:3px solid var(--color-border,#e5e7eb);
+}
+.adm-activity-row:hover { background:var(--bg-input,#f9fafb); }
+.adm-ts { font-size:.72rem; color:var(--color-muted,#9ca3af); white-space:nowrap; min-width:120px; }
+.adm-log-search { margin-bottom:.75rem; }
+.adm-log-unanswered { border-left-color:#f59e0b; }
+.adm-log-feedback   { border-left-color:#3b82f6; }
+.adm-log-admin      { border-left-color:#8b5cf6; }
+.adm-log-error      { border-left-color:#ef4444; }
+.adm-section-header { font-size:1.1rem; font-weight:700; margin:1.25rem 0 .5rem; color:var(--color-text,#111); }
+.adm-quick-action { text-align:center; }
+.adm-source-health { display:flex; gap:.5rem; align-items:center; padding:.4rem 0; }
+[data-theme="dark"] .adm-kpi { background:#161b22; border-color:#30363d; }
+[data-theme="dark"] .adm-kpi-value { color:#f0f6fc; }
+[data-theme="dark"] .adm-badge-green  { background:#0d4429; color:#56d364; }
+[data-theme="dark"] .adm-badge-red    { background:#4d1a1a; color:#f97171; }
+[data-theme="dark"] .adm-badge-yellow { background:#4d3800; color:#e3b341; }
+[data-theme="dark"] .adm-badge-blue   { background:#0d2a4d; color:#79b8ff; }
+[data-theme="dark"] .adm-badge-gray   { background:#21262d; color:#c9d1d9; }
+[data-theme="dark"] .adm-activity-row:hover { background:#21262d; }
+</style>
+""", unsafe_allow_html=True)
+
+
+def _actor() -> str:
+    """Return the currently logged-in admin's username for audit logging."""
+    return st.session_state.get("admin_username", "")
+
+
 # ── Main admin UI ──────────────────────────────────────────────────────────────
 st.title("📊 Admin Dashboard")
 
@@ -308,56 +363,115 @@ if _sel_nav == "logs":
         else:
             st.subheader("Query Logs")
 
-            col_filter, col_limit, col_btn = st.columns([2, 1, 1])
-            with col_filter:
-                log_type_filter = st.selectbox(
+            # ── Filters ────────────────────────────────────────────────────────
+            _lf_c1, _lf_c2, _lf_c3 = st.columns([2, 1, 1])
+            with _lf_c1:
+                _log_search = st.text_input("🔍 Search query text", key="log_search",
+                                             placeholder="Filter by keyword…", label_visibility="collapsed")
+            with _lf_c2:
+                _log_type_filter = st.selectbox(
                     "Log type",
                     options=["all", "unanswered", "feedback", "admin_action"],
                     key="log_type_filter",
+                    label_visibility="collapsed",
                 )
-            with col_limit:
-                log_limit = st.number_input("Max rows", min_value=10, max_value=1000,
-                                            value=200, step=10, key="log_limit")
-            with col_btn:
-                st.markdown("&nbsp;", unsafe_allow_html=True)
-                fetch_btn = st.button("🔄 Fetch Logs", type="primary",
-                                      use_container_width=True)
+            with _lf_c3:
+                _log_limit = st.number_input("Max rows", min_value=10, max_value=1000,
+                                              value=200, step=10, key="log_limit",
+                                              label_visibility="collapsed")
 
-            if fetch_btn:
-                from core.db_logger import fetch_logs
-                ltype = log_type_filter if log_type_filter != "all" else None
-                with st.spinner("Fetching…"):
-                    rows, err = fetch_logs(log_type=ltype, limit=int(log_limit))
-                if err:
-                    st.error(f"Error: {err}")
-                elif not rows:
-                    st.info("No rows found.")
+            _lf_d1, _lf_d2, _lf_d3, _lf_d4 = st.columns([2, 2, 1, 1])
+            with _lf_d1:
+                _log_date_from = st.date_input("From date", value=None, key="log_date_from",
+                                                label_visibility="collapsed")
+            with _lf_d2:
+                _log_date_to = st.date_input("To date", value=None, key="log_date_to",
+                                              label_visibility="collapsed")
+            with _lf_d3:
+                _auto_refresh = st.toggle("Auto-refresh", key="log_auto_refresh")
+            with _lf_d4:
+                _fetch_btn = st.button("🔄 Fetch", type="primary",
+                                        use_container_width=True, key="log_fetch_btn")
+
+            _should_fetch = _fetch_btn or _auto_refresh
+            if _should_fetch:
+                from core.db_logger import fetch_logs as _fl
+                _ltype = _log_type_filter if _log_type_filter != "all" else None
+                with st.spinner("Fetching logs…"):
+                    _rows, _err = _fl(
+                        log_type=_ltype,
+                        limit=int(_log_limit),
+                        date_from=_log_date_from or None,
+                        date_to=_log_date_to or None,
+                        search=_log_search.strip() or None,
+                    )
+                if _err:
+                    st.error(f"Error: {_err}")
+                elif not _rows:
+                    st.info("No rows match your filters.")
                 else:
                     import pandas as pd
-                    df = pd.DataFrame(rows)
-                    st.success(f"Fetched {len(df)} rows.")
-                    st.dataframe(df, use_container_width=True)
-                    csv = df.to_csv(index=False).encode("utf-8")
-                    st.download_button(
-                        "⬇️ Download CSV", data=csv,
-                        file_name=f"logs_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv",
+                    import json as _json_logs
+                    _df_logs = pd.DataFrame(_rows)
+                    st.success(f"Fetched **{len(_df_logs)}** rows.")
+
+                    # ── Type color badges ───────────────────────────────────────
+                    _type_cls = {
+                        "unanswered": "adm-badge-yellow",
+                        "feedback":   "adm-badge-blue",
+                        "admin_action": "adm-badge-blue",
+                    }
+
+                    st.dataframe(
+                        _df_logs,
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "ts": st.column_config.DatetimeColumn("Timestamp", format="YYYY-MM-DD HH:mm:ss"),
+                            "log_type": st.column_config.TextColumn("Type"),
+                            "query": st.column_config.TextColumn("Query / Action"),
+                            "source": st.column_config.TextColumn("Source"),
+                            "score": st.column_config.NumberColumn("Score", format="%.3f"),
+                            "vote": st.column_config.TextColumn("Vote"),
+                        },
                     )
+
+                    # ── Export ─────────────────────────────────────────────────
+                    _exp_c1, _exp_c2 = st.columns(2)
+                    with _exp_c1:
+                        _csv_l = _df_logs.to_csv(index=False).encode("utf-8")
+                        st.download_button(
+                            "⬇️ CSV", data=_csv_l,
+                            file_name=f"logs_{datetime.date.today()}.csv",
+                            mime="text/csv", key="log_dl_csv",
+                        )
+                    with _exp_c2:
+                        _json_l = _json_logs.dumps(_rows, default=str, indent=2).encode("utf-8")
+                        st.download_button(
+                            "⬇️ JSON", data=_json_l,
+                            file_name=f"logs_{datetime.date.today()}.json",
+                            mime="application/json", key="log_dl_json",
+                        )
+
+                if _auto_refresh:
+                    import time as _time
+                    _time.sleep(15)
+                    st.rerun()
 
             st.divider()
             st.subheader("Local Fallback Logs")
-            logs_dir = Path(__file__).resolve().parent.parent / "logs"
-            jsonl_files = sorted(logs_dir.glob("*.jsonl")) if logs_dir.exists() else []
-            if not jsonl_files:
+            _logs_dir_path = Path(__file__).resolve().parent.parent / "logs"
+            _jsonl_files = sorted(_logs_dir_path.glob("*.jsonl")) if _logs_dir_path.exists() else []
+            if not _jsonl_files:
                 st.info("No local JSONL log files found.")
             else:
-                for jf in jsonl_files:
-                    with st.expander(f"📄 {jf.name}"):
+                for _jf in _jsonl_files:
+                    with st.expander(f"📄 {_jf.name}"):
                         try:
-                            lines = jf.read_text(encoding="utf-8").splitlines()[-100:]
-                            st.code("\n".join(lines), language="json")
-                        except Exception as exc:
-                            st.error(f"Could not read: {exc}")
+                            _lines = _jf.read_text(encoding="utf-8").splitlines()[-100:]
+                            st.code("\n".join(_lines), language="json")
+                        except Exception as _exc:
+                            st.error(f"Could not read: {_exc}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -418,7 +532,7 @@ if _sel_nav == "docs":
                                 safe = _safe_filename(uf.name)
                                 try:
                                     (_docs_dir / safe).write_bytes(uf.read())
-                                    log_admin_action("upload", selected_source, safe)
+                                    log_admin_action("upload", selected_source, safe, actor=_actor())
                                     saved.append(safe)
                                 except Exception as exc:
                                     failed.append(f"{safe}: {exc}")
@@ -436,7 +550,7 @@ if _sel_nav == "docs":
                                     ok, msg = build_source_index(_s, selected_source)
                                 if ok:
                                     st.success(f"Index rebuilt: {msg}")
-                                    log_admin_action("rebuild", selected_source)
+                                    log_admin_action("rebuild", selected_source, actor=_actor())
                                 else:
                                     st.error(f"Index rebuild failed: {msg}")
                                 st.cache_resource.clear()
@@ -478,7 +592,7 @@ if _sel_nav == "docs":
                                 from core.db_logger import log_admin_action
                                 try:
                                     _f.unlink()
-                                    log_admin_action("delete", selected_source, _f.name)
+                                    log_admin_action("delete", selected_source, _f.name, actor=_actor())
                                     st.session_state.pop(
                                         f"confirm_del_{selected_source}_{_f.name}", None
                                     )
@@ -503,7 +617,7 @@ if _sel_nav == "docs":
                         ok, msg = build_source_index(_s, selected_source)
                     if ok:
                         st.success(msg)
-                        log_admin_action("rebuild", selected_source)
+                        log_admin_action("rebuild", selected_source, actor=_actor())
                         st.cache_resource.clear()
                     else:
                         st.error(msg)
@@ -588,7 +702,7 @@ if _sel_nav == "add":
                             if err:
                                 st.error(f"Failed to register: {err}")
                             else:
-                                log_admin_action("add_source", new_key, new_display)
+                                log_admin_action("add_source", new_key, new_display, actor=_actor())
                                 st.success(f"Source `{new_key}` ({new_display}) created!")
                                 st.info("It will appear after the 60-second settings cache expires.")
                                 st.cache_data.clear()
@@ -766,6 +880,7 @@ if _sel_nav == "add":
                                                     "delete_source",
                                                     _del_src,
                                                     "; ".join(_del_log_parts),
+                                                    actor=_actor(),
                                                 )
                                             except Exception:
                                                 pass
@@ -911,6 +1026,57 @@ if _sel_nav == "users":
             _sm3.metric("Disabled", _total - _active)
             _sm4.metric("By Role", _role_summary)
 
+            # ── Quick actions row ──────────────────────────────────────────────
+            _um_qa1, _um_qa2 = st.columns(2)
+            with _um_qa1:
+                if st.button("⬇️ Export Users CSV", use_container_width=True, key="um_export_csv"):
+                    import pandas as pd
+                    _exp_df = pd.DataFrame([
+                        {k: v for k, v in u.items() if k != "password_hash"}
+                        for u in _all_users
+                    ])
+                    _exp_csv = _exp_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        "Download CSV", data=_exp_csv,
+                        file_name=f"users_{datetime.date.today()}.csv",
+                        mime="text/csv", key="um_dl_csv",
+                    )
+            with _um_qa2:
+                if _hp("users.view_sessions") and st.button(
+                    "📋 View Login History", use_container_width=True, key="um_login_hist_btn"
+                ):
+                    st.session_state["um_show_login_hist"] = not st.session_state.get("um_show_login_hist", False)
+
+            if st.session_state.get("um_show_login_hist") and _hp("users.view_sessions"):
+                with st.expander("Login History", expanded=True):
+                    _lh_filter = st.text_input("Username (blank = all)", key="um_lh_user_input")
+                    if st.button("Load", key="um_lh_load"):
+                        from core.db_logger import fetch_login_history as _flh_um
+                        _lh_data, _lh_err = _flh_um(
+                            username=_lh_filter.strip() or None, limit=100
+                        )
+                        if _lh_err:
+                            st.error(f"Error: {_lh_err}")
+                        elif not _lh_data:
+                            st.info("No login history found. Run migration 005 first.")
+                        else:
+                            import pandas as pd
+                            _df_lh = pd.DataFrame(_lh_data)
+                            if "success" in _df_lh.columns:
+                                _df_lh["status"] = _df_lh["success"].map(
+                                    {True: "✅ Success", False: "❌ Failed"}
+                                )
+                            st.dataframe(
+                                _df_lh[["username", "status", "created_at"]]
+                                if "status" in _df_lh.columns else _df_lh,
+                                use_container_width=True, hide_index=True,
+                            )
+                            _s_cnt = int(_df_lh.get("success", pd.Series([], dtype=bool)).sum()) if "success" in _df_lh else 0
+                            _f_cnt = len(_df_lh) - _s_cnt
+                            _lhc1, _lhc2 = st.columns(2)
+                            _lhc1.metric("✅ Successful", _s_cnt)
+                            _lhc2.metric("❌ Failed", _f_cnt)
+
             st.divider()
 
             # ── Create User ───────────────────────────────────────────────────
@@ -948,7 +1114,7 @@ if _sel_nav == "users":
                             if _cerr:
                                 st.error(f"Failed: {_cerr}")
                             else:
-                                _log_um("create_user", _cu_uname, _cu_role)
+                                _log_um("create_user", _cu_uname, _cu_role, actor=_actor())
                                 st.success(
                                     f"User **{_cu_uname}** created with role `{_cu_role}`."
                                 )
@@ -1090,7 +1256,7 @@ if _sel_nav == "users":
                         if _err:
                             st.error(f"Update failed: {_err}")
                         else:
-                            _log_um("edit_user", _un, f"role={_ed_role}")
+                            _log_um("edit_user", _un, f"role={_ed_role}", actor=_actor())
                             st.session_state.pop(f"um_action_{_un}", None)
                             st.success(f"User **{_un}** updated.")
                             st.rerun()
@@ -1109,7 +1275,7 @@ if _sel_nav == "users":
                                 st.error(f"Failed: {_err}")
                             else:
                                 _log_um("disable_user" if not _new_active else "enable_user",
-                                        _un)
+                                        _un, actor=_actor())
                                 st.session_state.pop(f"um_action_{_un}", None)
                                 st.rerun()
                     with _tcn:
@@ -1143,7 +1309,7 @@ if _sel_nav == "users":
                             if _dberr:
                                 st.error(f"Failed: {_dberr}")
                             else:
-                                _log_um("reset_password", _un)
+                                _log_um("reset_password", _un, actor=_actor())
                                 st.session_state.pop(f"um_action_{_un}", None)
                                 st.success(f"Password reset for **{_un}**.")
                                 st.rerun()
@@ -1160,7 +1326,7 @@ if _sel_nav == "users":
                             if _err:
                                 st.error(f"Failed: {_err}")
                             else:
-                                _log_um("delete_user", _un)
+                                _log_um("delete_user", _un, actor=_actor())
                                 st.session_state.pop(f"um_action_{_un}", None)
                                 st.success(f"User **{_un}** deleted.")
                                 st.rerun()
@@ -1264,7 +1430,8 @@ if _sel_nav == "roles":
                 else:
                     from core.db_logger import log_admin_action as _log_rp
                     _log_rp("update_permissions", _sel_role,
-                            f"{len(_new_perms_set)} permissions")
+                            f"{len(_new_perms_set)} permissions",
+                            actor=_actor())
                     _grp.clear()
                     # Refresh current session's permissions if we modified our own role
                     if _sel_role == _actor_role:
@@ -1312,6 +1479,7 @@ if _sel_nav == "roles":
                                 "reset_role_permissions",
                                 _sel_role,
                                 f"restored {_def_count} default permissions",
+                                actor=_actor(),
                             )
                             _grp.clear()
                             if _sel_role == _actor_role:
@@ -1321,6 +1489,77 @@ if _sel_nav == "roles":
                                 f"reset to defaults ({_def_count} permissions)."
                             )
                             st.rerun()
+
+            # ── Clone Role ────────────────────────────────────────────────────
+            if _can_edit and not _is_sa:
+                st.divider()
+                st.markdown("#### Clone Permissions to Another Role")
+                st.caption(
+                    "Copy all permissions from the selected role into another role, "
+                    "overwriting its current permissions."
+                )
+                _clone_targets = [r for r in _role_names if r != _sel_role and r != "super_admin"]
+                if _clone_targets:
+                    _clone_to = st.selectbox(
+                        "Clone INTO role",
+                        options=_clone_targets,
+                        format_func=lambda r: _role_labels.get(r, r),
+                        key="roles_clone_target",
+                    )
+                    if st.button(f"📋 Clone → {_role_labels.get(_clone_to, _clone_to)}",
+                                 key="roles_clone_btn", type="primary"):
+                        _clone_perms = list(_current_rp)
+                        _cerr = _set_role_perms(_clone_to, _clone_perms, _actor_role)
+                        if _cerr:
+                            st.error(f"Clone failed: {_cerr}")
+                        else:
+                            from core.db_logger import log_admin_action as _log_cl
+                            _log_cl("clone_permissions",
+                                    f"{_sel_role}→{_clone_to}",
+                                    f"{len(_clone_perms)} permissions",
+                                    actor=_actor())
+                            _grp.clear()
+                            st.success(
+                                f"Permissions from **{_role_labels.get(_sel_role, _sel_role)}** "
+                                f"cloned to **{_role_labels.get(_clone_to, _clone_to)}** "
+                                f"({len(_clone_perms)} permissions)."
+                            )
+                            st.rerun()
+
+            # ── Compare Roles ──────────────────────────────────────────────────
+            st.divider()
+            st.markdown("#### Compare Two Roles")
+            _cmp_c1, _cmp_c2 = st.columns(2)
+            with _cmp_c1:
+                _cmp_role_a = st.selectbox(
+                    "Role A", options=_role_names,
+                    format_func=lambda r: _role_labels.get(r, r),
+                    key="cmp_role_a", index=0,
+                )
+            with _cmp_c2:
+                _cmp_role_b = st.selectbox(
+                    "Role B", options=_role_names,
+                    format_func=lambda r: _role_labels.get(r, r),
+                    key="cmp_role_b",
+                    index=min(1, len(_role_names) - 1),
+                )
+            if st.button("🔍 Compare", key="cmp_roles_btn"):
+                _perms_a = frozenset(_ALL_PERM_KEYS) if _cmp_role_a == "super_admin" else _grp(_cmp_role_a)
+                _perms_b = frozenset(_ALL_PERM_KEYS) if _cmp_role_b == "super_admin" else _grp(_cmp_role_b)
+                _la = _role_labels.get(_cmp_role_a, _cmp_role_a)
+                _lb = _role_labels.get(_cmp_role_b, _cmp_role_b)
+                _hdr_c1, _hdr_c2, _hdr_c3 = st.columns([3, 1, 1])
+                _hdr_c1.markdown("**Permission**")
+                _hdr_c2.markdown(f"**{_la}**")
+                _hdr_c3.markdown(f"**{_lb}**")
+                st.divider()
+                for _cp in sorted(_all_perms, key=lambda p: (p["category"], p["sort_order"])):
+                    _ck = _cp["key"]
+                    _ccat = _cp.get("category", "")
+                    _cc1, _cc2, _cc3 = st.columns([3, 1, 1])
+                    _cc1.caption(f"*{_ccat}* · {_cp['label']}")
+                    _cc2.markdown("✅" if _ck in _perms_a else "—")
+                    _cc3.markdown("✅" if _ck in _perms_b else "—")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1540,7 +1779,7 @@ if _sel_nav == "debug":
                                 _bok, _bmsg = build_source_index(_s4, _bsrc)
                             if _bok:
                                 st.success(_bmsg)
-                                log_admin_action("rebuild", _bsrc)
+                                log_admin_action("rebuild", _bsrc, actor=_actor())
                                 st.cache_resource.clear()
                             else:
                                 st.error(_bmsg)
@@ -1564,3 +1803,506 @@ if _sel_nav == "debug":
             if st.button("👁️ Show Env Vars", key="show_env"):
                 safe_keys = ["STREAMLIT_SERVER_PORT", "HOME", "PATH", "PYTHONPATH", "HOSTNAME"]
                 st.json({k: os.environ.get(k, "(not set)") for k in safe_keys})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Overview
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "overview":
+    if not _hp("dashboard.view"):
+        _show_403("dashboard.view")
+    else:
+        st.subheader("System Overview")
+
+        # ── Metrics ───────────────────────────────────────────────────────────
+        try:
+            from core.auth import get_all_users as _gau_ov
+            from core.settings_store import get_enabled_sources as _ges_ov
+            from core.db_logger import fetch_logs as _fl_ov
+            from config import get_settings as _gs_ov
+            import pandas as _pd_ov
+
+            _users_ov  = _gau_ov()
+            _active_ov = sum(1 for u in _users_ov if u.get("is_active", True))
+            _srcs_ov   = _ges_ov()
+            _cfg_ov    = _gs_ov()
+
+            _total_docs_ov = 0
+            _src_doc_counts: dict[str, int] = {}
+            for _src_ov in _srcs_ov:
+                _ddir_ov = _cfg_ov.docs_dir_for(_src_ov)
+                _cnt_ov  = len([f for f in _ddir_ov.iterdir()
+                                  if f.is_file() and f.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}]
+                                ) if _ddir_ov.exists() else 0
+                _src_doc_counts[_src_ov] = _cnt_ov
+                _total_docs_ov += _cnt_ov
+
+            # Logs from the last 24 hours
+            _logs_ov, _ = _fl_ov(limit=500)
+            _df_ov = _pd_ov.DataFrame(_logs_ov) if _logs_ov else _pd_ov.DataFrame()
+            _queries_today  = 0
+            _failed_logins_ov = 0
+            if not _df_ov.empty and "ts" in _df_ov.columns:
+                _df_ov["_dt"] = _pd_ov.to_datetime(_df_ov["ts"], utc=True, errors="coerce")
+                _cutoff = _pd_ov.Timestamp.now(tz="UTC") - _pd_ov.Timedelta(hours=24)
+                _recent_ov = _df_ov[_df_ov["_dt"] >= _cutoff]
+                _queries_today = int(len(_recent_ov[
+                    _recent_ov.get("log_type", _pd_ov.Series(dtype=str)) != "admin_action"
+                ])) if "log_type" in _recent_ov.columns else len(_recent_ov)
+
+            # KPI cards
+            _kpi_data = [
+                ("Total Users",    len(_users_ov),          f"{_active_ov} active",   "adm-badge-green"),
+                ("Disabled Users", len(_users_ov)-_active_ov, "accounts locked",      "adm-badge-red"),
+                ("Sources",        len(_srcs_ov),           "knowledge bases",         "adm-badge-blue"),
+                ("Documents",      _total_docs_ov,          "across all sources",      "adm-badge-blue"),
+                ("Queries 24 h",   _queries_today,          "last 24 hours",           "adm-badge-yellow"),
+            ]
+            _kpi_cols = st.columns(len(_kpi_data))
+            for _ki, (_klbl, _kval, _ksub, _kbadge) in enumerate(_kpi_data):
+                with _kpi_cols[_ki]:
+                    st.metric(_klbl, _kval, delta=None)
+
+        except Exception as _exc_ov:
+            st.warning(f"Could not load metrics: {_exc_ov}")
+
+        st.divider()
+
+        # ── Source health + Recent activity ────────────────────────────────────
+        _ov_left, _ov_right = st.columns([3, 2])
+
+        with _ov_left:
+            st.markdown("**Recent Activity**")
+            try:
+                from core.db_logger import fetch_logs as _fl2_ov
+                _recent_acts, _ = _fl2_ov(log_type="admin_action", limit=10)
+                if _recent_acts:
+                    for _ra in _recent_acts:
+                        _ts_ra = str(_ra.get("ts", ""))[:16]
+                        _qr    = _ra.get("query", "")
+                        _src_ra = _ra.get("source", "")
+                        _actor_ra = _ra.get("answer_preview", "") or ""
+                        _who = f"by **{_actor_ra}**" if _actor_ra else ""
+                        st.markdown(
+                            f'<div class="adm-activity-row adm-log-admin">'
+                            f'<span class="adm-ts">{_ts_ra}</span>'
+                            f'<span>{_qr}</span>&nbsp;{_who}'
+                            f'{"&nbsp;<em>" + _src_ra + "</em>" if _src_ra else ""}'
+                            f"</div>",
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.info("No admin actions recorded yet.")
+            except Exception as _exc2_ov:
+                st.caption(f"Activity unavailable: {_exc2_ov}")
+
+        with _ov_right:
+            st.markdown("**Source Health**")
+            try:
+                for _src_ov2 in _srcs_ov:
+                    _idir_ov = _cfg_ov.db_dir_for(_src_ov2)
+                    _ddir_ov2 = _cfg_ov.docs_dir_for(_src_ov2)
+                    _em_ov, _det_ov = _index_status(_idir_ov, _ddir_ov2)
+                    _dc_ov = _src_doc_counts.get(_src_ov2, 0)
+                    st.markdown(
+                        f'{_em_ov} **{_src_ov2}** &nbsp; '
+                        f'<span class="adm-badge adm-badge-gray">{_dc_ov} docs</span>',
+                        unsafe_allow_html=True,
+                    )
+            except Exception:
+                st.caption("Status unavailable")
+
+        st.divider()
+
+        # ── Quick Actions ──────────────────────────────────────────────────────
+        st.markdown("**Quick Actions**")
+        _qa_cols = st.columns(5)
+        _qa_items = [
+            ("📋 Logs",      "logs"),
+            ("👥 Users",     "users"),
+            ("📁 Documents", "docs"),
+            ("🔐 Roles",     "roles"),
+            ("🛡️ Security", "security"),
+        ]
+        for _qai, (_qa_lbl, _qa_key) in enumerate(_qa_items):
+            with _qa_cols[_qai]:
+                if st.button(_qa_lbl, use_container_width=True, key=f"qa_{_qa_key}"):
+                    st.session_state["admin_nav_key"] = _qa_key
+                    st.rerun()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Analytics
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "analytics":
+    if not _hp("dashboard.analytics"):
+        _show_403("dashboard.analytics")
+    else:
+        st.subheader("Analytics")
+
+        try:
+            import pandas as _pd_an
+            from core.db_logger import fetch_logs as _fl_an
+
+            _an_c1, _an_c2 = st.columns([2, 1])
+            with _an_c1:
+                _an_date_from = st.date_input(
+                    "From", value=datetime.date.today() - datetime.timedelta(days=30),
+                    key="an_date_from",
+                )
+            with _an_c2:
+                _an_limit = st.number_input("Max rows", 100, 2000, 500, 100, key="an_limit")
+
+            if st.button("📊 Load Analytics", type="primary", key="an_load_btn"):
+                with st.spinner("Loading analytics data…"):
+                    _an_rows, _an_err = _fl_an(
+                        limit=int(_an_limit),
+                        date_from=_an_date_from,
+                    )
+
+                if _an_err:
+                    st.error(f"Cannot load data: {_an_err}")
+                elif not _an_rows:
+                    st.info("No data in this date range.")
+                else:
+                    _df_an = _pd_an.DataFrame(_an_rows)
+
+                    if "ts" in _df_an.columns:
+                        _df_an["ts_dt"] = _pd_an.to_datetime(_df_an["ts"], errors="coerce", utc=True)
+                        _df_an["date"]  = _df_an["ts_dt"].dt.date
+
+                    # ── Summary metrics ───────────────────────────────────────
+                    _an_tot   = len(_df_an)
+                    _an_unans = len(_df_an[_df_an["log_type"] == "unanswered"]) if "log_type" in _df_an.columns else 0
+                    _an_fb    = len(_df_an[_df_an["log_type"] == "feedback"]) if "log_type" in _df_an.columns else 0
+                    _an_adm   = len(_df_an[_df_an["log_type"] == "admin_action"]) if "log_type" in _df_an.columns else 0
+
+                    _an_m1, _an_m2, _an_m3, _an_m4 = st.columns(4)
+                    _an_m1.metric("Total Events",       _an_tot)
+                    _an_m2.metric("Unanswered Queries", _an_unans)
+                    _an_m3.metric("Feedback Events",    _an_fb)
+                    _an_m4.metric("Admin Actions",      _an_adm)
+
+                    st.divider()
+
+                    # ── Charts row 1 ──────────────────────────────────────────
+                    _ch_c1, _ch_c2 = st.columns(2)
+
+                    with _ch_c1:
+                        st.markdown("##### Events by Type")
+                        if "log_type" in _df_an.columns:
+                            _type_counts = _df_an["log_type"].value_counts()
+                            st.bar_chart(_type_counts)
+
+                    with _ch_c2:
+                        st.markdown("##### Events by Source")
+                        if "source" in _df_an.columns:
+                            _src_counts = _df_an["source"].dropna().value_counts()
+                            if not _src_counts.empty:
+                                st.bar_chart(_src_counts)
+                            else:
+                                st.info("No source data.")
+
+                    # ── Daily trend ───────────────────────────────────────────
+                    st.markdown("##### Daily Activity Trend")
+                    if "date" in _df_an.columns:
+                        _daily_an = _df_an.groupby("date").size().rename("events")
+                        _all_dates_an = _pd_an.date_range(
+                            _an_date_from, datetime.date.today()
+                        ).date
+                        _daily_an = _daily_an.reindex(_all_dates_an, fill_value=0)
+                        st.area_chart(_daily_an)
+
+                    # ── Feedback satisfaction ─────────────────────────────────
+                    if "vote" in _df_an.columns:
+                        _fb_an = _df_an[_df_an.get("log_type", "") == "feedback"] if "log_type" in _df_an.columns else _pd_an.DataFrame()
+                        if not _fb_an.empty:
+                            st.divider()
+                            st.markdown("##### User Satisfaction (Feedback)")
+                            _vc_an = _fb_an["vote"].value_counts()
+                            _up_an   = int(_vc_an.get("up", 0))
+                            _down_an = int(_vc_an.get("down", 0))
+                            _tot_fb_an = _up_an + _down_an
+                            _sat_an = f"{100*_up_an//_tot_fb_an}%" if _tot_fb_an else "N/A"
+                            _fb_c1, _fb_c2, _fb_c3 = st.columns(3)
+                            _fb_c1.metric("👍 Positive",  _up_an)
+                            _fb_c2.metric("👎 Negative",  _down_an)
+                            _fb_c3.metric("Satisfaction", _sat_an)
+
+                    # ── Download ───────────────────────────────────────────────
+                    st.divider()
+                    import json as _json_an
+                    _an_dl_c1, _an_dl_c2 = st.columns(2)
+                    with _an_dl_c1:
+                        st.download_button(
+                            "⬇️ Export CSV",
+                            data=_df_an.to_csv(index=False).encode("utf-8"),
+                            file_name=f"analytics_{datetime.date.today()}.csv",
+                            mime="text/csv", key="an_dl_csv",
+                        )
+                    with _an_dl_c2:
+                        st.download_button(
+                            "⬇️ Export JSON",
+                            data=_json_an.dumps(_an_rows, default=str).encode("utf-8"),
+                            file_name=f"analytics_{datetime.date.today()}.json",
+                            mime="application/json", key="an_dl_json",
+                        )
+
+        except Exception as _exc_an:
+            st.error(f"Analytics error: {_exc_an}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Audit Trail
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "audit":
+    if not _hp("audit.view"):
+        _show_403("audit.view")
+    else:
+        st.subheader("Audit Trail")
+        st.caption(
+            "All admin actions — who changed what and when.  "
+            "Stored in the `logs` table with `log_type = admin_action`."
+        )
+
+        # ── Filters ───────────────────────────────────────────────────────────
+        _au_c1, _au_c2, _au_c3 = st.columns([3, 2, 2])
+        with _au_c1:
+            _au_search = st.text_input("🔍 Search actions", key="audit_search",
+                                        placeholder="Keyword…", label_visibility="collapsed")
+        with _au_c2:
+            _au_from = st.date_input("From date", value=None, key="audit_from",
+                                      label_visibility="collapsed")
+        with _au_c3:
+            _au_to = st.date_input("To date", value=None, key="audit_to",
+                                    label_visibility="collapsed")
+
+        _au_limit = st.number_input("Max rows", 10, 1000, 200, 10, key="audit_limit")
+
+        if st.button("🔄 Load Audit Trail", type="primary", key="audit_load_btn"):
+            try:
+                import pandas as _pd_au
+                import json as _json_au
+                from core.db_logger import fetch_logs as _fl_au
+                _au_rows, _au_err = _fl_au(
+                    log_type="admin_action",
+                    limit=int(_au_limit),
+                    date_from=_au_from or None,
+                    date_to=_au_to or None,
+                    search=_au_search.strip() or None,
+                )
+                if _au_err:
+                    st.error(f"Error: {_au_err}")
+                elif not _au_rows:
+                    st.info("No audit records match your filters.")
+                else:
+                    _df_au = _pd_au.DataFrame(_au_rows)
+                    st.success(f"**{len(_df_au)}** audit records found.")
+
+                    # Rename answer_preview → actor for display (migration 005 adds real column)
+                    _display_cols = {}
+                    if "ts" in _df_au.columns:
+                        _display_cols["ts"] = "Timestamp"
+                    if "answer_preview" in _df_au.columns:
+                        _df_au = _df_au.rename(columns={"answer_preview": "actor"})
+                    if "actor" in _df_au.columns:
+                        _display_cols["actor"] = "Actor"
+                    if "query" in _df_au.columns:
+                        _display_cols["query"] = "Action"
+                    if "source" in _df_au.columns:
+                        _display_cols["source"] = "Resource"
+
+                    _show_df = _df_au[[c for c in _display_cols if c in _df_au.columns]].rename(columns=_display_cols)
+                    st.dataframe(
+                        _show_df,
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "Timestamp": st.column_config.DatetimeColumn("Timestamp", format="YYYY-MM-DD HH:mm:ss"),
+                        },
+                    )
+
+                    # ── Export ─────────────────────────────────────────────────
+                    _au_dl_c1, _au_dl_c2 = st.columns(2)
+                    with _au_dl_c1:
+                        st.download_button(
+                            "⬇️ Export CSV",
+                            data=_df_au.to_csv(index=False).encode("utf-8"),
+                            file_name=f"audit_{datetime.date.today()}.csv",
+                            mime="text/csv", key="audit_dl_csv",
+                        )
+                    with _au_dl_c2:
+                        st.download_button(
+                            "⬇️ Export JSON",
+                            data=_json_au.dumps(_au_rows, default=str, indent=2).encode("utf-8"),
+                            file_name=f"audit_{datetime.date.today()}.json",
+                            mime="application/json", key="audit_dl_json",
+                        )
+            except Exception as _exc_au:
+                st.error(f"Audit error: {_exc_au}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Security Center
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "security":
+    if not _hp("security.view"):
+        _show_403("security.view")
+    else:
+        st.subheader("Security Center")
+
+        _sec_t1, _sec_t2, _sec_t3 = st.tabs(["🔑 Active Sessions", "📋 Login History", "🔒 Account Lockouts"])
+
+        # ── Active Sessions ────────────────────────────────────────────────────
+        with _sec_t1:
+            st.markdown("#### All Active Admin Sessions")
+            st.caption("Sessions that have not yet expired. Refresh to update.")
+
+            if st.button("🔄 Refresh Sessions", key="sec_refresh_sess"):
+                try:
+                    from core.db_logger import _get_client as _sec_db
+                    _sc = _sec_db()
+                    if _sc is None:
+                        st.warning("Supabase unavailable — cannot list sessions.")
+                    else:
+                        _now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                        _sess_resp = (
+                            _sc.table("admin_sessions")
+                            .select("id,username,created_at,expires_at")
+                            .gt("expires_at", _now_utc)
+                            .order("created_at", desc=True)
+                            .limit(200)
+                            .execute()
+                        )
+                        _sess_rows = _sess_resp.data or []
+                        if not _sess_rows:
+                            st.info("No active sessions found.")
+                        else:
+                            import pandas as _pd_sec
+                            _df_sess = _pd_sec.DataFrame(_sess_rows)
+                            # Mask token to first 8 chars
+                            if "id" in _df_sess.columns:
+                                _df_sess["token"] = _df_sess["id"].str[:8] + "…"
+                            _df_sess_show = _df_sess[["username", "created_at", "expires_at", "token"]
+                                                      if "token" in _df_sess.columns
+                                                      else ["username", "created_at", "expires_at"]]
+                            st.success(f"**{len(_sess_rows)}** active session(s).")
+                            st.dataframe(_df_sess_show, use_container_width=True, hide_index=True)
+
+                            # ── Force logout (super_admin only) ─────────────────
+                            if st.session_state.get("admin_role") == "super_admin" and _hp("users.force_logout"):
+                                st.divider()
+                                st.markdown("#### Force Logout")
+                                _my_user = st.session_state.get("admin_username", "")
+                                _other_users = sorted(set(
+                                    s["username"] for s in _sess_rows if s.get("username") != _my_user
+                                ))
+                                if _other_users:
+                                    _flu_target = st.selectbox("Select user to log out",
+                                                                _other_users, key="sec_flu_target")
+                                    if st.button(f"🚫 Force Logout {_flu_target}",
+                                                  type="primary", key="sec_flu_btn"):
+                                        from core.auth import force_logout_user as _flu_fn
+                                        from core.db_logger import log_admin_action as _log_flu
+                                        _flu_err = _flu_fn(_flu_target)
+                                        if _flu_err:
+                                            st.error(_flu_err)
+                                        else:
+                                            _log_flu("force_logout", _flu_target, actor=_actor())
+                                            st.success(f"All sessions for **{_flu_target}** revoked.")
+                                            st.rerun()
+                                else:
+                                    st.info("No other users have active sessions.")
+                except Exception as _exc_sec:
+                    st.error(f"Session error: {_exc_sec}")
+
+        # ── Login History ──────────────────────────────────────────────────────
+        with _sec_t2:
+            st.markdown("#### Login Attempt History")
+            st.caption("Records every login attempt (success + failure). Requires migration 005.")
+
+            _lh_c1, _lh_c2, _lh_c3 = st.columns([2, 1, 1])
+            with _lh_c1:
+                _lh_user_sel = ""
+                if _hp("users.view"):
+                    _lh_user_sel = st.text_input("Username (blank = all)", key="sec_lh_user")
+                else:
+                    _lh_user_sel = st.session_state.get("admin_username", "")
+                    st.caption(f"Showing history for: **{_lh_user_sel}**")
+            with _lh_c2:
+                _lh_outcome = st.selectbox("Outcome", ["all", "success", "failed"],
+                                            key="sec_lh_outcome")
+            with _lh_c3:
+                _lh_limit = st.number_input("Limit", 10, 500, 100, 10, key="sec_lh_limit")
+
+            if st.button("🔄 Load History", key="sec_lh_load"):
+                try:
+                    import pandas as _pd_lh
+                    from core.db_logger import fetch_login_history as _flh_sec
+                    _lh_rows, _lh_err = _flh_sec(
+                        username=_lh_user_sel.strip() or None,
+                        limit=int(_lh_limit),
+                    )
+                    if _lh_err:
+                        st.error(f"Error: {_lh_err}")
+                    elif not _lh_rows:
+                        st.info("No login history found. Ensure migration 005 has been run.")
+                    else:
+                        _df_lh_sec = _pd_lh.DataFrame(_lh_rows)
+                        if "success" in _df_lh_sec.columns:
+                            _df_lh_sec["status"] = _df_lh_sec["success"].map(
+                                {True: "✅ Success", False: "❌ Failed"}
+                            )
+                            if _lh_outcome == "success":
+                                _df_lh_sec = _df_lh_sec[_df_lh_sec["success"] == True]  # noqa: E712
+                            elif _lh_outcome == "failed":
+                                _df_lh_sec = _df_lh_sec[_df_lh_sec["success"] == False]  # noqa: E712
+
+                        _s_sec = int(_df_lh_sec["success"].sum()) if "success" in _df_lh_sec.columns else 0
+                        _f_sec = len(_df_lh_sec) - _s_sec
+                        _lh_m1, _lh_m2, _lh_m3 = st.columns(3)
+                        _lh_m1.metric("Total Attempts", len(_df_lh_sec))
+                        _lh_m2.metric("✅ Successful",   _s_sec)
+                        _lh_m3.metric("❌ Failed",       _f_sec)
+
+                        _show_lh_cols = ["username", "status", "created_at"] if "status" in _df_lh_sec.columns else _df_lh_sec.columns.tolist()
+                        st.dataframe(
+                            _df_lh_sec[_show_lh_cols],
+                            use_container_width=True, hide_index=True,
+                            column_config={
+                                "created_at": st.column_config.DatetimeColumn("Time", format="YYYY-MM-DD HH:mm:ss"),
+                            },
+                        )
+                except Exception as _exc_lh:
+                    st.error(f"Login history error: {_exc_lh}")
+
+        # ── Account Lockouts ───────────────────────────────────────────────────
+        with _sec_t3:
+            st.markdown("#### In-Process Login Rate Limiting")
+            st.caption(
+                "Shows accounts currently tracked for failed login attempts "
+                "(in-process only — resets when the Streamlit server restarts)."
+            )
+            if st.session_state.get("admin_role") in ("super_admin", "admin"):
+                try:
+                    from core.auth import _login_failures as _lf_dict, _LOCKOUT_WINDOW_SECS, _MAX_LOGIN_ATTEMPTS
+                    import time as _time_sec
+                    _now_sec = _time_sec.monotonic()
+                    _active_fails = {
+                        _u: [t for t in _ts if _now_sec - t < _LOCKOUT_WINDOW_SECS]
+                        for _u, _ts in _lf_dict.items()
+                    }
+                    _active_fails = {u: ts for u, ts in _active_fails.items() if ts}
+                    if not _active_fails:
+                        st.success("No accounts have recent failed login attempts.")
+                    else:
+                        st.warning(f"{len(_active_fails)} account(s) have recent failed attempts.")
+                        for _u_lk, _ts_lk in _active_fails.items():
+                            _cnt_lk = len(_ts_lk)
+                            _locked_lk = _cnt_lk >= _MAX_LOGIN_ATTEMPTS
+                            _badge_lk = "🔴 LOCKED" if _locked_lk else f"⚠️ {_cnt_lk} failures"
+                            st.markdown(f"- **{_u_lk}**: {_badge_lk}")
+                except Exception as _exc_lk:
+                    st.info(f"Lockout data unavailable: {_exc_lk}")
+            else:
+                st.info("Lockout monitoring requires Admin or Super Admin role.")
