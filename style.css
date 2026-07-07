@@ -1120,9 +1120,32 @@ header[data-testid="stHeader"] {
     font-size: 0.78rem !important;
   }
 
+  /* Source picker — stack cards vertically on mobile so each card is full-width
+     and tappable. Without stacking, two 155px columns make buttons unreachable. */
+  .st-key-src_picker [data-testid="stHorizontalBlock"] {
+    flex-direction: column !important;
+    gap: 0.6rem !important;
+  }
+  .st-key-src_picker [data-testid="stColumn"] {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+  /* Disable the ::before click-shield on mobile — it's designed for desktop hover
+     coverage; on stacked single-column cards it overflows and intercepts wrong taps. */
+  .st-key-src_picker [data-testid="stBaseButton-primary"] > button::before,
+  .st-key-src_picker [data-testid="stBaseButton-secondary"] > button::before {
+    display: none !important;
+  }
+  .st-key-src_picker [data-testid="stBaseButton-primary"] > button,
+  .st-key-src_picker [data-testid="stBaseButton-secondary"] > button {
+    min-height: 48px !important;
+    touch-action: manipulation !important;
+  }
+
   /* Suggestion pill rows — stack vertically on very small screens.
      Scoped to .st-key-sugg_row_* containers so other st.columns() layouts
-     (ctrl_bar, confirm dialogs, source cards) are not affected. */
+     (ctrl_bar, confirm dialogs) are not affected. */
   [class*="st-key-sugg_row_"] [data-testid="stHorizontalBlock"] {
     flex-direction: column !important;
     gap: 0.4rem !important;
@@ -1197,6 +1220,17 @@ header[data-testid="stHeader"] {
   .st-key-btn_theme button,
   .st-key-btn_lang  button {
     min-height: 44px !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Source picker on narrow tablets: disable click-shield that causes tap misses */
+  .st-key-src_picker [data-testid="stBaseButton-primary"] > button::before,
+  .st-key-src_picker [data-testid="stBaseButton-secondary"] > button::before {
+    display: none !important;
+  }
+  .st-key-src_picker [data-testid="stBaseButton-primary"] > button,
+  .st-key-src_picker [data-testid="stBaseButton-secondary"] > button {
+    min-height: 48px !important;
     touch-action: manipulation !important;
   }
 }

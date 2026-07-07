@@ -34,11 +34,10 @@ class Settings:
     css_path: Path = field(default_factory=lambda: BASE_DIR / "style.css")
 
     # ── Embedding & LLM ───────────────────────────────────────────────────────
-    # multilingual-e5-small: ~470 MB, fits Streamlit Cloud 1 GB RAM.
-    # Proper Arabic + English retrieval (all-MiniLM-L6-v2 was English-only).
-    # e5 models REQUIRE "passage: " prefix at index time and "query: " at search
-    # time — omitting them collapses retrieval quality significantly.
-    embedding_model: str = "intfloat/multilingual-e5-small"
+    # paraphrase-multilingual-MiniLM-L12-v2: 0.22 GB ONNX, 384-dim.
+    # Supports Arabic + English. Fits comfortably in Streamlit Cloud 1 GB RAM.
+    # Does NOT use e5-style "passage:"/"query:" prefixes.
+    embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     llm_model: str = "llama-3.3-70b-versatile"
     llm_fallback_model: str = "llama-3.1-8b-instant"  # used when primary hits rate limit
     llm_temperature: float = 0.45

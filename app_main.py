@@ -216,8 +216,6 @@ if len(_enabled_sources) > 1:
         unsafe_allow_html=True,
     )
 
-    _card_cols = st.columns(len(_enabled_sources))
-
     # Built-in source card definitions
     _CARD_DEFS: dict[str, dict] = {
         "company": {
@@ -245,7 +243,6 @@ if len(_enabled_sources) > 1:
     def _get_card_def(src: str) -> dict:
         if src in _CARD_DEFS:
             return _CARD_DEFS[src]
-        # Generic fallback for any dynamically added source
         _label = src.replace("_", " ").title()
         return {
             "css_class": "company",
@@ -258,11 +255,13 @@ if len(_enabled_sources) > 1:
             "welcome": "welcome_company",
         }
 
-    for _col, _src in zip(_card_cols, _enabled_sources):
-        _cd = _get_card_def(_src)
-        _sel = "selected" if current_source == _src else ""
-        with _col:
-            st.markdown(f"""
+    with st.container(key="src_picker"):
+        _card_cols = st.columns(len(_enabled_sources))
+        for _col, _src in zip(_card_cols, _enabled_sources):
+            _cd = _get_card_def(_src)
+            _sel = "selected" if current_source == _src else ""
+            with _col:
+                st.markdown(f"""
 <div class="source-card {_cd['css_class']} {_sel}" data-cr="1" aria-label="{_cd['aria']}">
   <div class="source-card-header">
     <span class="source-card-icon">{_cd['icon']}</span>
@@ -271,21 +270,21 @@ if len(_enabled_sources) > 1:
   <div class="source-card-title" data-i18n="{_cd['title_i18n']}">{_cd['title']}</div>
   <div class="source-card-desc" data-i18n="{_cd['desc_i18n']}">{_cd['desc']}</div>
 </div>""", unsafe_allow_html=True)
-            if st.button(
-                t("card_active", _ui_lang) if current_source == _src else t("card_select", _ui_lang),
-                key=f"btn_{_src}",
-                use_container_width=True,
-                type="primary" if current_source == _src else "secondary",
-            ):
-                if current_source != _src:
-                    if len(st.session_state.get("messages", [])) > 1:
-                        _confirm_switch(_src)
-                    else:
-                        st.session_state.knowledge_source = _src
-                        st.session_state.messages = [
-                            {"role": "assistant", "content": _welcome(_cd["welcome"]), "is_welcome": True}
-                        ]
-                        st.rerun()
+                if st.button(
+                    t("card_active", _ui_lang) if current_source == _src else t("card_select", _ui_lang),
+                    key=f"btn_{_src}",
+                    use_container_width=True,
+                    type="primary" if current_source == _src else "secondary",
+                ):
+                    if current_source != _src:
+                        if len(st.session_state.get("messages", [])) > 1:
+                            _confirm_switch(_src)
+                        else:
+                            st.session_state.knowledge_source = _src
+                            st.session_state.messages = [
+                                {"role": "assistant", "content": _welcome(_cd["welcome"]), "is_welcome": True}
+                            ]
+                            st.rerun()
 
 # ── Directories — create for all enabled sources ──────────────────────────────
 for _src_key in _enabled_sources:
@@ -308,6 +307,11 @@ def load_engine(_api_key: str, source: str) -> RagEngine | None:
         logger.exception("Engine init failed for: %s", source)
         return None
 
+
+# Warm up all enabled sources at page load so indexes are built before
+# the first query — also ensures the debug tab shows correct index status.
+for _src_key in _enabled_sources:
+    load_engine(api_key, _src_key)
 
 engine: RagEngine | None = None
 

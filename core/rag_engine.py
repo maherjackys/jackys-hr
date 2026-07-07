@@ -95,7 +95,6 @@ def _load_docs(docs_dir: Path, chunk_size: int = 1200, chunk_overlap: int = 200)
             chunks = splitter.split_documents(pages)
             for c in chunks:
                 if c.page_content.strip():
-                    c.page_content = "passage: " + c.page_content
                     docs.append(c)
         except Exception:
             logger.exception("Failed to load document: %s", f.name)
@@ -281,6 +280,7 @@ class RagEngine:
         self._llm          = None
         self._fallback_llm = None
         self._is_ready     = False
+        self._build_error: str = ""
         self._last_source_docs: list[str] = []
         self._last_best_score: float = float("inf")
 
@@ -305,8 +305,13 @@ class RagEngine:
         """Best (lowest) L2 score from the most recent retrieval. inf = no retrieval."""
         return getattr(self, "_last_best_score", float("inf"))
 
+    @property
+    def build_error(self) -> str:
+        """Non-empty string if _build_index() failed — empty string on success."""
+        return getattr(self, "_build_error", "")
+
     # ── Index building ────────────────────────────────────────────────────────
-    _INDEX_VERSION = 4  # v4: switched to FastEmbedEmbeddings (ONNX, no PyTorch)
+    _INDEX_VERSION = 5  # v5: switched to multilingual-MiniLM (intfloat/e5-small unsupported in fastembed ≥0.4)
 
     def _build_index(self) -> None:
         try:
@@ -402,8 +407,9 @@ class RagEngine:
                 self._source, len(docs), pdf_count, self._INDEX_VERSION,
             )
 
-        except Exception:
-            logger.exception("[%s] Index build failed — engine not ready.", self._source)
+        except Exception as _exc:
+            self._build_error = f"{type(_exc).__name__}: {_exc}"
+            logger.exception("[%s] Index build failed — engine not ready. Error: %s", self._source, self._build_error)
 
     # ── LLM init ─────────────────────────────────────────────────────────────
     def _init_llm(self) -> None:
@@ -442,10 +448,8 @@ class RagEngine:
 
     def _retrieve(self, query: str) -> tuple[str, list[str], str] | None:
         """Return (context, source_docs, source_label) or None if no relevant results."""
-        # e5 models require "query: " prefix at search time for proper similarity
-        prefixed_query = "query: " + query
         results = self._index.similarity_search_with_score(
-            prefixed_query, k=self._settings.retrieval_k
+            query, k=self._settings.retrieval_k
         )
         relevant = [
             (doc, score) for doc, score in results

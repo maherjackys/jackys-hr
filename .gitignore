@@ -1,8 +1,6 @@
 .streamlit/secrets.toml
 .streamlit/Secrets.toml
 chroma_db_default/
-faiss_db/
-dubai_faiss_db/
 .fastembed_cache/
 __pycache__/
 *.pyc

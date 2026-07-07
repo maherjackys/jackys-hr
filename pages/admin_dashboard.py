@@ -1455,7 +1455,24 @@ if _sel_nav == "debug":
                     results.append(("Enabled sources", "✅", str(_srcs)))
                     for _src in _srcs:
                         _em, _det = _index_status(_s3.db_dir_for(_src), _s3.docs_dir_for(_src))
-                        results.append((f"Index: {_src}", _em, _det))
+                        results.append((f"Index file: {_src}", _em, _det))
+                    # Engine live status (is_ready + build_error from cached engine)
+                    try:
+                        from app_main import load_engine as _le
+                        _api = _get_secret("GROQ_API_KEY") or ""
+                        for _src in _srcs:
+                            _eng = _le(_api, _src) if _api else None
+                            if _eng is None:
+                                results.append((f"Engine: {_src}", "❌", "not initialized (no API key or init failure)"))
+                            elif not _eng.is_ready:
+                                _berr = getattr(_eng, "build_error", "") or "unknown"
+                                results.append((f"Engine: {_src}", "❌", f"is_ready=False — {_berr}"))
+                            elif _eng._index is None:
+                                results.append((f"Engine: {_src}", "⚠️", "is_ready=True, index=None (general-knowledge mode — no docs)"))
+                            else:
+                                results.append((f"Engine: {_src}", "✅", f"is_ready=True, index loaded"))
+                    except Exception as _eexc:
+                        results.append(("Engine status", "⚠️", f"could not inspect: {_eexc}"))
                 except Exception as exc:
                     results.append(("Config / sources", "❌", str(exc)))
 
