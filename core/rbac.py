@@ -68,8 +68,9 @@ _PERMISSION_CATALOG: list[dict[str, Any]] = [
 ]
 
 
-# ── Fallback permissions per role (pre-migration or DB down) ──────────────────
-_FALLBACK: dict[str, frozenset[str]] = {
+# ── Default permissions per role (canonical source of truth) ─────────────────
+# Used both as the DB fallback and as the target for "Reset to Default".
+DEFAULT_ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
     "super_admin": frozenset(_ALL_PERM_KEYS),
     "admin":       frozenset(_ALL_PERM_KEYS - {"roles.edit"}),
     "moderator":   frozenset({
@@ -80,6 +81,9 @@ _FALLBACK: dict[str, frozenset[str]] = {
     }),
     "user":        frozenset({"dashboard.view"}),
 }
+
+# Keep the old name as an alias so nothing else breaks
+_FALLBACK = DEFAULT_ROLE_PERMISSIONS
 
 _FALLBACK_ROLES: list[dict] = [
     {"name": "super_admin", "label": "Super Admin", "level": 4, "is_system": True},

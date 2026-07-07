@@ -1170,6 +1170,7 @@ if _sel_nav == "roles":
         else:
             from core.rbac import (
                 _ALL_PERM_KEYS,
+                DEFAULT_ROLE_PERMISSIONS as _DEFAULT_PERMS,
                 get_all_permissions as _get_all_perms,
                 get_roles as _get_roles,
                 set_role_permissions as _set_role_perms,
@@ -1259,6 +1260,50 @@ if _sel_nav == "roles":
 
             if not _can_edit and not _is_sa:
                 st.info("You have view-only access to role permissions.")
+
+            # ── Reset to Default ──────────────────────────────────────────────
+            if _can_edit and not _is_sa:
+                st.divider()
+                _def_perms = _DEFAULT_PERMS.get(_sel_role)
+                if _def_perms is not None:
+                    _def_count = len(_def_perms)
+                    with st.form(f"reset_perms_form_{_sel_role}", clear_on_submit=True):
+                        st.warning(
+                            f"**Reset `{_role_labels.get(_sel_role, _sel_role)}` to default?**  \n"
+                            f"This will overwrite any custom permissions and restore the "
+                            f"built-in defaults ({_def_count} permissions)."
+                        )
+                        _confirm_reset = st.checkbox(
+                            "Yes, overwrite current permissions with defaults",
+                            key=f"confirm_reset_{_sel_role}",
+                        )
+                        _reset_btn = st.form_submit_button(
+                            "🔄 Reset to Default",
+                            disabled=not _confirm_reset,
+                        )
+
+                    if _reset_btn and _confirm_reset:
+                        with st.spinner("Resetting permissions…"):
+                            _rerr = _set_role_perms(
+                                _sel_role, list(_def_perms), _actor_role
+                            )
+                        if _rerr:
+                            st.error(f"Reset failed: {_rerr}")
+                        else:
+                            from core.db_logger import log_admin_action as _log_rst
+                            _log_rst(
+                                "reset_role_permissions",
+                                _sel_role,
+                                f"restored {_def_count} default permissions",
+                            )
+                            _grp.clear()
+                            if _sel_role == _actor_role:
+                                st.session_state.user_permissions = frozenset(_def_perms)
+                            st.success(
+                                f"✅ Permissions for **{_role_labels.get(_sel_role, _sel_role)}** "
+                                f"reset to defaults ({_def_count} permissions)."
+                            )
+                            st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
