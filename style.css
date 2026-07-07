@@ -1106,7 +1106,7 @@ header[data-testid="stHeader"] {
   .hr-header-icon         { font-size: 2rem; }
   .main-title             { font-size: 1.35rem !important; }
   .sub-title              { font-size: 0.8rem !important; }
-  .hr-stats-bar           { flex-direction: column; gap: 0.5rem; padding: 0.65rem 0.75rem; }
+  .hr-stats-bar           { grid-template-columns: 1fr; gap: 0.5rem; padding: 0.65rem 0.75rem; }
   .hr-stat-divider        { width: 60%; height: 1px; margin: 0; }
   .source-card            { padding: 0.85rem 0.9rem; }
   .source-card-title      { font-size: 0.9rem; }
