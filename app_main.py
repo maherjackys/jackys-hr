@@ -441,12 +441,13 @@ def _render_suggestions(sugg_list: list, key_prefix: str) -> None:
     for row_idx, row in enumerate([row1, row2]):
         if not row:
             continue
-        cols = st.columns(3)
-        for col_idx, q in enumerate(row):
-            with cols[col_idx]:
-                if st.button(q, key=f"{key_prefix}_{row_idx}_{col_idx}", use_container_width=True):
-                    st.session_state.suggested_query = q
-                    st.rerun()
+        with st.container(key=f"sugg_row_{key_prefix}_{row_idx}"):
+            cols = st.columns(3)
+            for col_idx, q in enumerate(row):
+                with cols[col_idx]:
+                    if st.button(q, key=f"{key_prefix}_{row_idx}_{col_idx}", use_container_width=True):
+                        st.session_state.suggested_query = q
+                        st.rerun()
 
 if not has_history:
     st.markdown(f'<p class="suggestions-label">{t("try_asking", _ui_lang)}</p>', unsafe_allow_html=True)

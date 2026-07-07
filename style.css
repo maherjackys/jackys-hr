@@ -1120,22 +1120,19 @@ header[data-testid="stHeader"] {
     font-size: 0.78rem !important;
   }
 
-  /* Suggestion pills — stack vertically on very small screens */
-  [data-testid="stHorizontalBlock"] {
+  /* Suggestion pill rows — stack vertically on very small screens.
+     Scoped to .st-key-sugg_row_* containers so other st.columns() layouts
+     (ctrl_bar, confirm dialogs, source cards) are not affected. */
+  [class*="st-key-sugg_row_"] [data-testid="stHorizontalBlock"] {
     flex-direction: column !important;
     gap: 0.4rem !important;
   }
-  [data-testid="stHorizontalBlock"] [data-testid="stBaseButton-secondary"] {
+  [class*="st-key-sugg_row_"] [data-testid="stBaseButton-secondary"] {
     font-size: 0.72rem !important;
     padding: 8px 10px !important;
   }
 
-  /* ── Control bar exception ─────────────────────────────────────────────────
-     The rule above stacks EVERY stHorizontalBlock including the ctrl_bar
-     st.columns(2) row. That collapses theme + lang buttons vertically and
-     causes the touch hitbox to be displaced — button renders but taps miss it.
-     Force the ctrl_bar row back to horizontal so both buttons stay side-by-side
-     and their hitboxes match their visual positions on all mobile viewports.    */
+  /* Ctrl bar stays horizontal — touch hitboxes must match visual positions */
   .st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
     flex-direction: row !important;
     gap: 0.45rem !important;
@@ -1149,7 +1146,6 @@ header[data-testid="stHeader"] {
     min-width: 0 !important;
     padding: 0 !important;
   }
-  /* Ensure the buttons themselves have adequate touch targets */
   .st-key-btn_theme button,
   .st-key-btn_lang  button {
     min-width: 3rem !important;
