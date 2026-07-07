@@ -1141,6 +1141,7 @@ if "roles" in _TABS:
             _show_403("roles.view")
         else:
             from core.rbac import (
+                _ALL_PERM_KEYS,
                 get_all_permissions as _get_all_perms,
                 get_roles as _get_roles,
                 set_role_permissions as _set_role_perms,
