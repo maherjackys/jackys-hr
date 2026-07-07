@@ -141,6 +141,18 @@ if _cookie_token and not st.session_state.get("admin_authed"):
     else:
         _delete_session_cookie()
 
+# Backfill permissions for sessions that predate the RBAC rollout.
+# Without this, any active session from before migration 003 would have
+# user_permissions absent → _hp() always False → all tabs hidden.
+if st.session_state.get("admin_authed") and "user_permissions" not in st.session_state:
+    from core.auth import get_user_role as _gur_bf
+    from core.rbac import load_session_permissions as _lsp_bf
+    _bf_role = st.session_state.get("admin_role") or _gur_bf(
+        st.session_state.get("admin_username", "admin")
+    )
+    st.session_state.admin_role        = _bf_role
+    st.session_state.user_permissions  = _lsp_bf(_bf_role)
+
 
 # ── Auth gate — login / forgot-password ────────────────────────────────────────
 
