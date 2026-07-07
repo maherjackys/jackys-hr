@@ -247,18 +247,23 @@ if not st.session_state.get("admin_authed"):
 from core.rbac import has_permission as _hp  # noqa: E402
 
 _TABS_DEF = [
-    ("🏠 Overview",     "overview",  "dashboard.view"),
-    ("📊 Analytics",    "analytics", "dashboard.analytics"),
-    ("📋 Logs",         "logs",      "dashboard.logs"),
-    ("🔍 Audit Trail",  "audit",     "audit.view"),
-    ("🛡️ Security",    "security",  "security.view"),
-    ("📁 Documents",    "docs",      "documents.view"),
-    ("🗄️ Sources",     "add",       "sources.view"),
-    ("⚙️ Settings",    "settings",  "settings.view"),
-    ("👥 Users",        "users",     "users.view"),
-    ("🔐 Roles",        "roles",     "roles.view"),
-    ("🔑 Account",      "account",   None),
-    ("🐛 Debug",        "debug",     "dashboard.debug"),
+    ("🏠 Overview",        "overview",     "dashboard.view"),
+    ("📊 Analytics",       "analytics",    "dashboard.analytics"),
+    ("📋 Logs",            "logs",         "dashboard.logs"),
+    ("🔍 Audit Trail",     "audit",        "audit.view"),
+    ("🛡️ Security",       "security",     "security.view"),
+    ("📁 Documents",       "docs",         "documents.view"),
+    ("🗄️ Sources",        "add",          "sources.view"),
+    ("⚙️ Settings",       "settings",     "settings.view"),
+    ("👥 Users",           "users",        "users.view"),
+    ("🔐 Roles",           "roles",        "roles.view"),
+    ("🚩 Feature Flags",   "features",     "features.view"),
+    ("💻 System Health",   "syshealth",    "system.health"),
+    ("📧 Email Templates", "emailtmpls",   "templates.view"),
+    ("🔑 API Keys",        "apikeys",      "api_keys.view"),
+    ("🔔 Notifications",   "notifications","notifications.view"),
+    ("🔑 Account",         "account",      None),
+    ("🐛 Debug",           "debug",        "dashboard.debug"),
 ]
 
 _vis_defs   = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
@@ -274,6 +279,18 @@ with st.sidebar:
         f"Signed in as **{_logged_user}**  \n"
         f"{_ROLE_BADGE.get(_logged_role, '⚪')} `{_logged_role}`"
     )
+    # Notification badge
+    try:
+        from core.notifications import get_unread_count as _get_unread
+        _unread_n = _get_unread()
+        if _unread_n > 0:
+            st.markdown(
+                f'<span class="adm-badge adm-badge-red" style="margin:.2rem 0;display:inline-block">'
+                f'🔔 {_unread_n} unread notification{"s" if _unread_n != 1 else ""}</span>',
+                unsafe_allow_html=True,
+            )
+    except Exception:
+        pass
     st.divider()
     if _nav_labels:
         _prev        = st.session_state.get("admin_nav_key", _nav_keys[0])
@@ -1118,6 +1135,109 @@ if _sel_nav == "users":
                                 st.success(
                                     f"User **{_cu_uname}** created with role `{_cu_role}`."
                                 )
+                                st.rerun()
+
+            st.divider()
+
+            # ── Bulk Actions ──────────────────────────────────────────────────
+            _can_bulk = _hp("users.disable") or _hp("users.delete") or _hp("users.assign_roles")
+            if _can_bulk:
+                with st.expander("☑️ Bulk User Actions"):
+                    st.caption("Select users then choose an action to apply to all selected.")
+                    _bulk_all_users = [
+                        u for u in _all_users
+                        if u["username"] != _cur_user
+                        and _can_manage(_cur_role, u.get("role", "user"))
+                    ]
+                    _bulk_unames = [u["username"] for u in _bulk_all_users]
+                    _bulk_sel = st.multiselect(
+                        "Select users", options=_bulk_unames,
+                        key="um_bulk_sel", placeholder="Choose users…",
+                    )
+                    _bulk_action = st.selectbox(
+                        "Action",
+                        options=["— choose —", "Enable", "Disable", "Force Logout", "Delete", "Assign Role"],
+                        key="um_bulk_action",
+                        label_visibility="collapsed",
+                    )
+                    _bulk_role_target = None
+                    if _bulk_action == "Assign Role" and _hp("users.assign_roles"):
+                        _bulk_role_opts = (
+                            list(_VALID_ROLES) if _cur_role == "super_admin"
+                            else [r for r in _VALID_ROLES if r not in ("super_admin", "admin")]
+                        )
+                        _bulk_role_target = st.selectbox("Target role", _bulk_role_opts, key="um_bulk_role")
+
+                    _bulk_submit = st.button(
+                        "▶ Apply to Selected", type="primary", key="um_bulk_apply",
+                        disabled=(not _bulk_sel or _bulk_action == "— choose —"),
+                    )
+
+                    if _bulk_submit and _bulk_sel and _bulk_action != "— choose —":
+                        st.session_state["um_bulk_confirm"] = {
+                            "users": _bulk_sel, "action": _bulk_action,
+                            "role": _bulk_role_target,
+                        }
+
+                    if st.session_state.get("um_bulk_confirm"):
+                        _bcp = st.session_state["um_bulk_confirm"]
+                        _bc_n = len(_bcp["users"])
+                        st.warning(
+                            f"Apply **{_bcp['action']}** to **{_bc_n}** user(s)?  \n"
+                            + ("Target role: `" + str(_bcp["role"]) + "`  \n" if _bcp["role"] else "")
+                            + "This action will be audit logged."
+                        )
+                        _bcy, _bcn = st.columns(2)
+                        with _bcy:
+                            if st.button("Yes, apply", key="um_bulk_yes", type="primary"):
+                                _bulk_errors = []
+                                for _bun in _bcp["users"]:
+                                    try:
+                                        _ba = _bcp["action"]
+                                        if _ba == "Enable":
+                                            if _hp("users.enable"):
+                                                _err = _update_admin_user(_bun, is_active=True)
+                                                if not _err:
+                                                    _log_um("enable_user", _bun, actor=_actor())
+                                        elif _ba == "Disable":
+                                            if _hp("users.disable"):
+                                                _err = _update_admin_user(_bun, is_active=False)
+                                                _force_logout_user(_bun)
+                                                if not _err:
+                                                    _log_um("disable_user", _bun, actor=_actor())
+                                        elif _ba == "Force Logout":
+                                            if _hp("users.force_logout"):
+                                                _force_logout_user(_bun)
+                                                _log_um("force_logout_user", _bun, actor=_actor())
+                                                _err = None
+                                        elif _ba == "Delete":
+                                            if _hp("users.delete"):
+                                                _err = _delete_admin_user(_bun)
+                                                if not _err:
+                                                    _log_um("delete_user", _bun, actor=_actor())
+                                        elif _ba == "Assign Role":
+                                            if _hp("users.assign_roles") and _bcp["role"]:
+                                                _err = _update_admin_user(_bun, role=_bcp["role"])
+                                                if not _err:
+                                                    _log_um("assign_role", _bun,
+                                                            _bcp["role"], actor=_actor())
+                                        else:
+                                            _err = None
+                                        if _err:
+                                            _bulk_errors.append(f"{_bun}: {_err}")
+                                    except Exception as _be:
+                                        _bulk_errors.append(f"{_bun}: {_be}")
+                                if _bulk_errors:
+                                    st.error("Some actions failed:\n" + "\n".join(_bulk_errors))
+                                else:
+                                    st.success(
+                                        f"**{_bcp['action']}** applied to {len(_bcp['users'])} user(s)."
+                                    )
+                                st.session_state.pop("um_bulk_confirm", None)
+                                st.rerun()
+                        with _bcn:
+                            if st.button("Cancel", key="um_bulk_no"):
+                                st.session_state.pop("um_bulk_confirm", None)
                                 st.rerun()
 
             st.divider()
@@ -2306,3 +2426,43 @@ if _sel_nav == "security":
                     st.info(f"Lockout data unavailable: {_exc_lk}")
             else:
                 st.info("Lockout monitoring requires Admin or Super Admin role.")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Feature Flags
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "features":
+    from admin_tabs.feature_flags import render_feature_flags_tab
+    render_feature_flags_tab()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: System Health
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "syshealth":
+    from admin_tabs.system_health import render_system_health_tab
+    render_system_health_tab()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Email Templates
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "emailtmpls":
+    from admin_tabs.email_templates import render_email_templates_tab
+    render_email_templates_tab()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: API Keys
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "apikeys":
+    from admin_tabs.api_keys import render_api_keys_tab
+    render_api_keys_tab()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAB: Notifications
+# ─────────────────────────────────────────────────────────────────────────────
+if _sel_nav == "notifications":
+    from admin_tabs.notifications import render_notifications_tab
+    render_notifications_tab()

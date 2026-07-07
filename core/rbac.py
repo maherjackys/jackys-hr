@@ -37,6 +37,11 @@ _ALL_PERM_KEYS: frozenset[str] = frozenset({
     "dashboard.analytics", "audit.view", "security.view",
     "settings.view", "settings.edit",
     "roles.view", "roles.edit",
+    "features.view", "features.edit",
+    "api_keys.view", "api_keys.manage",
+    "templates.view", "templates.edit",
+    "system.health",
+    "notifications.view",
 })
 
 
@@ -69,6 +74,14 @@ _PERMISSION_CATALOG: list[dict[str, Any]] = [
     {"key": "settings.edit",        "category": "Settings",           "label": "Edit Settings",    "sort_order": 20},
     {"key": "roles.view",           "category": "Roles",              "label": "View Roles",       "sort_order": 10},
     {"key": "roles.edit",           "category": "Roles",              "label": "Edit Permissions", "sort_order": 20},
+    {"key": "features.view",        "category": "Feature Flags",      "label": "View Flags",       "sort_order": 10},
+    {"key": "features.edit",        "category": "Feature Flags",      "label": "Edit Flags",       "sort_order": 20},
+    {"key": "api_keys.view",        "category": "API Keys",           "label": "View API Keys",    "sort_order": 10},
+    {"key": "api_keys.manage",      "category": "API Keys",           "label": "Manage API Keys",  "sort_order": 20},
+    {"key": "templates.view",       "category": "Email Templates",    "label": "View Templates",   "sort_order": 10},
+    {"key": "templates.edit",       "category": "Email Templates",    "label": "Edit Templates",   "sort_order": 20},
+    {"key": "system.health",        "category": "System",             "label": "View System Health","sort_order": 10},
+    {"key": "notifications.view",   "category": "System",             "label": "View Notifications","sort_order": 20},
 ]
 
 
@@ -82,6 +95,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
         "documents.view", "documents.create", "documents.delete", "documents.rebuild",
         "sources.view",
         "dashboard.view", "dashboard.logs", "dashboard.analytics", "audit.view",
+        "features.view", "templates.view", "api_keys.view",
+        "system.health", "notifications.view",
     }),
     "user":        frozenset({"dashboard.view"}),
 }
