@@ -106,10 +106,13 @@ def validate_new_password(password: str, confirm: str) -> str | None:
 
 # ── Session management ────────────────────────────────────────────────────────
 
-def create_session(username: str) -> str:
-    """Insert a session row in admin_sessions, return the 64-hex token."""
-    token    = secrets.token_hex(32)   # 256-bit
-    expires  = (datetime.now(timezone.utc) + timedelta(hours=_SESSION_TTL_HOURS)).isoformat()
+def create_session(username: str, ttl_hours: int = _SESSION_TTL_HOURS) -> str:
+    """Insert a session row in admin_sessions, return the 64-hex token.
+
+    Pass ttl_hours=720 (30 days) when the user ticks "Remember me".
+    """
+    token   = secrets.token_hex(32)   # 256-bit
+    expires = (datetime.now(timezone.utc) + timedelta(hours=ttl_hours)).isoformat()
     try:
         c = _db()
         if c:

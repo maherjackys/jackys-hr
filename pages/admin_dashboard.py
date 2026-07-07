@@ -45,8 +45,9 @@ except Exception:
     _cookie_writer = None
     _COOKIES_AVAILABLE = False
 
-_SESSION_COOKIE   = "admin_session"
-_SESSION_TTL_DAYS = 1
+_SESSION_COOKIE        = "admin_session"
+_SESSION_TTL_DAYS      = 1   # default (no remember me)
+_SESSION_TTL_DAYS_LONG = 30  # remember me
 
 # ── RBAC level map (mirrors core.auth) ────────────────────────────────────────
 _RLEVEL = {"super_admin": 4, "admin": 3, "moderator": 2, "user": 1}
@@ -61,11 +62,12 @@ def _read_session_cookie() -> str:
         return ""
 
 
-def _write_session_cookie(token: str) -> None:
+def _write_session_cookie(token: str, remember: bool = False) -> None:
     if _cookie_writer is None:
         return
     try:
-        expires = datetime.datetime.now() + datetime.timedelta(days=_SESSION_TTL_DAYS)
+        days    = _SESSION_TTL_DAYS_LONG if remember else _SESSION_TTL_DAYS
+        expires = datetime.datetime.now() + datetime.timedelta(days=days)
         _cookie_writer.set(_SESSION_COOKIE, token, expires_at=expires)
     except Exception as exc:
         st.warning(f"Could not persist session cookie: {exc}", icon="⚠️")
@@ -149,8 +151,10 @@ def _show_login() -> None:
 
     if mode == "Sign in":
         with st.form("login_form", clear_on_submit=False):
-            uname = st.text_input("Username", value="admin", key="login_uname")
-            pwd   = st.text_input("Password", type="password", key="login_pwd")
+            uname     = st.text_input("Username", value="admin", key="login_uname")
+            pwd       = st.text_input("Password", type="password", key="login_pwd")
+            remember  = st.checkbox("Remember me for 30 days", value=True,
+                                    key="login_remember")
             submitted = st.form_submit_button("Login", type="primary",
                                               use_container_width=True)
 
@@ -160,12 +164,13 @@ def _show_login() -> None:
             else:
                 ok, err = check_login(pwd, uname)
                 if ok:
-                    token = create_session(uname)
+                    ttl   = 30 * 24 if remember else 24   # hours
+                    token = create_session(uname, ttl_hours=ttl)
                     st.session_state.admin_authed        = True
                     st.session_state.admin_username      = uname
                     st.session_state.admin_session_token = token
                     st.session_state.admin_role          = get_user_role(uname)
-                    _write_session_cookie(token)
+                    _write_session_cookie(token, remember=remember)
                     st.rerun()
                 else:
                     st.error(err)
