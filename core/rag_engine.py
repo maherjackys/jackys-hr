@@ -321,10 +321,15 @@ class RagEngine:
             index_file    = self._db_dir / "index.faiss"
             count_file    = self._db_dir / "pdf_count.txt"
             version_file  = self._db_dir / "index_version.txt"
-            pdf_files     = list(self._docs_dir.glob("*.pdf"))
-            pdf_count     = len(pdf_files)
 
-            # Version check — old indexes lack page-number metadata
+            # Count ALL supported document types (not just PDFs)
+            doc_files = [
+                f for f in self._docs_dir.iterdir()
+                if f.is_file() and f.suffix.lower() in _SUPPORTED_EXTS
+            ] if self._docs_dir.exists() else []
+            doc_count = len(doc_files)
+
+            # Version check — bump _INDEX_VERSION to force a rebuild after model changes
             saved_version = 0
             if version_file.exists():
                 try:
@@ -334,17 +339,17 @@ class RagEngine:
             version_outdated = saved_version < self._INDEX_VERSION
 
             if index_file.exists() and not version_outdated:
-                if pdf_count == 0:
+                if doc_count == 0:
                     try:
                         self._index = FAISS.load_local(
                             str(self._db_dir), embeddings,
                             allow_dangerous_deserialization=True,
                         )
                         self._is_ready = True
-                        logger.info("[%s] FAISS index loaded (no PDFs present).", self._source)
+                        logger.info("[%s] FAISS index loaded (no documents present).", self._source)
                         return
                     except Exception:
-                        logger.warning("[%s] Corrupt index, no PDFs — general-knowledge mode.", self._source)
+                        logger.warning("[%s] Corrupt index, no docs — general-knowledge mode.", self._source)
                         self._is_ready = True
                         self._index = None
                         return
@@ -356,11 +361,11 @@ class RagEngine:
                     except Exception:
                         saved_count = 0
 
-                index_mtime = index_file.stat().st_mtime
-                latest_pdf  = max(pdf_files, key=lambda p: p.stat().st_mtime)
+                index_mtime  = index_file.stat().st_mtime
+                latest_doc   = max(doc_files, key=lambda p: p.stat().st_mtime)
                 needs_rebuild = (
-                    pdf_count != saved_count
-                    or latest_pdf.stat().st_mtime > index_mtime
+                    doc_count != saved_count
+                    or latest_doc.stat().st_mtime > index_mtime
                 )
 
                 if not needs_rebuild:
@@ -376,12 +381,12 @@ class RagEngine:
                         logger.warning("[%s] Failed to load saved index — rebuilding.", self._source)
                 else:
                     logger.info(
-                        "[%s] Rebuild triggered (PDF count %d→%d or newer PDF detected).",
-                        self._source, saved_count, pdf_count,
+                        "[%s] Rebuild triggered (doc count %d→%d or newer file detected).",
+                        self._source, saved_count, doc_count,
                     )
             elif version_outdated and index_file.exists():
                 logger.info(
-                    "[%s] Index version %d < %d — rebuilding to add page-number metadata.",
+                    "[%s] Index version %d < %d — rebuilding.",
                     self._source, saved_version, self._INDEX_VERSION,
                 )
 
@@ -391,7 +396,7 @@ class RagEngine:
                 self._settings.chunk_overlap,
             )
             if not docs:
-                logger.warning("[%s] No PDFs found — general-knowledge mode.", self._source)
+                logger.warning("[%s] No documents found — general-knowledge mode.", self._source)
                 self._is_ready = True
                 self._index = None
                 return
@@ -399,12 +404,12 @@ class RagEngine:
             self._index = FAISS.from_documents(docs, embeddings)
             self._db_dir.mkdir(parents=True, exist_ok=True)
             self._index.save_local(str(self._db_dir))
-            count_file.write_text(str(pdf_count))
+            count_file.write_text(str(doc_count))
             version_file.write_text(str(self._INDEX_VERSION))
             self._is_ready = True
             logger.info(
-                "[%s] FAISS index built and saved (%d chunks, %d PDFs, v%d).",
-                self._source, len(docs), pdf_count, self._INDEX_VERSION,
+                "[%s] FAISS index built and saved (%d chunks, %d docs, v%d).",
+                self._source, len(docs), doc_count, self._INDEX_VERSION,
             )
 
         except Exception as _exc:
@@ -576,4 +581,4 @@ class RagEngine:
                 _wait_str = f" ({_wait.group(1)})" if _wait else ""
                 yield t("rate_limit_error", lang).replace("{wait}", _wait_str)
             else:
-                yield t("system_error", lang) + f"\n\n`{type(_exc).__name__}: {_exc}`"
+                yield t("system_error", lang)

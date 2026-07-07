@@ -1,10 +1,31 @@
+# Secrets
 .streamlit/secrets.toml
 .streamlit/Secrets.toml
+.env
+*.env
+
+# Generated databases (committed pre-built indexes are intentional)
 chroma_db_default/
 .fastembed_cache/
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+
+# Documents — policy PDFs may be confidential; exclude from git
+hr_documents/*.pdf
+hr_documents/*.docx
+dubai_hr_documents/*.pdf
+dubai_hr_documents/*.docx
+*_documents/*.pdf
+*_documents/*.docx
+
+# Local logs — contain user query data
+logs/
+
+# OS
 New folder/
 Thumbs.db
 .DS_Store

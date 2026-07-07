@@ -10,7 +10,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING  # noqa: F401  (kept for any runtime type checks)
 
 import streamlit as st
 
@@ -90,8 +89,14 @@ class Settings:
         return BASE_DIR / f"{source}_faiss_db"
 
 
+_settings: Settings | None = None
+
+
 def get_settings() -> Settings:
-    return Settings()
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
 
 
 def get_groq_api_key() -> str:

@@ -38,12 +38,19 @@ from __future__ import annotations
 import logging
 import os
 import secrets
+import time
 from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
-_SESSION_TTL_HOURS = 24
-_MIN_PASSWORD_LEN  = 8
+_SESSION_TTL_HOURS   = 24
+_MIN_PASSWORD_LEN    = 8
+_MAX_LOGIN_ATTEMPTS  = 5    # lockout after this many failures per window
+_LOCKOUT_WINDOW_SECS = 300  # 5-minute sliding window
+_LOCKOUT_SECS        = 900  # 15-minute lockout
+
+# In-process store: username → list of failure timestamps
+_login_failures: dict[str, list[float]] = {}
 
 VALID_ROLES = ("super_admin", "admin", "moderator", "user")
 _ROLE_LEVEL = {"super_admin": 4, "admin": 3, "moderator": 2, "user": 1}
@@ -195,16 +202,18 @@ def get_admin_user(username: str = "admin") -> dict | None:
 
 
 def get_user_role(username: str) -> str:
-    """Return the role for *username*.
+    """Return the role for *username* from the DB.
 
-    Defaults to 'super_admin' for the bootstrap 'admin' account so the system
-    remains fully accessible before migration 001 has been run.
+    Falls back to 'user' (least-privilege) when the DB is unavailable,
+    preventing a Supabase outage from silently granting elevated roles.
+    The bootstrap 'admin' account keeps super_admin only when the DB is
+    reachable and that role is stored there.
     """
-    _default = "super_admin" if username == "admin" else "admin"
     try:
         c = _db()
         if c is None:
-            return _default
+            logger.warning("auth.get_user_role: DB unavailable — defaulting to 'user' for %s", username)
+            return "user"
         resp = (
             c.table("admin_users")
             .select("role")
@@ -213,10 +222,12 @@ def get_user_role(username: str) -> str:
             .execute()
         )
         if resp.data:
-            return resp.data[0].get("role") or _default
+            role = resp.data[0].get("role")
+            if role in VALID_ROLES:
+                return role
     except Exception as exc:
         logger.warning("auth.get_user_role error: %s", exc)
-    return _default
+    return "user"
 
 
 def get_all_users() -> list[dict]:
@@ -287,7 +298,7 @@ def create_admin_user(
         return None
     except Exception as exc:
         logger.warning("auth.create_admin_user error: %s", exc)
-        return f"{type(exc).__name__}: {exc}"
+        return "Failed to create user. Check server logs for details."
 
 
 def update_admin_user(username: str, **fields) -> str | None:
@@ -318,7 +329,7 @@ def update_admin_user(username: str, **fields) -> str | None:
         return None
     except Exception as exc:
         logger.warning("auth.update_admin_user error: %s", exc)
-        return f"{type(exc).__name__}: {exc}"
+        return "Failed to update user. Check server logs for details."
 
 
 def delete_admin_user(username: str) -> str | None:
@@ -332,7 +343,7 @@ def delete_admin_user(username: str) -> str | None:
         return None
     except Exception as exc:
         logger.warning("auth.delete_admin_user error: %s", exc)
-        return f"{type(exc).__name__}: {exc}"
+        return "Failed to delete user. Check server logs for details."
 
 
 def force_logout_user(username: str) -> str | None:
@@ -345,7 +356,7 @@ def force_logout_user(username: str) -> str | None:
         return None
     except Exception as exc:
         logger.warning("auth.force_logout_user error: %s", exc)
-        return f"{type(exc).__name__}: {exc}"
+        return "Failed to revoke sessions. Check server logs for details."
 
 
 def get_user_sessions(username: str) -> list[dict]:
@@ -411,7 +422,7 @@ def update_password(username: str, new_password: str) -> str | None:
         return None
     except Exception as exc:
         logger.warning("auth.update_password error: %s", exc)
-        return f"{type(exc).__name__}: {exc}"
+        return "Failed to update password. Check server logs for details."
 
 
 def _update_last_login(username: str) -> None:
@@ -426,6 +437,37 @@ def _update_last_login(username: str) -> None:
         pass
 
 
+# ── Login rate limiting ───────────────────────────────────────────────────────
+
+def _record_failure(username: str) -> None:
+    now = time.monotonic()
+    failures = _login_failures.get(username, [])
+    failures = [t for t in failures if now - t < _LOCKOUT_WINDOW_SECS]
+    failures.append(now)
+    _login_failures[username] = failures
+
+
+def _is_locked_out(username: str) -> tuple[bool, int]:
+    """Return (locked, seconds_remaining). Cleans up stale entries."""
+    now = time.monotonic()
+    failures = _login_failures.get(username, [])
+    # Keep only failures within the window
+    failures = [t for t in failures if now - t < _LOCKOUT_WINDOW_SECS]
+    _login_failures[username] = failures
+    if len(failures) >= _MAX_LOGIN_ATTEMPTS:
+        oldest = min(failures)
+        remaining = int(_LOCKOUT_SECS - (now - oldest))
+        if remaining > 0:
+            return True, remaining
+        # Lockout expired — clear and allow
+        _login_failures[username] = []
+    return False, 0
+
+
+def _clear_failures(username: str) -> None:
+    _login_failures.pop(username, None)
+
+
 # ── Login verification ────────────────────────────────────────────────────────
 
 def check_login(password: str, username: str = "admin") -> tuple[bool, str]:
@@ -437,15 +479,23 @@ def check_login(password: str, username: str = "admin") -> tuple[bool, str]:
 
     Also checks is_active and records last_login_at on success.
     """
+    # Check lockout before doing any work
+    locked, secs_left = _is_locked_out(username)
+    if locked:
+        mins = (secs_left + 59) // 60
+        return False, f"Too many failed attempts. Please try again in {mins} minute(s)."
+
     # 1. Try DB
     user = get_admin_user(username)
     if user:
         if user.get("is_active") is False:
             return False, "Account is disabled. Contact your administrator."
         if verify_password(password, user["password_hash"]):
+            _clear_failures(username)
             _update_last_login(username)
             return True, ""
-        return False, "Incorrect password."
+        _record_failure(username)
+        return False, "Incorrect username or password."
 
     # 2. Fallback: plain-text secret
     correct = _get_secret("ADMIN_PASSWORD")
@@ -454,10 +504,12 @@ def check_login(password: str, username: str = "admin") -> tuple[bool, str]:
 
     if secrets.compare_digest(password.encode("utf-8"), correct.encode("utf-8")):
         _auto_migrate(username, password)
+        _clear_failures(username)
         _update_last_login(username)
         return True, ""
 
-    return False, "Incorrect password."
+    _record_failure(username)
+    return False, "Incorrect username or password."
 
 
 def _auto_migrate(username: str, plain: str) -> None:

@@ -152,16 +152,16 @@ def log_unanswered(query: str, source: str) -> None:
             _supabase_insert({
                 "log_type":       "unanswered",
                 "source":         source,
-                "question":       query,
+                "query":          query,
                 "answer_preview": None,
-                "best_score":     None,
+                "score":          None,
                 "vote":           None,
             })
         else:
             _local_append(
                 Path(str(_LOCAL_UNANSWERED).format(source=source)),
                 {
-                    "ts":     datetime.datetime.utcnow().isoformat() + "Z",
+                    "ts":     datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     "query":  query,
                     "source": source,
                 },
@@ -185,20 +185,20 @@ def log_feedback(
             _supabase_insert({
                 "log_type":       "feedback",
                 "source":         source,
-                "question":       question,
+                "query":          question,
                 "answer_preview": answer_preview[:200] if answer_preview else None,
-                "best_score":     score,
+                "score":          score,
                 "vote":           vote,
             })
         else:
             _local_append(
                 _LOCAL_FEEDBACK,
                 {
-                    "ts":           datetime.datetime.utcnow().isoformat() + "Z",
+                    "ts":           datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     "source":       source,
-                    "question":     question,
+                    "query":        question,
                     "answer":       answer_preview[:200] if answer_preview else None,
-                    "best_score":   score,
+                    "score":        score,
                     "vote":         vote,
                 },
             )
@@ -215,16 +215,16 @@ def log_admin_action(action: str, source: str, filename: str = "") -> None:
             _supabase_insert({
                 "log_type":       "admin_action",
                 "source":         source,
-                "question":       detail[:500],
+                "query":          detail[:500],
                 "answer_preview": None,
-                "best_score":     None,
+                "score":          None,
                 "vote":           None,
             })
         else:
             _local_append(
                 _LOGS_DIR / "admin_actions.jsonl",
                 {
-                    "ts":      datetime.datetime.utcnow().isoformat() + "Z",
+                    "ts":      datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     "action":  detail,
                     "source":  source,
                 },

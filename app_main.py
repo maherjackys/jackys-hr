@@ -255,20 +255,24 @@ if len(_enabled_sources) > 1:
             "welcome": "welcome_company",
         }
 
+    import html as _html_mod
     with st.container(key="src_picker"):
         _card_cols = st.columns(len(_enabled_sources))
         for _col, _src in zip(_card_cols, _enabled_sources):
             _cd = _get_card_def(_src)
             _sel = "selected" if current_source == _src else ""
+            _aria_safe  = _html_mod.escape(_cd["aria"])
+            _title_safe = _html_mod.escape(_cd["title"])
+            _desc_safe  = _html_mod.escape(_cd["desc"])
             with _col:
                 st.markdown(f"""
-<div class="source-card {_cd['css_class']} {_sel}" data-cr="1" aria-label="{_cd['aria']}">
+<div class="source-card {_cd['css_class']} {_sel}" data-cr="1" aria-label="{_aria_safe}">
   <div class="source-card-header">
     <span class="source-card-icon">{_cd['icon']}</span>
     <div class="source-card-check">&#x2713;</div>
   </div>
-  <div class="source-card-title" data-i18n="{_cd['title_i18n']}">{_cd['title']}</div>
-  <div class="source-card-desc" data-i18n="{_cd['desc_i18n']}">{_cd['desc']}</div>
+  <div class="source-card-title" data-i18n="{_cd['title_i18n']}">{_title_safe}</div>
+  <div class="source-card-desc" data-i18n="{_cd['desc_i18n']}">{_desc_safe}</div>
 </div>""", unsafe_allow_html=True)
                 if st.button(
                     t("card_active", _ui_lang) if current_source == _src else t("card_select", _ui_lang),
@@ -355,17 +359,21 @@ def _unique_sources(raw: list[str]) -> list[str]:
 
 
 def _render_citations(srcs: list[str], score: float, lang: str, is_welcome: bool) -> None:
+    import html as _html
+    # FAISS L2: lower score = more similar = higher confidence.
+    # Show high-confidence citations (score ≤ threshold) as prominent inline badge.
+    # Show low-confidence citations in a collapsible expander to reduce noise.
     if srcs and score <= settings.min_score_to_show_source:
+        src_html = " · ".join(f"📄 {_html.escape(s)}" for s in srcs)
+        st.markdown(f'<div class="source-citation">{src_html}</div>', unsafe_allow_html=True)
+    elif srcs:
         with st.expander(t("source_label", lang)):
             for s in srcs:
-                st.markdown(f"- `{s}`")
-    elif srcs:
-        src_html = " · ".join(f"📄 {s}" for s in srcs)
-        st.markdown(f'<div class="source-citation">{src_html}</div>', unsafe_allow_html=True)
+                st.markdown(f"- `{_html.escape(s)}`")
     elif not is_welcome:
         st.markdown(
             f'<p style="font-size:0.75rem;color:var(--color-muted,#888);font-style:italic;margin:4px 0 0">'
-            f'{t("general_knowledge_note", lang)}</p>',
+            f'{_html.escape(t("general_knowledge_note", lang))}</p>',
             unsafe_allow_html=True,
         )
 
@@ -393,8 +401,6 @@ for _msg_idx, message in enumerate(st.session_state.messages):
                         best_score=message.get("best_score", float("inf")),
                     )
                     st.toast("شكراً لملاحظتك / Thanks for your feedback")
-
-st.session_state.pop("scroll_to_bottom", False)
 
 # ── Suggested questions ────────────────────────────────────────────────────────
 _SUGGESTIONS: dict[str, dict[str, list[str]]] = {

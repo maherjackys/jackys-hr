@@ -179,12 +179,36 @@ def t(key: str, lang: str) -> str:
     return bucket.get(lang, bucket.get(LANG_EN, key))
 
 
-GREETING_KEYWORDS = (
-    "مرحبا", "مرحباً", "هلا", "اهلين", "أهلاً", "السلام عليكم", "سلام", "صباح", "مساء",
-    "hi", "hello", "hey", "good morning", "good evening", "how are you",
+_GREETING_EXACT = frozenset({
+    "مرحبا", "مرحباً", "هلا", "اهلين", "أهلاً", "السلام عليكم", "سلام",
+    "hi", "hello", "hey",
+})
+
+_GREETING_PHRASES = (
+    "good morning", "good evening", "good afternoon", "how are you",
+    "صباح الخير", "مساء الخير",
 )
 
 
 def is_greeting(text: str) -> bool:
-    lowered = text.strip().lower()
-    return any(keyword in lowered for keyword in GREETING_KEYWORDS)
+    """Return True only when the entire message is a greeting.
+
+    Uses word-boundary matching for short English words ("hi", "hello") to
+    avoid false-positives on substrings like "history", "achieve", "vehicle".
+    Arabic greetings are matched as whole-message substrings (no embedding risk).
+    """
+    import re as _re
+    stripped = text.strip()
+    lowered  = stripped.lower()
+
+    # If the whole message is just a greeting word (after stripping punctuation)
+    clean = _re.sub(r"[^\w\s]", "", lowered).strip()
+    if clean in _GREETING_EXACT:
+        return True
+
+    # Multi-word greeting phrases — match as full message or clear prefix
+    for phrase in _GREETING_PHRASES:
+        if lowered == phrase or lowered.startswith(phrase + " ") or lowered.startswith(phrase + "،"):
+            return True
+
+    return False

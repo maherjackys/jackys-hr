@@ -842,14 +842,31 @@ if _sel_nav == "settings":
                     _idx_cols = st.columns(min(len(_srcs3), 3))
                     for _ci, _src3 in enumerate(_srcs3):
                         with _idx_cols[_ci % 3]:
-                            if st.button(f"🗑️ Clear {_src3}", key=f"clear_idx_{_src3}",
-                                         use_container_width=True):
-                                _d = _cfg3.db_dir_for(_src3)
-                                if _d.exists():
-                                    shutil.rmtree(_d)
-                                    st.success(f"{_src3} index cleared.")
-                                else:
-                                    st.info(f"No index for {_src3}.")
+                            _confirm_key = f"confirm_clear_{_src3}"
+                            if not st.session_state.get(_confirm_key):
+                                if st.button(f"🗑️ Clear {_src3}", key=f"clear_idx_{_src3}",
+                                             use_container_width=True):
+                                    st.session_state[_confirm_key] = True
+                                    st.rerun()
+                            else:
+                                st.warning(f"Delete the **{_src3}** FAISS index? This cannot be undone.")
+                                _col_y, _col_n = st.columns(2)
+                                with _col_y:
+                                    if st.button("Yes, delete", key=f"clear_idx_yes_{_src3}",
+                                                 type="primary", use_container_width=True):
+                                        _d = _cfg3.db_dir_for(_src3)
+                                        if _d.exists():
+                                            shutil.rmtree(_d)
+                                            st.success(f"{_src3} index cleared.")
+                                        else:
+                                            st.info(f"No index for {_src3}.")
+                                        st.session_state.pop(_confirm_key, None)
+                                        st.rerun()
+                                with _col_n:
+                                    if st.button("Cancel", key=f"clear_idx_no_{_src3}",
+                                                 use_container_width=True):
+                                        st.session_state.pop(_confirm_key, None)
+                                        st.rerun()
                 except Exception as exc:
                     st.error(f"Index management error: {exc}")
 
@@ -1406,7 +1423,7 @@ if _sel_nav == "debug":
                     results.append((
                         f"Secret: {sec_key}",
                         "✅" if val else "⚠️",
-                        f"{val[:6]}…" if val else "not set",
+                        "set" if val else "not set",
                     ))
 
                 try:
@@ -1456,23 +1473,28 @@ if _sel_nav == "debug":
                     for _src in _srcs:
                         _em, _det = _index_status(_s3.db_dir_for(_src), _s3.docs_dir_for(_src))
                         results.append((f"Index file: {_src}", _em, _det))
-                    # Engine live status (is_ready + build_error from cached engine)
+                    # Engine live status — inspect cached RAGEngine instances without
+                    # importing app_main (which would re-execute top-level Streamlit calls)
                     try:
-                        from app_main import load_engine as _le
+                        from core.rag_engine import RAGEngine as _RAGEng
                         _api = _get_secret("GROQ_API_KEY") or ""
-                        for _src in _srcs:
-                            _eng = _le(_api, _src) if _api else None
-                            if _eng is None:
-                                results.append((f"Engine: {_src}", "❌", "not initialized (no API key or init failure)"))
-                            elif not _eng.is_ready:
-                                _berr = getattr(_eng, "build_error", "") or "unknown"
-                                results.append((f"Engine: {_src}", "❌", f"is_ready=False — {_berr}"))
-                            elif _eng._index is None:
-                                results.append((f"Engine: {_src}", "⚠️", "is_ready=True, index=None (general-knowledge mode — no docs)"))
-                            else:
-                                results.append((f"Engine: {_src}", "✅", f"is_ready=True, index loaded"))
+                        if not _api:
+                            results.append(("Engine status", "⚠️", "no GROQ_API_KEY — engines not checked"))
+                        else:
+                            for _src in _srcs:
+                                # st.cache_resource stores under the function's hash key;
+                                # we can read the index file + version as a proxy.
+                                _idir = _s3.db_dir_for(_src)
+                                _ver_f = _idir / "index_version.txt"
+                                _idx_f = _idir / "index.faiss"
+                                if not _idx_f.exists():
+                                    results.append((f"Engine: {_src}", "⚠️", "no index on disk"))
+                                elif _ver_f.exists():
+                                    results.append((f"Engine: {_src}", "✅", f"index present, v{_ver_f.read_text().strip()}"))
+                                else:
+                                    results.append((f"Engine: {_src}", "✅", "index present (version unknown)"))
                     except Exception as _eexc:
-                        results.append(("Engine status", "⚠️", f"could not inspect: {_eexc}"))
+                        results.append(("Engine status", "⚠️", "could not inspect"))
                 except Exception as exc:
                     results.append(("Config / sources", "❌", str(exc)))
 

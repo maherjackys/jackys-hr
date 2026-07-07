@@ -59,8 +59,8 @@ def get_enabled_sources() -> list[str]:
         if resp.data:
             val = resp.data[0]["value"]
             if isinstance(val, list) and val:
-                # Only basic sanity: non-empty strings
-                valid = [s for s in val if isinstance(s, str) and s.strip()]
+                # Re-validate each slug against the same regex used at write time
+                valid = [s for s in val if isinstance(s, str) and is_valid_source_key(s)]
                 if valid:
                     return valid
         return list(_FALLBACK_SOURCES)
@@ -71,9 +71,9 @@ def get_enabled_sources() -> list[str]:
 
 def set_enabled_sources(sources: list[str]) -> str | None:
     """Persist enabled sources. Returns error string or None on success."""
-    valid = [s for s in sources if isinstance(s, str) and s.strip()]
+    valid = [s for s in sources if isinstance(s, str) and is_valid_source_key(s)]
     if not valid:
-        return "At least one source must be enabled."
+        return "At least one valid source must be enabled."
     try:
         c = _client()
         if c is None:
@@ -86,7 +86,7 @@ def set_enabled_sources(sources: list[str]) -> str | None:
         return None
     except Exception as exc:
         logger.warning("settings_store: set_enabled_sources failed (%s).", exc)
-        return f"{type(exc).__name__}: {exc}"
+        return "Failed to save settings. Check server logs for details."
 
 
 def register_source(key: str) -> str | None:
@@ -102,4 +102,5 @@ def register_source(key: str) -> str | None:
             return None  # already registered — not an error
         return set_enabled_sources(current + [key])
     except Exception as exc:
-        return f"{type(exc).__name__}: {exc}"
+        logger.warning("settings_store: register_source failed (%s).", exc)
+        return "Failed to register source. Check server logs for details."
