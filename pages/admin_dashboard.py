@@ -12,11 +12,12 @@ Auth architecture:
 
 RBAC:
   super_admin (4) → admin (3) → moderator (2) → user (1)
-  Tabs are hidden for roles without the matching permission.
+  Nav items are hidden for roles without the matching permission.
   Every privileged action enforces the matching permission server-side.
   Permissions stored in role_permissions Supabase table (migration 003).
 
-Tabs (dynamic — shown based on assigned permissions):
+Navigation (sidebar radio — only the selected section renders):
+  Nav items are shown/hidden by permission; only selected section's Python runs.
   📋 Logs              (dashboard.logs)
   📁 Manage Docs       (documents.view)
   ➕ Add Source        (sources.view)
@@ -241,7 +242,25 @@ if not st.session_state.get("admin_authed"):
     st.stop()
 
 
-# ── Sidebar / logout ───────────────────────────────────────────────────────────
+# ── Navigation (sidebar) ──────────────────────────────────────────────────────
+
+from core.rbac import has_permission as _hp  # noqa: E402
+
+_TABS_DEF = [
+    ("📋 Logs",        "logs",     "dashboard.logs"),
+    ("📁 Manage Docs", "docs",     "documents.view"),
+    ("➕ Add Source",  "add",      "sources.view"),
+    ("⚙️ Settings",   "settings", "settings.view"),
+    ("👥 Users",       "users",    "users.view"),
+    ("🔐 Roles",       "roles",    "roles.view"),
+    ("🔑 Account",     "account",  None),
+    ("🐛 Debug",       "debug",    "dashboard.debug"),
+]
+
+_vis_defs   = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
+               if perm is None or _hp(perm)]
+_nav_labels = [lbl for lbl, _, _ in _vis_defs]
+_nav_keys   = [key for _, key, _ in _vis_defs]
 
 with st.sidebar:
     _logged_user = st.session_state.get("admin_username", "admin")
@@ -251,6 +270,22 @@ with st.sidebar:
         f"Signed in as **{_logged_user}**  \n"
         f"{_ROLE_BADGE.get(_logged_role, '⚪')} `{_logged_role}`"
     )
+    st.divider()
+    if _nav_labels:
+        _prev        = st.session_state.get("admin_nav_key", _nav_keys[0])
+        _default_idx = _nav_keys.index(_prev) if _prev in _nav_keys else 0
+        _sel_nav_lbl = st.radio(
+            "Navigation",
+            options=_nav_labels,
+            index=_default_idx,
+            key="admin_nav",
+            label_visibility="collapsed",
+        )
+        _sel_nav = _nav_keys[_nav_labels.index(_sel_nav_lbl)]
+        st.session_state["admin_nav_key"] = _sel_nav
+    else:
+        _sel_nav = ""
+    st.divider()
     if st.button("🚪 Logout", use_container_width=True, key="logout_btn"):
         from core.auth import invalidate_session
         invalidate_session(st.session_state.get("admin_session_token", ""))
@@ -259,34 +294,15 @@ with st.sidebar:
         st.rerun()
 
 
-# ── Main admin UI — permission-based dynamic tabs ─────────────────────────────
+# ── Main admin UI ──────────────────────────────────────────────────────────────
 st.title("📊 Admin Dashboard")
-
-from core.rbac import has_permission as _hp  # noqa: E402
-
-_TABS_DEF = [
-    # (label,            key,       required_permission)
-    ("📋 Logs",          "logs",    "dashboard.logs"),
-    ("📁 Manage Docs",   "docs",    "documents.view"),
-    ("➕ Add Source",    "add",     "sources.view"),
-    ("⚙️ Settings",     "settings","settings.view"),
-    ("👥 Users",         "users",   "users.view"),
-    ("🔐 Roles",         "roles",   "roles.view"),
-    ("🔑 Account",       "account",  None),
-    ("🐛 Debug",         "debug",   "dashboard.debug"),
-]
-
-_vis_defs    = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
-                if perm is None or _hp(perm)]
-_tab_objects = st.tabs([lbl for lbl, _, _ in _vis_defs])
-_TABS        = {key: obj for (_, key, _), obj in zip(_vis_defs, _tab_objects)}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Logs
 # ─────────────────────────────────────────────────────────────────────────────
-if "logs" in _TABS:
-    with _TABS["logs"]:
+if _sel_nav == "logs":
+    with st.container():
         if not _hp("dashboard.logs"):
             _show_403("dashboard.logs")
         else:
@@ -347,8 +363,8 @@ if "logs" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Manage Docs
 # ─────────────────────────────────────────────────────────────────────────────
-if "docs" in _TABS:
-    with _TABS["docs"]:
+if _sel_nav == "docs":
+    with st.container():
         if not _hp("documents.view"):
             _show_403("documents.view")
         else:
@@ -496,8 +512,8 @@ if "docs" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Add Source
 # ─────────────────────────────────────────────────────────────────────────────
-if "add" in _TABS:
-    with _TABS["add"]:
+if _sel_nav == "add":
+    with st.container():
         if not _hp("sources.view"):
             _show_403("sources.view")
         else:
@@ -777,8 +793,8 @@ if "add" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Settings
 # ─────────────────────────────────────────────────────────────────────────────
-if "settings" in _TABS:
-    with _TABS["settings"]:
+if _sel_nav == "settings":
+    with st.container():
         if not _hp("settings.view"):
             _show_403("settings.view")
         else:
@@ -841,8 +857,8 @@ if "settings" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Users
 # ─────────────────────────────────────────────────────────────────────────────
-if "users" in _TABS:
-    with _TABS["users"]:
+if _sel_nav == "users":
+    with st.container():
         from core.auth import (
             VALID_ROLES as _VALID_ROLES,
             can_manage_user as _can_manage,
@@ -1147,8 +1163,8 @@ if "users" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Roles & Permissions
 # ─────────────────────────────────────────────────────────────────────────────
-if "roles" in _TABS:
-    with _TABS["roles"]:
+if _sel_nav == "roles":
+    with st.container():
         if not _hp("roles.view"):
             _show_403("roles.view")
         else:
@@ -1248,8 +1264,8 @@ if "roles" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Account
 # ─────────────────────────────────────────────────────────────────────────────
-if "account" in _TABS:
-    with _TABS["account"]:
+if _sel_nav == "account":
+    with st.container():
         st.subheader("Change Password")
         st.caption("Update the admin password stored in the database (bcrypt-hashed).")
 
@@ -1326,8 +1342,8 @@ if "account" in _TABS:
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: Debug
 # ─────────────────────────────────────────────────────────────────────────────
-if "debug" in _TABS:
-    with _TABS["debug"]:
+if _sel_nav == "debug":
+    with st.container():
         if not _hp("dashboard.debug"):
             _show_403("dashboard.debug")
         else:
