@@ -151,7 +151,7 @@ def _show_login() -> None:
     bootstrap_admin_user()
 
     st.title("🔐 Admin Login")
-    mode = st.radio("", ["Sign in", "Forgot password"], horizontal=True,
+    mode = st.radio("Login mode", ["Sign in", "Forgot password"], horizontal=True,
                     key="auth_mode", label_visibility="collapsed")
 
     if mode == "Sign in":

@@ -16,7 +16,7 @@ Roles (lowest → highest):  user → moderator → admin → super_admin
 
 Public API:
     check_login(password, username="admin")                → (ok: bool, error: str)
-    create_session(username)                               → token: str
+    create_session(username, ttl_hours=24)                 → token: str
     verify_session(token)                                  → username | None
     invalidate_session(token)                              → None
     update_password(username, new_password)                → error_str | None
