@@ -5,7 +5,9 @@ Streaming responses | Thinking animation | Source citations
 """
 from __future__ import annotations
 
+import hmac
 import logging
+import os
 
 import streamlit as st
 
@@ -21,6 +23,69 @@ from ui.styles import inject_css, inject_dark_mode
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger("hr_assistant")
 logger.setLevel(logging.INFO)
+
+
+# ── Employee app password gate ────────────────────────────────────────────────
+# Guards the chat app with APP_PASSWORD from st.secrets / env var.
+# If the secret is absent the gate is skipped (dev/local mode).
+# Uses hmac.compare_digest for constant-time comparison.
+# Completely separate from the admin dashboard's own session auth.
+
+def _get_app_password() -> str:
+    try:
+        v = st.secrets.get("APP_PASSWORD", "")
+        if v:
+            return v
+    except Exception:
+        pass
+    return os.environ.get("APP_PASSWORD", "")
+
+
+def _show_app_gate() -> None:
+    """Render a centered bilingual password prompt and block until correct."""
+    st.markdown("""
+<style>
+.gate-wrap{display:flex;flex-direction:column;align-items:center;
+           justify-content:center;min-height:60vh;gap:1.2rem}
+.gate-logo{font-size:3rem;line-height:1}
+.gate-title{font-size:1.45rem;font-weight:700;text-align:center;
+            color:var(--text-color,#111);margin:0}
+.gate-sub{font-size:.88rem;color:var(--text-color-secondary,#666);
+          text-align:center;margin:0;line-height:1.6}
+</style>
+<div class="gate-wrap">
+  <div class="gate-logo">🏢</div>
+  <p class="gate-title">HR Policy Assistant<br>
+    <span style="font-size:.9rem;font-weight:400">المساعد المعرفي للموارد البشرية</span>
+  </p>
+  <p class="gate-sub">Enter your access password to continue.<br>
+    أدخل كلمة المرور للمتابعة.</p>
+</div>""", unsafe_allow_html=True)
+
+    with st.form("app_gate_form", clear_on_submit=True):
+        _pwd = st.text_input(
+            "Password / كلمة المرور",
+            type="password",
+            key="app_gate_input",
+            placeholder="••••••••",
+        )
+        _submitted = st.form_submit_button(
+            "Enter / دخول", type="primary", use_container_width=True
+        )
+
+    if _submitted:
+        _correct = _get_app_password()
+        if _correct and hmac.compare_digest(_pwd.encode("utf-8"), _correct.encode("utf-8")):
+            st.session_state["app_authed"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password. / كلمة المرور غير صحيحة.")
+
+
+_app_pw = _get_app_password()
+if _app_pw and not st.session_state.get("app_authed"):
+    _show_app_gate()
+    st.stop()
 
 def _log_feedback(vote: str, source: str, query: str, answer: str, best_score: float) -> None:
     _db_log_feedback(
