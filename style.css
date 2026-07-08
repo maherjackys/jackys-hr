@@ -18,7 +18,7 @@
   --bg-app-rgb:           244,245,247;
   --bg-surface:           #FFFFFF;
   /* Fixed header height — must match .hr-header actual rendered height */
-  --header-h:             210px;
+  --header-h:             188px;
   --bg-surface-2:         #F8F9FA;
   --bg-surface-hover:     #F0F2F5;
 
@@ -57,9 +57,9 @@
   /* Radii */
   --radius-xs:            6px;
   --radius-sm:            10px;
-  --radius-md:            14px;
-  --radius-lg:            20px;
-  --radius-xl:            28px;
+  --radius-md:            8px;
+  --radius-lg:            12px;
+  --radius-xl:            18px;
   --radius-pill:          999px;
 
   /* Transitions */
@@ -172,7 +172,7 @@ html, body, [class*="css"] {
 
 .main .block-container {
   /* padding-top compensates for the fixed header height */
-  padding-top: var(--header-h, 210px) !important;
+  padding-top: calc(var(--header-h, 188px) + 0.75rem) !important;
   padding-bottom: 5rem !important;
   max-width: 860px !important;
   overflow-x: clip !important;
@@ -287,7 +287,7 @@ span  { color: inherit !important; }
   width: 100%;
   z-index: 999;
   text-align: center;
-  padding: 0.85rem 1rem 0.65rem;
+  padding: 0.65rem 1rem 0.55rem;
   background: rgba(var(--bg-app-rgb, 244,245,247), 0.95);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
@@ -302,8 +302,8 @@ span  { color: inherit !important; }
   justify-content: center;
   gap: 0.55rem;
   width: fit-content;
-  margin: 0 auto 0.85rem;
-  padding: 0.58rem 1rem;
+  margin: 0 auto 0.65rem;
+  padding: 0.52rem 0.95rem;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-light));
   color: white !important;
@@ -336,9 +336,9 @@ span  { color: inherit !important; }
 /* Header icon — inline SVG people graphic above the brand pill */
 .hr-header-icon {
   display: block;
-  margin: 0 auto 0.75rem;
-  width: 52px;
-  height: 52px;
+  margin: 0 auto 0.55rem;
+  width: 44px;
+  height: 44px;
   filter: drop-shadow(0 4px 12px rgba(192, 57, 43, 0.30));
   transition: filter 0.3s ease, transform 0.3s ease;
 }
@@ -354,9 +354,9 @@ span  { color: inherit !important; }
 }
 
 .main-title {
-  font-size: clamp(1.6rem, 4vw, 2.4rem) !important;
+  font-size: 2rem !important;
   font-weight: 900 !important;
-  letter-spacing: -1px;
+  letter-spacing: 0;
   line-height: 1.15 !important;
   margin-bottom: 0.15rem !important;
   background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
@@ -374,7 +374,7 @@ span  { color: inherit !important; }
 }
 
 .sub-title {
-  font-size: clamp(0.85rem, 2vw, 1rem) !important;
+  font-size: 0.95rem !important;
   font-weight: 400 !important;
   color: var(--text-secondary) !important;
   margin: 0 auto 0 !important;
@@ -1247,16 +1247,16 @@ header[data-testid="stHeader"] {
 
 /* ── Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  :root { --header-h: 175px; }
+  :root { --header-h: 164px; }
   /* Keep top-padding from fixed header — never override it to a flat value */
   .main .block-container {
-    padding-top: var(--header-h, 175px) !important;
+    padding-top: calc(var(--header-h, 164px) + 0.5rem) !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
     padding-bottom: 1rem !important;
   }
   .hr-header              { padding: 0.75rem 0.75rem 0.5rem; }
-  .hr-header-icon         { font-size: 2rem; }
+  .hr-header-icon         { width: 36px !important; height: 36px !important; }
   .main-title             { font-size: 1.35rem !important; }
   .sub-title              { font-size: 0.8rem !important; }
   .hr-stats-bar           { gap: 0.35rem; }
@@ -1680,13 +1680,14 @@ header[data-testid="stHeader"] {
   font-size: 0.80rem !important;
   font-weight: 500 !important;
   padding: 6px 14px !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  overflow: hidden !important;
   text-overflow: unset !important;
   text-align: center !important;
   box-shadow: var(--shadow-xs) !important;
   min-height: 36px !important;
-  width: max-content !important;
+  width: 100% !important;
   transform: none !important;
 }
 [class*="st-key-sugg_row"] [data-testid="stButton"] > button:hover {
@@ -1696,6 +1697,13 @@ header[data-testid="stHeader"] {
   -webkit-text-fill-color: var(--text-brand) !important;
   transform: translateY(-1px) !important;
   box-shadow: var(--shadow-sm) !important;
+}
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button:focus-visible,
+.st-key-btn_new_chat button:focus-visible,
+[data-testid="stChatInput"] button:focus-visible {
+  outline: 3px solid var(--border-focus) !important;
+  outline-offset: 2px !important;
+  box-shadow: var(--shadow-focus) !important;
 }
 [class*="st-key-sugg_row"] [data-testid="stButton"] > button:active {
   transform: scale(0.97) !important;
@@ -1739,7 +1747,7 @@ header[data-testid="stHeader"] {
 @media (max-width: 768px) {
 
   /* Adjust header height token for mobile (header is taller with smaller fonts stacked) */
-  :root { --header-h: 185px; }
+  :root { --header-h: 170px; }
 
   /* ── Kill horizontal overflow globally ── */
   html, body,
@@ -1756,15 +1764,15 @@ header[data-testid="stHeader"] {
 
   /* ── Container padding — fixed header + sides ── */
   .main .block-container {
-    padding: var(--header-h, 185px) 0.9rem 1rem !important;
+    padding: calc(var(--header-h, 170px) + 0.5rem) 0.9rem 1rem !important;
     width: 100% !important;
   }
 
   /* ── Header — compact ── */
-  .hr-header          { padding: 0.4rem 0 0.1rem !important; margin-bottom: 0.1rem !important; }
+  .hr-header          { padding: 0.45rem 0.75rem 0.35rem !important; margin-bottom: 0.1rem !important; }
   .hr-header-icon     { width: 36px !important; height: 36px !important; }
   .hr-brand-pill      { font-size: 0.62rem !important; padding: 0.35rem 0.7rem !important; margin-bottom: 0.5rem !important; }
-  .main-title         { font-size: 1.3rem !important; letter-spacing: -0.5px !important; }
+  .main-title         { font-size: 1.35rem !important; letter-spacing: 0 !important; }
   .sub-title          { font-size: 0.75rem !important; max-width: 95% !important; }
 
   /* ── Stats bar — wrap ── */
