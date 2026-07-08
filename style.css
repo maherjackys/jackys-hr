@@ -2086,3 +2086,31 @@ header[data-testid="stHeader"] {
   margin-bottom: 0.45rem !important;
   font-size: 0.68rem !important;
 }
+
+/* v7.4: hide Streamlit's floating header/sidebar controls that can appear as
+   clipped white pills in the top-left corner on Cloud deployments. */
+header[data-testid="stHeader"],
+header[data-testid="stHeader"] *,
+[data-testid="stHeader"],
+[data-testid="stHeader"] *,
+[data-testid="stHeaderActionElements"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"],
+[data-testid="stBaseButton-header"],
+[data-testid="stBaseButton-headerNoPadding"],
+button[kind="header"],
+button[aria-label*="sidebar" i],
+button[title*="sidebar" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
