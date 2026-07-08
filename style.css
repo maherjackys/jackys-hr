@@ -211,8 +211,8 @@ span  { color: inherit !important; }
    ============================================================ */
 .hr-header {
   text-align: center;
-  padding: 0.25rem 0 0.25rem;
-  margin: -1rem auto 0.25rem;
+  padding: 0.5rem 0 0.15rem;
+  margin: -0.5rem auto 0.15rem;
 }
 
 /* Brand pill — text badge with gradient background */
@@ -311,46 +311,41 @@ span  { color: inherit !important; }
    7. STATS BAR
    ============================================================ */
 .hr-stats-bar {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: stretch;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  margin: 0.3rem auto 1rem;
-  max-width: 700px;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  box-shadow: none;
+  margin: 0.4rem auto 0.85rem;
+  max-width: 600px;
 }
 
 .hr-stat-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  justify-content: flex-start;
-  background: var(--bg-surface-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 1rem;
-  min-height: 64px;
+  gap: 0.45rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  padding: 0.35rem 0.85rem;
+  min-height: 34px;
+  box-shadow: var(--shadow-xs);
 }
 
-.hr-stat-icon { font-size: 1.5rem; line-height: 1; }
+.hr-stat-icon { font-size: 1rem; line-height: 1; }
 
 .hr-stat-text { display: flex; flex-direction: column; }
 
 .hr-stat-text strong {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: var(--text-primary) !important;
-  line-height: 1.2;
+  line-height: 1.1;
+  -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 .hr-stat-text span {
-  font-size: 0.7rem;
-  color: var(--text-muted) !important;
+  display: none;
 }
 
 .hr-stat-divider {
@@ -778,13 +773,41 @@ span  { color: inherit !important; }
    13. SUGGESTED QUESTIONS
    ============================================================ */
 .suggestions-label {
-  font-size: 0.78rem !important;
-  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
   color: var(--text-muted) !important;
   -webkit-text-fill-color: var(--text-muted) !important;
   background: none !important;
   text-align: center;
-  margin: 0.5rem 0 0.6rem !important;
+  margin: 0.6rem 0 0.5rem !important;
+}
+
+/* Suggestion rows — horizontal scroll on mobile, centered wrap on desktop */
+[class*="st-key-sugg_row"] [data-testid="stHorizontalBlock"] {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  gap: 0.4rem !important;
+  padding-bottom: 2px !important;
+}
+[class*="st-key-sugg_row"] [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+  display: none !important;
+}
+[class*="st-key-sugg_row"] [data-testid="stColumn"] {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+/* On tablet+ wrap instead of scroll */
+@media (min-width: 600px) {
+  [class*="st-key-sugg_row"] [data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    justify-content: center !important;
+  }
 }
 
 
@@ -1106,8 +1129,8 @@ header[data-testid="stHeader"] {
   .hr-header-icon         { font-size: 2rem; }
   .main-title             { font-size: 1.35rem !important; }
   .sub-title              { font-size: 0.8rem !important; }
-  .hr-stats-bar           { grid-template-columns: 1fr; gap: 0.5rem; padding: 0.65rem 0.75rem; }
-  .hr-stat-divider        { width: 60%; height: 1px; margin: 0; }
+  .hr-stats-bar           { gap: 0.35rem; }
+  .hr-stat-item           { padding: 0.3rem 0.7rem; }
   .source-card            { padding: 0.85rem 0.9rem; }
   .source-card-title      { font-size: 0.9rem; }
   .source-card-desc       { font-size: 0.72rem; }
@@ -1143,16 +1166,11 @@ header[data-testid="stHeader"] {
     touch-action: manipulation !important;
   }
 
-  /* Suggestion pill rows — stack vertically on very small screens.
-     Scoped to .st-key-sugg_row_* containers so other st.columns() layouts
-     (ctrl_bar, confirm dialogs) are not affected. */
-  [class*="st-key-sugg_row_"] [data-testid="stHorizontalBlock"] {
-    flex-direction: column !important;
-    gap: 0.4rem !important;
-  }
-  [class*="st-key-sugg_row_"] [data-testid="stBaseButton-secondary"] {
-    font-size: 0.72rem !important;
-    padding: 8px 10px !important;
+  /* Suggestion chips — stay horizontal scroll on mobile (handled by general rule above) */
+  [class*="st-key-sugg_row"] [data-testid="stButton"] > button {
+    font-size: 0.75rem !important;
+    padding: 5px 11px !important;
+    min-height: 34px !important;
   }
 
   /* Ctrl bar stays horizontal — touch hitboxes must match visual positions */
@@ -1491,6 +1509,52 @@ header[data-testid="stHeader"] {
   font-size: 0.7rem;
 }
 [dir="rtl"] .suggestion-chip { direction: rtl; }
+
+/* ============================================================
+   24. SUGGESTION CHIPS — pill style (override red-button default)
+   Scoped to sugg_row containers so source/control buttons stay red.
+   ============================================================ */
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button {
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  border: 1.5px solid var(--border-default) !important;
+  border-radius: var(--radius-pill) !important;
+  font-size: 0.80rem !important;
+  font-weight: 500 !important;
+  padding: 6px 14px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+  box-shadow: var(--shadow-xs) !important;
+  min-height: 36px !important;
+  transform: none !important;
+}
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button:hover {
+  background: var(--bg-card-selected) !important;
+  border-color: var(--brand-primary) !important;
+  color: var(--text-brand) !important;
+  -webkit-text-fill-color: var(--text-brand) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button:active {
+  transform: scale(0.97) !important;
+}
+/* Dark mode chip */
+[data-theme="dark"] [class*="st-key-sugg_row"] [data-testid="stButton"] > button {
+  background: var(--bg-surface-2) !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  border-color: var(--border-default) !important;
+}
+[data-theme="dark"] [class*="st-key-sugg_row"] [data-testid="stButton"] > button:hover {
+  background: var(--bg-card-selected) !important;
+  border-color: var(--text-brand) !important;
+  color: var(--text-brand) !important;
+  -webkit-text-fill-color: var(--text-brand) !important;
+}
 
 /* ── Feedback thumbs ──────────────────────────────────────────────────────── */
 [data-testid="stFeedback"] button {
