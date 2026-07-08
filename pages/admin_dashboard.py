@@ -492,14 +492,19 @@ html, body, [class*="css"] {{
 
 /* ── Sidebar collapse/expand toggle — always visible ── */
 [data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"],
-button[kind="header"] {{
+[data-testid="stSidebarCollapseButton"] {{
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   background: #374151 !important;
   color: #F9FAFB !important;
   border-radius: 0 8px 8px 0 !important;
+  z-index: 9999 !important;
+}}
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stSidebarCollapseButton"] svg {{
+  stroke: #F9FAFB !important;
+  fill: #F9FAFB !important;
 }}
 
 /* ── Typography ── */
@@ -563,9 +568,8 @@ p, li {{ color: var(--adm-ink2) !important; }}
 /* ── Dataframe ── */
 [data-testid="stDataFrame"] {{ background: var(--adm-surface) !important; }}
 
-/* ── Hide Streamlit chrome ── */
+/* ── Hide Streamlit chrome — keep stHeader because it holds sidebar toggle ── */
 [data-testid="stToolbar"],
-[data-testid="stHeader"],
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
 [data-testid="stActionButton"],
@@ -574,6 +578,20 @@ p, li {{ color: var(--adm-ink2) !important; }}
 footer, #MainMenu,
 [class*="deployButton"],
 [class*="manageApp"] {{ display:none !important; visibility:hidden !important; }}
+
+/* stHeader: collapse to 0 height so it doesn't take space, but keep sidebar toggle */
+[data-testid="stHeader"] {{
+  background: var(--adm-bg) !important;
+  border-bottom: none !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}}
+/* Hide everything inside stHeader EXCEPT the sidebar toggle */
+[data-testid="stHeader"] > *:not([data-testid="stSidebarCollapsedControl"]):not([data-testid="stSidebarCollapseButton"]) {{
+  display: none !important;
+}}
 
 /* ── Main content card-feel ── */
 .main .block-container {{

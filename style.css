@@ -172,9 +172,8 @@ html, body, [class*="css"] {
   box-sizing: border-box !important;
 }
 
-/* Hide Streamlit chrome */
+/* Hide Streamlit chrome (keep stHeader for sidebar toggle) */
 [data-testid="stToolbar"],
-[data-testid="stHeader"],
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
 [data-testid="stActionButton"],
@@ -184,6 +183,19 @@ html, body, [class*="css"] {
 #MainMenu, footer {
   display: none !important;
   visibility: hidden !important;
+}
+
+/* Collapse stHeader to zero but keep sidebar toggle accessible */
+[data-testid="stHeader"] {
+  background: var(--bg-app) !important;
+  border-bottom: none !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+[data-testid="stHeader"] > *:not([data-testid="stSidebarCollapsedControl"]):not([data-testid="stSidebarCollapseButton"]) {
+  display: none !important;
 }
 
 /* ── New Chat button — always secondary pill, never full-width red ── */
