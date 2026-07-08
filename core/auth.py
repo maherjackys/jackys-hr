@@ -499,13 +499,21 @@ def check_login(password: str, username: str = "admin") -> tuple[bool, str]:
         _log_login(username, False)
         return False, "Incorrect username or password."
 
-    # 2. Fallback: plain-text secret
+    # 2. Fallback: plain-text secret — ONLY for the "admin" username in
+    #    pre-migration state (no admin_users row exists yet).
+    #    Any other unknown username is rejected outright to prevent the
+    #    legacy secret from acting as a universal master password.
+    if username != "admin" or get_admin_user("admin") is not None:
+        _record_failure(username)
+        _log_login(username, False)
+        return False, "Incorrect username or password."
+
     correct = _get_secret("ADMIN_PASSWORD")
     if not correct:
         return False, "No credentials configured (set ADMIN_PASSWORD or create admin_users row)."
 
     if secrets.compare_digest(password.encode("utf-8"), correct.encode("utf-8")):
-        _auto_migrate(username, password)
+        _auto_migrate(password)
         _clear_failures(username)
         _update_last_login(username)
         _log_login(username, True)
@@ -525,20 +533,20 @@ def _log_login(username: str, success: bool) -> None:
         pass
 
 
-def _auto_migrate(username: str, plain: str) -> None:
-    """Store bcrypt hash in DB after a successful plain-text login."""
+def _auto_migrate(plain: str) -> None:
+    """Store bcrypt hash for the 'admin' user after a successful plain-text login."""
     try:
         c = _db()
         if c:
             c.table("admin_users").upsert(
                 {
-                    "username":      username,
+                    "username":      "admin",
                     "password_hash": hash_password(plain),
                     "role":          "super_admin",
                     "is_active":     True,
                 },
                 on_conflict="username",
             ).execute()
-            logger.info("auth: auto-migrated %s to bcrypt hash.", username)
+            logger.info("auth: auto-migrated admin to bcrypt hash.")
     except Exception:
         pass
