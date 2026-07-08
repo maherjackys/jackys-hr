@@ -1030,17 +1030,20 @@ span  { color: inherit !important; }
    position:sticky keeps buttons in document flow → always clickable.
    ============================================================ */
 
-/* Sticky row that hugs the top-right */
+/* Fixed top-right — lives inside the header band, always visible */
 .st-key-ctrl_bar {
-  position: sticky !important;
-  top: 0.4rem !important;
-  z-index: 99999 !important;
+  position: fixed !important;
+  top: 0.55rem !important;
+  right: 1rem !important;
+  z-index: 1001 !important;   /* above fixed header (999) */
   display: flex !important;
   justify-content: flex-end !important;
   background: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
   pointer-events: auto !important;
+  /* zero layout height so it doesn't push content */
+  height: 0 !important;
 }
 .st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
   flex: 0 0 auto !important;
@@ -1049,6 +1052,8 @@ span  { color: inherit !important; }
   padding: 0 !important;
   margin: 0 !important;
   background: transparent !important;
+  /* restore visible height for the actual buttons */
+  height: auto !important;
 }
 .st-key-ctrl_bar [data-testid="stColumn"] {
   flex: 0 0 auto !important;
@@ -1753,19 +1758,21 @@ header[data-testid="stHeader"] {
   /* ── Active badge + New Chat row ── */
   .active-source-badge { font-size: 0.72rem !important; padding: 4px 12px !important; }
 
-  /* ── Ctrl bar (theme + lang) — top right, auto width ── */
+  /* ── Ctrl bar (theme + lang) — fixed top-right on mobile ── */
   .st-key-ctrl_bar {
-    position: sticky !important;
-    top: 0.25rem !important;
-    z-index: 99999 !important;
-    justify-content: flex-end !important;
+    position: fixed !important;
+    top: 0.4rem !important;
+    right: 0.5rem !important;
+    z-index: 1001 !important;
+    height: 0 !important;
   }
   .st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     justify-content: flex-end !important;
-    gap: 0.35rem !important;
+    gap: 0.3rem !important;
     width: auto !important;
+    height: auto !important;
   }
   .st-key-ctrl_bar [data-testid="stColumn"] {
     flex: 0 0 auto !important;

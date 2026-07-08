@@ -39,18 +39,9 @@ from pathlib import Path
 
 import streamlit as st
 
-# ── Cookie writer (write-only; reading done via st.context.cookies) ───────────
-try:
-    import extra_streamlit_components as stx
-    _cookie_writer = stx.CookieManager(key="hr_admin_cookie_mgr_v1")
-    _COOKIES_AVAILABLE = True
-except Exception:
-    _cookie_writer = None
-    _COOKIES_AVAILABLE = False
-
 _SESSION_COOKIE        = "admin_session"
-_SESSION_TTL_DAYS      = 1   # default (no remember me)
-_SESSION_TTL_DAYS_LONG = 30  # remember me
+_SESSION_TTL_DAYS      = 1
+_SESSION_TTL_DAYS_LONG = 30
 
 # ── RBAC level map (kept for user hierarchy checks — who can manage whom) ─────
 _RLEVEL = {"super_admin": 4, "admin": 3, "moderator": 2, "user": 1}
@@ -66,23 +57,28 @@ def _read_session_cookie() -> str:
 
 
 def _write_session_cookie(token: str, remember: bool = False) -> None:
-    if _cookie_writer is None:
-        return
-    try:
-        days    = _SESSION_TTL_DAYS_LONG if remember else _SESSION_TTL_DAYS
-        expires = datetime.datetime.now() + datetime.timedelta(days=days)
-        _cookie_writer.set(_SESSION_COOKIE, token, expires_at=expires)
-    except Exception as exc:
-        st.warning(f"Could not persist session cookie: {exc}", icon="⚠️")
+    """Write session cookie via inline JS — avoids extra_streamlit_components deprecation."""
+    days = _SESSION_TTL_DAYS_LONG if remember else _SESSION_TTL_DAYS
+    st.markdown(
+        f"""<script>
+(function(){{
+  var d=new Date();
+  d.setTime(d.getTime()+({days}*24*60*60*1000));
+  document.cookie="{_SESSION_COOKIE}={token};expires="+d.toUTCString()+";path=/;SameSite=Lax";
+}})();
+</script>""",
+        unsafe_allow_html=True,
+    )
 
 
 def _delete_session_cookie() -> None:
-    if _cookie_writer is None:
-        return
-    try:
-        _cookie_writer.delete(_SESSION_COOKIE)
-    except Exception:
-        pass
+    """Expire the session cookie immediately via inline JS."""
+    st.markdown(
+        f"""<script>
+document.cookie="{_SESSION_COOKIE}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax";
+</script>""",
+        unsafe_allow_html=True,
+    )
 
 
 # ── Misc helpers ───────────────────────────────────────────────────────────────
@@ -568,7 +564,7 @@ p, li {{ color: var(--adm-ink2) !important; }}
 /* ── Dataframe ── */
 [data-testid="stDataFrame"] {{ background: var(--adm-surface) !important; }}
 
-/* ── Hide Streamlit chrome — keep stHeader because it holds sidebar toggle ── */
+/* ── Hide Streamlit chrome ── */
 [data-testid="stToolbar"],
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
@@ -579,17 +575,21 @@ footer, #MainMenu,
 [class*="deployButton"],
 [class*="manageApp"] {{ display:none !important; visibility:hidden !important; }}
 
-/* stHeader: collapse to 0 height so it doesn't take space, but keep sidebar toggle */
+/* stHeader: transparent shell — do NOT display:none it (sidebar toggle lives inside) */
 [data-testid="stHeader"] {{
-  background: var(--adm-bg) !important;
+  background: transparent !important;
   border-bottom: none !important;
+  box-shadow: none !important;
   min-height: 0 !important;
-  height: auto !important;
   padding: 0 !important;
   overflow: visible !important;
+  z-index: 9000 !important;
 }}
-/* Hide everything inside stHeader EXCEPT the sidebar toggle */
-[data-testid="stHeader"] > *:not([data-testid="stSidebarCollapsedControl"]):not([data-testid="stSidebarCollapseButton"]) {{
+/* Hide only the toolbar/app-menu children, NOT the sidebar toggle wrapper */
+[data-testid="stHeader"] [data-testid="stToolbar"],
+[data-testid="stHeader"] [data-testid="stHeaderActionElements"],
+[data-testid="stHeader"] [data-testid="stAppViewBlockContainer"],
+[data-testid="stHeader"] .stAppToolbar {{
   display: none !important;
 }}
 
