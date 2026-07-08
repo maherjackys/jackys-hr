@@ -823,7 +823,7 @@ span  { color: inherit !important; }
    12. BUTTONS
    ============================================================ */
 /* Primary (selected source / active action) */
-[data-testid="stButton"] > button,
+[data-testid="stBaseButton-primary"] > button,
 [data-testid="stBaseButton-primary"] {
   background: var(--brand-primary) !important;
   color: var(--text-inverse) !important;
@@ -837,24 +837,25 @@ span  { color: inherit !important; }
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast) !important;
 }
 
-[data-testid="stButton"] > button:hover,
+[data-testid="stBaseButton-primary"] > button:hover,
 [data-testid="stBaseButton-primary"]:hover {
   background: var(--brand-primary-dark) !important;
   box-shadow: var(--shadow-md) !important;
   transform: translateY(-1px) !important;
 }
-[data-testid="stButton"] > button:active,
+[data-testid="stBaseButton-primary"] > button:active,
 [data-testid="stBaseButton-primary"]:active {
   transform: scale(0.98) !important;
 }
 
-[data-testid="stButton"] > button:focus-visible,
+[data-testid="stBaseButton-primary"] > button:focus-visible,
 [data-testid="stBaseButton-primary"]:focus-visible {
   outline: 2px solid var(--border-focus) !important;
   outline-offset: 2px !important;
 }
 
 /* Secondary (inactive source) */
+[data-testid="stBaseButton-secondary"] > button,
 [data-testid="stBaseButton-secondary"] {
   background: var(--bg-surface) !important;
   color: var(--text-secondary) !important;
@@ -866,11 +867,13 @@ span  { color: inherit !important; }
   opacity: 1 !important;
   visibility: visible !important;
 }
+[data-testid="stBaseButton-secondary"] > button:hover,
 [data-testid="stBaseButton-secondary"]:hover {
   background: var(--bg-surface-hover) !important;
   border-color: var(--border-focus) !important;
   color: var(--text-primary) !important;
 }
+[data-testid="stBaseButton-secondary"] > button:focus-visible,
 [data-testid="stBaseButton-secondary"]:focus-visible {
   outline: 2px solid var(--border-focus) !important;
   outline-offset: 2px !important;
@@ -1088,8 +1091,8 @@ span  { color: inherit !important; }
   border-radius: 999px !important;
   border: 1.5px solid var(--border-default) !important;
   background: var(--bg-surface) !important;
-  color: var(--text-secondary) !important;
-  -webkit-text-fill-color: var(--text-secondary) !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
   box-shadow: 0 2px 8px rgba(0,0,0,0.14) !important;
   white-space: nowrap !important;
   transition: border-color 0.15s, color 0.15s, background 0.15s !important;

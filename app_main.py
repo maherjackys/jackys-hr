@@ -554,9 +554,16 @@ _SUGGESTIONS: dict[str, dict[str, list[str]]] = {
     },
 }
 
+def _normalize_suggestions(items: Optional[list]) -> list:
+    if not items:
+        return []
+    return [q.strip() for q in items if isinstance(q, str) and q.strip()]
+
+
 sugg_lang = st.session_state.ui_lang
-sugg_list = _SUGGESTIONS.get(current_source, {}).get(sugg_lang, [])
+sugg_list = _normalize_suggestions(_SUGGESTIONS.get(current_source, {}).get(sugg_lang, []))
 has_history = len(st.session_state.messages) > 1
+
 
 def _render_suggestions(sugg_list: list, key_prefix: str) -> None:
     row1, row2 = sugg_list[:3], sugg_list[3:6]

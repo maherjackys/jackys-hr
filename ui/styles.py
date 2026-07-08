@@ -238,8 +238,10 @@ code, pre { background: #1C2128 !important; border-color: #30363D !important; co
 [data-testid="stFeedback"] button[aria-pressed="true"]:last-child { color:#FF7060!important; background:rgba(255,112,96,0.14)!important; border-color:rgba(255,112,96,0.5)!important; }
 [data-testid="stToggle"] label { color: #8B949E !important; }
 
-/* ── Suggestion chips — white text on buttons in dark mode ── */
-[data-testid="stButton"] > button {
+/* ── Primary buttons keep white text in dark mode ── */
+[data-testid="stBaseButton-primary"] > button,
+[data-testid="stBaseButton-primary"] > button p,
+[data-testid="stBaseButton-primary"] > button span {
   color: #FFFFFF !important;
   -webkit-text-fill-color: #FFFFFF !important;
 }
