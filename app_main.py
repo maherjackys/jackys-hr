@@ -659,7 +659,7 @@ st.markdown(f"""
     <span class="hr-footer-dot">·</span>
     <span>Powered by <strong>Groq</strong> + <strong>LangChain</strong></span>
     <span class="hr-footer-dot">·</span>
-    <span>v7.5 · logs: {_logging_mode()}</span>
+    <span>v7.6 · logs: {_logging_mode()}</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
