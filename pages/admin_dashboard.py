@@ -316,50 +316,220 @@ with st.sidebar:
         st.rerun()
 
 
-# ── Enterprise CSS ────────────────────────────────────────────────────────────
+# ── Admin theme state ─────────────────────────────────────────────────────────
+if "adm_theme" not in st.session_state:
+    st.session_state.adm_theme = "light"
+_adm_theme = st.session_state.adm_theme
+
+# ── Cairo font + shared design tokens ─────────────────────────────────────────
 st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+""", unsafe_allow_html=True)
+
+# ── Admin CSS — unified with main app tokens ──────────────────────────────────
+_ADM_LIGHT = """
+:root {
+  --adm-bg:       #F4F5F7;
+  --adm-surface:  #FFFFFF;
+  --adm-sf2:      #F8F9FA;
+  --adm-border:   #E5E7EB;
+  --adm-ink:      #111827;
+  --adm-ink2:     #4B5563;
+  --adm-ink3:     #9CA3AF;
+  --adm-brand:    #C0392B;
+  --adm-brand-l:  #E74C3C;
+  --adm-sh:       0 1px 4px rgba(0,0,0,.06);
+  --adm-sh2:      0 4px 16px rgba(0,0,0,.09);
+}
+"""
+_ADM_DARK = """
+:root {
+  --adm-bg:       #0D1117;
+  --adm-surface:  #161B22;
+  --adm-sf2:      #1C2128;
+  --adm-border:   #30363D;
+  --adm-ink:      #E6EDF3;
+  --adm-ink2:     #8B949E;
+  --adm-ink3:     #7D8590;
+  --adm-brand:    #FF7060;
+  --adm-brand-l:  #FF9080;
+  --adm-sh:       0 1px 4px rgba(0,0,0,.3);
+  --adm-sh2:      0 4px 16px rgba(0,0,0,.5);
+}
+"""
+_adm_token_css = _ADM_DARK if _adm_theme == "dark" else _ADM_LIGHT
+
+st.markdown(f"""
 <style>
-/* ── Admin dashboard enterprise styles ─── */
-.adm-metric-row { display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }
-.adm-kpi {
-    flex:1; min-width:140px; background:var(--bg-surface,#fff);
-    border:1px solid var(--color-border,#e5e7eb); border-radius:10px;
-    padding:1rem 1.25rem; box-shadow:0 1px 4px rgba(0,0,0,.06);
-}
-.adm-kpi-label { font-size:.72rem; color:var(--color-muted,#6b7280); text-transform:uppercase; letter-spacing:.05em; }
-.adm-kpi-value { font-size:1.75rem; font-weight:700; color:var(--color-text,#111); line-height:1.2; }
-.adm-kpi-sub   { font-size:.78rem; color:var(--color-muted,#6b7280); margin-top:.2rem; }
-.adm-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; }
-.adm-badge-green  { background:#dcfce7; color:#166534; }
-.adm-badge-red    { background:#fee2e2; color:#991b1b; }
-.adm-badge-yellow { background:#fef9c3; color:#854d0e; }
-.adm-badge-blue   { background:#dbeafe; color:#1e40af; }
-.adm-badge-gray   { background:#f3f4f6; color:#374151; }
-.adm-activity-row {
-    display:flex; align-items:flex-start; gap:.6rem;
-    padding:.5rem .75rem; border-radius:6px; margin:.2rem 0;
-    border-left:3px solid var(--color-border,#e5e7eb);
-}
-.adm-activity-row:hover { background:var(--bg-input,#f9fafb); }
-.adm-ts { font-size:.72rem; color:var(--color-muted,#9ca3af); white-space:nowrap; min-width:120px; }
-.adm-log-search { margin-bottom:.75rem; }
-.adm-log-unanswered { border-left-color:#f59e0b; }
-.adm-log-feedback   { border-left-color:#3b82f6; }
-.adm-log-admin      { border-left-color:#8b5cf6; }
-.adm-log-error      { border-left-color:#ef4444; }
-.adm-section-header { font-size:1.1rem; font-weight:700; margin:1.25rem 0 .5rem; color:var(--color-text,#111); }
-.adm-quick-action { text-align:center; }
-.adm-source-health { display:flex; gap:.5rem; align-items:center; padding:.4rem 0; }
-[data-theme="dark"] .adm-kpi { background:#161b22; border-color:#30363d; }
-[data-theme="dark"] .adm-kpi-value { color:#f0f6fc; }
-[data-theme="dark"] .adm-badge-green  { background:#0d4429; color:#56d364; }
-[data-theme="dark"] .adm-badge-red    { background:#4d1a1a; color:#f97171; }
-[data-theme="dark"] .adm-badge-yellow { background:#4d3800; color:#e3b341; }
-[data-theme="dark"] .adm-badge-blue   { background:#0d2a4d; color:#79b8ff; }
-[data-theme="dark"] .adm-badge-gray   { background:#21262d; color:#c9d1d9; }
-[data-theme="dark"] .adm-activity-row:hover { background:#21262d; }
+{_adm_token_css}
+
+/* ── Global ── */
+html, body, [class*="css"] {{
+  font-family: 'Cairo','Inter',sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}}
+[data-testid="stApp"],
+[data-testid="stMain"],
+.main {{
+  background-color: var(--adm-bg) !important;
+  color: var(--adm-ink) !important;
+}}
+.main .block-container {{ max-width: 960px !important; padding-top:.5rem !important; }}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {{
+  background: var(--adm-surface) !important;
+  border-right: 1px solid var(--adm-border) !important;
+}}
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stRadio label {{
+  color: var(--adm-ink2) !important;
+  -webkit-text-fill-color: var(--adm-ink2) !important;
+}}
+[data-testid="stSidebar"] strong {{ color: var(--adm-ink) !important; -webkit-text-fill-color: var(--adm-ink) !important; }}
+
+/* ── Typography ── */
+h1,h2,h3,h4 {{ color: var(--adm-ink) !important; font-family:'Cairo','Inter',sans-serif !important; }}
+p, li {{ color: var(--adm-ink2) !important; }}
+
+/* ── Buttons ── */
+[data-testid="stBaseButton-primary"] {{
+  background: var(--adm-brand) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-family: 'Cairo','Inter',sans-serif !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}}
+[data-testid="stBaseButton-primary"]:hover {{ background: var(--adm-brand-l) !important; }}
+[data-testid="stBaseButton-secondary"] {{
+  background: var(--adm-surface) !important;
+  border: 1.5px solid var(--adm-border) !important;
+  border-radius: 10px !important;
+  font-family: 'Cairo','Inter',sans-serif !important;
+  color: var(--adm-ink2) !important;
+  -webkit-text-fill-color: var(--adm-ink2) !important;
+}}
+[data-testid="stBaseButton-secondary"]:hover {{
+  border-color: var(--adm-brand) !important;
+  color: var(--adm-ink) !important;
+  -webkit-text-fill-color: var(--adm-ink) !important;
+}}
+
+/* ── Inputs ── */
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea,
+[data-testid="stSelectbox"] select {{
+  background: var(--adm-surface) !important;
+  color: var(--adm-ink) !important;
+  border-color: var(--adm-border) !important;
+  border-radius: 8px !important;
+  font-family: 'Cairo','Inter',sans-serif !important;
+}}
+
+/* ── Expanders ── */
+[data-testid="stExpander"] {{
+  background: var(--adm-surface) !important;
+  border-color: var(--adm-border) !important;
+}}
+
+/* ── Alerts ── */
+[data-testid="stAlert"] {{
+  background: var(--adm-sf2) !important;
+  border-color: var(--adm-border) !important;
+  color: var(--adm-ink) !important;
+}}
+
+/* ── Metrics ── */
+[data-testid="stMetric"] {{ color: var(--adm-ink) !important; }}
+[data-testid="stMetricValue"] {{ color: var(--adm-ink) !important; -webkit-text-fill-color: var(--adm-ink) !important; }}
+[data-testid="stMetricLabel"] {{ color: var(--adm-ink2) !important; -webkit-text-fill-color: var(--adm-ink2) !important; }}
+
+/* ── Dataframe ── */
+[data-testid="stDataFrame"] {{ background: var(--adm-surface) !important; }}
+
+/* ── Hide Streamlit chrome ── */
+[data-testid="stToolbar"],
+[data-testid="manage-app-button"],
+[data-testid="stAppDeployButton"],
+[data-testid="stActionButton"],
+.stDeployButton, footer, #MainMenu {{ display:none !important; }}
+
+/* ── Theme toggle button ── */
+.st-key-adm_theme_btn button {{
+  background: var(--adm-surface) !important;
+  border: 1.5px solid var(--adm-border) !important;
+  border-radius: 999px !important;
+  color: var(--adm-ink2) !important;
+  -webkit-text-fill-color: var(--adm-ink2) !important;
+  font-size: .9rem !important;
+  padding: .3rem 1rem !important;
+  height: 2.2rem !important;
+  box-shadow: var(--adm-sh) !important;
+}}
+.st-key-adm_theme_btn button:hover {{
+  border-color: var(--adm-brand) !important;
+  color: var(--adm-ink) !important;
+  -webkit-text-fill-color: var(--adm-ink) !important;
+}}
+
+/* ── KPI cards ── */
+.adm-kpi {{
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--adm-sh);
+  flex: 1; min-width: 130px;
+}}
+.adm-metric-row {{ display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }}
+.adm-kpi-label {{ font-size:.7rem; color:var(--adm-ink3); text-transform:uppercase; letter-spacing:.07em; font-weight:700; }}
+.adm-kpi-value {{ font-size:1.8rem; font-weight:800; color:var(--adm-ink); line-height:1.15; }}
+.adm-kpi-sub   {{ font-size:.75rem; color:var(--adm-ink3); margin-top:.15rem; }}
+
+/* ── Badges ── */
+.adm-badge {{ display:inline-block; padding:2px 8px; border-radius:4px; font-size:.73rem; font-weight:600; }}
+.adm-badge-green  {{ background:#dcfce7; color:#166534; }}
+.adm-badge-red    {{ background:#fee2e2; color:#991b1b; }}
+.adm-badge-yellow {{ background:#fef9c3; color:#854d0e; }}
+.adm-badge-blue   {{ background:#dbeafe; color:#1e40af; }}
+.adm-badge-gray   {{ background:#f3f4f6; color:#374151; }}
+
+/* Dark badge overrides */
+{''.join([
+  '.adm-badge-green{background:#0d4429!important;color:#56d364!important;}',
+  '.adm-badge-red{background:#4d1a1a!important;color:#f97171!important;}',
+  '.adm-badge-yellow{background:#4d3800!important;color:#e3b341!important;}',
+  '.adm-badge-blue{background:#0d2a4d!important;color:#79b8ff!important;}',
+  '.adm-badge-gray{background:#21262d!important;color:#c9d1d9!important;}',
+]) if _adm_theme == 'dark' else ''}
+
+/* ── Activity rows ── */
+.adm-activity-row {{
+  display:flex; align-items:flex-start; gap:.6rem;
+  padding:.5rem .75rem; border-radius:8px; margin:.2rem 0;
+  border-left:3px solid var(--adm-border);
+  transition: background .15s;
+}}
+.adm-activity-row:hover {{ background:var(--adm-sf2); }}
+.adm-ts {{ font-size:.7rem; color:var(--adm-ink3); white-space:nowrap; min-width:110px; }}
+.adm-log-unanswered {{ border-left-color:#f59e0b; }}
+.adm-log-feedback   {{ border-left-color:#3b82f6; }}
+.adm-log-admin      {{ border-left-color:#8b5cf6; }}
+.adm-log-error      {{ border-left-color:#ef4444; }}
+.adm-section-header {{ font-size:1.05rem; font-weight:700; margin:1.2rem 0 .45rem; color:var(--adm-ink); }}
+.adm-source-health  {{ display:flex; gap:.5rem; align-items:center; padding:.35rem 0; }}
 </style>
 """, unsafe_allow_html=True)
+
+# Apply dark mode to Streamlit native components too
+if _adm_theme == "dark":
+    from ui.styles import inject_dark_mode as _adm_dark
+    _adm_dark()
 
 
 def _actor() -> str:
@@ -368,7 +538,30 @@ def _actor() -> str:
 
 
 # ── Main admin UI ──────────────────────────────────────────────────────────────
-st.title("📊 Admin Dashboard")
+# Theme toggle — top right, always visible
+with st.container(key="adm_theme_bar"):
+    _t_spacer, _t_btn_col = st.columns([8, 1])
+    with _t_btn_col:
+        _t_icon = "☀️" if _adm_theme == "dark" else "🌙"
+        if st.button(_t_icon, key="adm_theme_btn", use_container_width=True):
+            st.session_state.adm_theme = "light" if _adm_theme == "dark" else "dark"
+            st.rerun()
+
+st.markdown("""
+<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+  <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#C0392B,#E74C3C);
+       display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(192,57,43,.3)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
+         stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      <rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  </div>
+  <div>
+    <h2 style="margin:0;font-size:1.35rem;font-weight:800;color:var(--adm-ink)">Admin Dashboard</h2>
+    <p style="margin:0;font-size:.75rem;color:var(--adm-ink3)">HR Policy Assistant · Control Panel</p>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
