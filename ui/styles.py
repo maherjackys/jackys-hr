@@ -8,6 +8,7 @@ _DARK_CSS = """
 /* ── Dark mode: CSS variable overrides ── */
 :root {
   --bg-app:               #0D1117;
+  --bg-app-rgb:           13,17,23;
   --bg-surface:           #161B22;
   --bg-surface-2:         #1C2128;
   --bg-surface-hover:     #21262D;
@@ -51,6 +52,12 @@ _DARK_CSS = """
 [data-testid="stAppViewContainer"] {
   background-color: #0D1117 !important;
   color: #E6EDF3 !important;
+}
+
+/* ── Sticky header dark background ── */
+.hr-header {
+  background: rgba(13,17,23,0.88) !important;
+  border-bottom-color: #21262D !important;
 }
 
 /* ── Chat bubbles — explicit overrides (Streamlit injects its own bg) ── */

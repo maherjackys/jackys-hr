@@ -15,6 +15,7 @@
 
   /* App Backgrounds */
   --bg-app:               #F4F5F7;
+  --bg-app-rgb:           244,245,247;  /* for rgba() in sticky header */
   --bg-surface:           #FFFFFF;
   --bg-surface-2:         #F8F9FA;
   --bg-surface-hover:     #F0F2F5;
@@ -158,28 +159,32 @@ html, body, [class*="css"] {
 [data-testid="stAppViewContainer"],
 [data-testid="stMain"],
 .main {
-  overflow-x: hidden !important;
+  overflow-x: clip !important;   /* clip ≠ hidden — doesn't break position:sticky */
   max-width: 100% !important;
 }
 
 .main .block-container {
-  padding-top: 0.25rem !important;
+  padding-top: 0 !important;     /* header handles its own top padding */
   padding-bottom: 5rem !important;
   max-width: 860px !important;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
 /* Hide Streamlit chrome */
 [data-testid="stToolbar"],
+[data-testid="stHeader"],
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
 [data-testid="stActionButton"],
-.stDeployButton,
-.stAppDeployButton,
-#MainMenu,
-footer { display: none !important; }
+[data-testid="stActionButtonIcon"],
+.stDeployButton, .stAppDeployButton,
+[class*="deployButton"], [class*="manageApp"],
+#MainMenu, footer {
+  display: none !important;
+  visibility: hidden !important;
+}
 
 /* ── New Chat button — always secondary pill, never full-width red ── */
 .st-key-btn_new_chat [data-testid="stButton"] > button,
@@ -242,9 +247,17 @@ span  { color: inherit !important; }
    6. HEADER
    ============================================================ */
 .hr-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
   text-align: center;
-  padding: 0.5rem 0 0.15rem;
-  margin: -0.5rem auto 0.15rem;
+  padding: 0.85rem 1rem 0.65rem;
+  margin: 0 -1rem 0.75rem;      /* bleed to container edges */
+  background: rgba(var(--bg-app-rgb, 250,250,250), 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 12px rgba(0,0,0,0.05);
 }
 
 /* Brand pill — text badge with gradient background */
@@ -636,11 +649,24 @@ span  { color: inherit !important; }
 
 [data-testid="stChatMessage"] {
   border-radius: var(--radius-md) !important;
-  padding: 0.9rem 1.1rem !important;
-  margin-bottom: 0.6rem !important;
+  padding: 1rem 1.25rem !important;
+  margin-bottom: 0.75rem !important;
   border: 1px solid var(--border-default) !important;
   box-shadow: var(--shadow-xs) !important;
   animation: msg-in 0.25s ease-out both;
+  max-width: 92% !important;
+  align-self: flex-start !important;
+}
+
+/* Chat column becomes a flex column so align-self works on bubbles */
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]),
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+  display: flex !important;
+}
+
+/* User bubble — push to the right */
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+  margin-left: 8% !important;
 }
 
 [data-testid="stChatMessage"]:nth-child(1) { animation-delay: 0ms; }
@@ -680,12 +706,23 @@ span  { color: inherit !important; }
   color: var(--text-primary) !important;
   font-size: 0.92rem !important;
   line-height: 1.8 !important;
+  /* Let the browser decide direction per paragraph based on first strong char */
+  unicode-bidi: plaintext !important;
+  text-align: start !important;
 }
 
 [data-testid="stChatMessage"] li {
   color: var(--text-primary) !important;
   font-size: 0.92rem !important;
   line-height: 1.7 !important;
+  unicode-bidi: plaintext !important;
+  text-align: start !important;
+}
+
+/* Markdown container — auto direction per block */
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+  unicode-bidi: plaintext !important;
+  direction: auto !important;
 }
 
 [data-testid="stChatMessage"] strong {
@@ -1319,23 +1356,32 @@ header[data-testid="stHeader"] {
   font-family: 'Cairo', 'Noto Sans Arabic', 'Segoe UI', Arial, sans-serif !important;
 }
 
-[dir="rtl"] [data-testid="stChatMessage"],
 [dir="rtl"] [data-testid="stMarkdownContainer"],
-[dir="rtl"] [data-testid="stMarkdownContainer"] p,
 [dir="rtl"] .element-container {
   direction: rtl !important;
   text-align: right !important;
 }
 
+/* Chat messages in RTL: flip avatar side, but let each paragraph self-detect direction */
 [dir="rtl"] [data-testid="stChatMessage"] {
   flex-direction: row-reverse !important;
 }
 
+/* Override the blanket right-align so mixed EN/AR paragraphs render correctly */
 [dir="rtl"] [data-testid="stChatMessage"] p,
-[dir="rtl"] [data-testid="stChatMessage"] span {
+[dir="rtl"] [data-testid="stChatMessage"] span,
+[dir="rtl"] [data-testid="stChatMessage"] li {
+  unicode-bidi: plaintext !important;
+  text-align: start !important;      /* respects the auto-detected direction */
   line-height: 2 !important;
   letter-spacing: 0 !important;
   word-spacing: 1px !important;
+}
+
+[dir="rtl"] [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+  direction: rtl !important;        /* outer container stays RTL as language default */
+  unicode-bidi: plaintext !important;
+  text-align: start !important;
 }
 
 [dir="rtl"] .main-title {
