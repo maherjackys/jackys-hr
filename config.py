@@ -44,12 +44,16 @@ class Settings:
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     # FAISS L2 distance: LOWER = MORE similar.
-    # multilingual-e5-small (normalized) produces on-topic scores ~0.2–0.7;
-    # off-topic scores typically >0.85. Starting values — tune after testing.
-    similarity_threshold: float = 0.85   # reject docs above this (too dissimilar)
+    # Calibrated 2026-07-08 against paraphrase-multilingual-MiniLM-L12-v2
+    # using 20 golden questions (10 EN + 10 AR on-topic, 4 off-topic).
+    #   On-topic  best-score range : 8.55 – 26.42
+    #   Off-topic best-score range : 27.26 – 44.39
+    # Gap between worst on-topic (26.42) and best off-topic (27.26) = 0.84.
+    # threshold set at 27.0 — accepts all on-topic, rejects all off-topic.
+    similarity_threshold: float = 27.0   # reject docs above this (too dissimilar)
     retrieval_k: int = 8                  # fetch more candidates before threshold filter
-    # Show high-confidence expander citation only when score is clearly relevant.
-    min_score_to_show_source: float = 0.75  # expander if score ≤ this; inline badge otherwise
+    # Inline badge for clearly close hits (score <= 16); expander for borderline (16–27).
+    min_score_to_show_source: float = 16.0  # expander if score <= this; inline badge otherwise
 
     # ── Text chunking ─────────────────────────────────────────────────────────
     # Larger chunks preserve policy context that spans multiple sentences.
