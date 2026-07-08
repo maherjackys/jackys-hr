@@ -596,7 +596,8 @@ span  { color: inherit !important; }
   overflow: visible !important;
 }
 
-/* Transparent click-shield — extends above button to cover the card */
+/* Transparent click-shield — extends above button to cover the card.
+   calc(100vh / 4) is a reasonable upper bound for any card height. */
 [data-testid="stColumn"] [data-testid="stBaseButton-primary"] > button::before,
 [data-testid="stColumn"] [data-testid="stBaseButton-secondary"] > button::before,
 [data-testid="stColumn"] [data-testid="stButton"] > button::before {
@@ -606,7 +607,7 @@ span  { color: inherit !important; }
   bottom: 100% !important;
   left: -12px !important;
   right: -12px !important;
-  height: 220px !important;
+  height: clamp(180px, 25vh, 320px) !important;
   cursor: pointer !important;
 }
 
@@ -649,6 +650,7 @@ span  { color: inherit !important; }
   content: '●';
   color: var(--brand-primary);
   margin-right: 6px;
+  margin-left: 0;          /* RTL override below zeroes right and sets left */
   animation: dot-pulse 3s ease-in-out infinite;
 }
 
@@ -699,9 +701,10 @@ span  { color: inherit !important; }
   display: flex !important;
 }
 
-/* User bubble — push to the right */
+/* User bubble — push to the right (mirrored in RTL below) */
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   margin-left: 8% !important;
+  margin-right: 0 !important;
 }
 
 [data-testid="stChatMessage"]:nth-child(1) { animation-delay: 0ms; }
@@ -1100,6 +1103,14 @@ span  { color: inherit !important; }
   box-shadow: 0 2px 8px rgba(192,57,43,0.15) !important;
 }
 
+/* Focus-visible: keyboard accessibility on ctrl buttons */
+.st-key-btn_theme button:focus-visible,
+.st-key-btn_lang  button:focus-visible {
+  outline: 2px solid var(--brand-primary) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px rgba(192,57,43,0.18) !important;
+}
+
 /* ── Primary buttons (✓ Active, Yes/No dialogs) — always white text ── */
 [data-testid="stBaseButton-primary"] > button,
 [data-testid="stBaseButton-primary"] > button p,
@@ -1233,8 +1244,15 @@ header[data-testid="stHeader"] {
 
 /* ── Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  .main .block-container { padding: 0.75rem !important; }
-  .hr-header              { padding: 1rem 0.75rem 0.75rem; }
+  :root { --header-h: 175px; }
+  /* Keep top-padding from fixed header — never override it to a flat value */
+  .main .block-container {
+    padding-top: var(--header-h, 175px) !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-bottom: 1rem !important;
+  }
+  .hr-header              { padding: 0.75rem 0.75rem 0.5rem; }
   .hr-header-icon         { font-size: 2rem; }
   .main-title             { font-size: 1.35rem !important; }
   .sub-title              { font-size: 0.8rem !important; }
@@ -1396,8 +1414,16 @@ header[data-testid="stHeader"] {
   font-family: 'Cairo', 'Noto Sans Arabic', 'Segoe UI', Arial, sans-serif !important;
 }
 
-[dir="rtl"] [data-testid="stMarkdownContainer"],
-[dir="rtl"] .element-container {
+/* RTL: only text-containing markdown gets blanket right-align;
+   .element-container is too broad (affects metric tiles, buttons, dataframes) */
+[dir="rtl"] [data-testid="stMarkdownContainer"] {
+  direction: rtl !important;
+  text-align: right !important;
+}
+/* Scope .element-container RTL only to its text children */
+[dir="rtl"] .element-container p,
+[dir="rtl"] .element-container label,
+[dir="rtl"] .element-container span:not([data-testid]) {
   direction: rtl !important;
   text-align: right !important;
 }
@@ -1446,6 +1472,16 @@ header[data-testid="stHeader"] {
 
 /* Active badge */
 [dir="rtl"] .active-source-badge { direction: rtl; text-align: right; }
+[dir="rtl"] .active-source-badge::before {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+/* User bubble — mirror margin to push right in RTL */
+[dir="rtl"] [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+  margin-right: 8% !important;
+  margin-left: 0 !important;
+}
 
 /* Chat message accent border — flip left→right in RTL */
 [dir="rtl"] [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
@@ -1577,7 +1613,7 @@ header[data-testid="stHeader"] {
 .mini-header {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 999;
+  z-index: 998;             /* below .hr-header (999) so it never occludes it */
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-default);
   padding: 8px 20px;

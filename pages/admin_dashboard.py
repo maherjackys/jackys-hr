@@ -430,17 +430,24 @@ _ADM_LIGHT = """
 """
 _ADM_DARK = """
 :root {
-  --adm-bg:       #0D1117;
-  --adm-surface:  #161B22;
-  --adm-sf2:      #1C2128;
-  --adm-border:   #30363D;
-  --adm-ink:      #E6EDF3;
-  --adm-ink2:     #8B949E;
-  --adm-ink3:     #7D8590;
-  --adm-brand:    #FF7060;
-  --adm-brand-l:  #FF9080;
-  --adm-sh:       0 1px 4px rgba(0,0,0,.3);
-  --adm-sh2:      0 4px 16px rgba(0,0,0,.5);
+  --adm-bg:             #0D1117;
+  --adm-surface:        #161B22;
+  --adm-sf2:            #1C2128;
+  --adm-border:         #30363D;
+  --adm-ink:            #E6EDF3;
+  --adm-ink2:           #8B949E;
+  --adm-ink3:           #7D8590;
+  --adm-brand:          #FF7060;
+  --adm-brand-l:        #FF9080;
+  --adm-sh:             0 1px 4px rgba(0,0,0,.3);
+  --adm-sh2:            0 4px 16px rgba(0,0,0,.5);
+  /* Sidebar tokens — kept identical (sidebar is always dark) */
+  --adm-sidebar:        #1F2937;
+  --adm-sidebar-ink:    #F9FAFB;
+  --adm-sidebar-ink2:   #D1D5DB;
+  --adm-sidebar-border: #374151;
+  --adm-sidebar-hover:  rgba(255,255,255,.07);
+  --adm-sidebar-active: rgba(255,112,96,.18);
 }
 """
 _adm_token_css = _ADM_DARK if _adm_theme == "dark" else _ADM_LIGHT
@@ -666,14 +673,31 @@ footer, #MainMenu,
   padding: 1rem 1.25rem;
   box-shadow: var(--adm-sh);
   flex: 1; min-width: 130px;
+  transition: box-shadow .18s, transform .18s;
 }}
-.adm-metric-row {{ display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }}
+.adm-kpi:hover {{ box-shadow: var(--adm-sh2); transform: translateY(-1px); }}
+.adm-metric-row {{
+  display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0;
+}}
+/* Stack KPIs on very narrow panels */
+@media (max-width: 540px) {{
+  .adm-metric-row {{ gap: .6rem; }}
+  .adm-kpi {{ min-width: calc(50% - .6rem); flex: 0 0 calc(50% - .6rem); }}
+}}
 .adm-kpi-label {{ font-size:.7rem; color:var(--adm-ink3); text-transform:uppercase; letter-spacing:.07em; font-weight:700; }}
-.adm-kpi-value {{ font-size:1.8rem; font-weight:800; color:var(--adm-ink); line-height:1.15; }}
+.adm-kpi-value {{
+  font-size: 1.8rem; font-weight: 800; color: var(--adm-ink); line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}}
 .adm-kpi-sub   {{ font-size:.75rem; color:var(--adm-ink3); margin-top:.15rem; }}
 
-/* ── Badges ── */
-.adm-badge {{ display:inline-block; padding:2px 8px; border-radius:4px; font-size:.73rem; font-weight:600; }}
+/* ── Badges — radius unified with card system ── */
+.adm-badge {{
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 8px;
+  font-size: .73rem; font-weight: 600;
+  letter-spacing: .01em;
+}}
 .adm-badge-green  {{ background:#dcfce7; color:#166534; }}
 .adm-badge-red    {{ background:#fee2e2; color:#991b1b; }}
 .adm-badge-yellow {{ background:#fef9c3; color:#854d0e; }}
@@ -691,19 +715,32 @@ footer, #MainMenu,
 
 /* ── Activity rows ── */
 .adm-activity-row {{
-  display:flex; align-items:flex-start; gap:.6rem;
-  padding:.5rem .75rem; border-radius:8px; margin:.2rem 0;
-  border-left:3px solid var(--adm-border);
+  display: flex; align-items: flex-start; gap: .6rem;
+  padding: .5rem .75rem; border-radius: 8px; margin: .2rem 0;
+  border-left: 3px solid var(--adm-border);
   transition: background .15s;
 }}
-.adm-activity-row:hover {{ background:var(--adm-sf2); }}
-.adm-ts {{ font-size:.7rem; color:var(--adm-ink3); white-space:nowrap; min-width:110px; }}
+.adm-activity-row:hover {{ background: var(--adm-sf2); }}
+/* Timestamp: flex-shrink allowed on narrow screens; min-width reduced */
+.adm-ts {{
+  font-size: .7rem; color: var(--adm-ink3);
+  white-space: nowrap; min-width: 80px; flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}}
 .adm-log-unanswered {{ border-left-color:#f59e0b; }}
 .adm-log-feedback   {{ border-left-color:#3b82f6; }}
 .adm-log-admin      {{ border-left-color:#8b5cf6; }}
 .adm-log-error      {{ border-left-color:#ef4444; }}
 .adm-section-header {{ font-size:1.05rem; font-weight:700; margin:1.2rem 0 .45rem; color:var(--adm-ink); }}
 .adm-source-health  {{ display:flex; gap:.5rem; align-items:center; padding:.35rem 0; }}
+
+/* ── Focus-visible: keyboard accessibility ── */
+.st-key-adm_lang_btn button:focus-visible,
+.st-key-adm_theme_btn_sb button:focus-visible,
+[data-testid="stSidebar"] button:focus-visible {{
+  outline: 2px solid var(--adm-brand) !important;
+  outline-offset: 2px !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
