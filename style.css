@@ -174,8 +174,40 @@ html, body, [class*="css"] {
 /* Hide Streamlit chrome */
 [data-testid="stToolbar"],
 [data-testid="manage-app-button"],
+[data-testid="stAppDeployButton"],
+[data-testid="stActionButton"],
 .stDeployButton,
-#MainMenu { display: none !important; }
+.stAppDeployButton,
+#MainMenu,
+footer { display: none !important; }
+
+/* ── New Chat button — always secondary pill, never full-width red ── */
+.st-key-btn_new_chat [data-testid="stButton"] > button,
+.st-key-btn_new_chat button {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  border: 1.5px solid var(--border-default) !important;
+  border-radius: var(--radius-pill) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 5px 14px !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+.st-key-btn_new_chat [data-testid="stButton"] > button:hover,
+.st-key-btn_new_chat button:hover {
+  border-color: var(--brand-primary) !important;
+  color: var(--text-brand) !important;
+  -webkit-text-fill-color: var(--text-brand) !important;
+  background: var(--bg-badge) !important;
+  transform: none !important;
+}
+[data-theme="dark"] .st-key-btn_new_chat button {
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  border-color: var(--border-default) !important;
+}
 
 /* Scoped theme transitions */
 .source-card,
@@ -1524,11 +1556,12 @@ header[data-testid="stHeader"] {
   font-weight: 500 !important;
   padding: 6px 14px !important;
   white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
   text-align: center !important;
   box-shadow: var(--shadow-xs) !important;
   min-height: 36px !important;
+  width: max-content !important;
   transform: none !important;
 }
 [class*="st-key-sugg_row"] [data-testid="stButton"] > button:hover {
@@ -1677,12 +1710,38 @@ header[data-testid="stHeader"] {
     touch-action: manipulation !important;
   }
 
-  /* ── Suggestion chips row ── */
+  /* ── Suggestion chips — true horizontal scroll, no wrap, no truncation ── */
   .suggestions-label { font-size: 0.68rem !important; margin: 0.5rem 0 0.4rem !important; }
+
+  /* Force the chips row to scroll, not wrap */
+  [class*="st-key-sugg_row"] [data-testid="stHorizontalBlock"] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 0.4rem !important;
+    padding: 2px 0 4px !important;
+    /* stretch to screen edges */
+    margin-left: -0.9rem !important;
+    margin-right: -0.9rem !important;
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+  }
+  [class*="st-key-sugg_row"] [data-testid="stHorizontalBlock"]::-webkit-scrollbar { display: none !important; }
+  [class*="st-key-sugg_row"] [data-testid="stColumn"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: fit-content !important;
+    padding: 0 !important;
+  }
   [class*="st-key-sugg_row"] [data-testid="stButton"] > button {
     font-size: 0.73rem !important;
-    padding: 5px 10px !important;
-    min-height: 32px !important;
+    padding: 5px 12px !important;
+    min-height: 34px !important;
+    white-space: nowrap !important;
+    width: max-content !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
   }
 
   /* ── Chat messages ── */
