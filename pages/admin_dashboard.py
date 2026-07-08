@@ -243,6 +243,66 @@ if not st.session_state.get("admin_authed"):
     st.stop()
 
 
+# ── Admin language state ───────────────────────────────────────────────────────
+if "adm_lang" not in st.session_state:
+    st.session_state.adm_lang = "en"
+_adm_lang = st.session_state.adm_lang
+_is_ar    = (_adm_lang == "ar")
+
+# ── UI string translations ─────────────────────────────────────────────────────
+_UI_AR: dict[str, str] = {
+    "Query Logs":              "سجلات الاستعلامات",
+    "Manage Documents":        "إدارة المستندات",
+    "Add / Manage Sources":    "إضافة المصادر وإدارتها",
+    "Settings":                "الإعدادات",
+    "User Management":         "إدارة المستخدمين",
+    "Roles & Permissions":     "الأدوار والصلاحيات",
+    "Account":                 "الحساب",
+    "Debug":                   "التشخيص",
+    "Overview":                "نظرة عامة",
+    "Analytics":               "التحليلات",
+    "Audit Trail":             "سجل التدقيق",
+    "Security":                "الأمان",
+    "Feature Flags":           "ميزات النظام",
+    "System Health":           "صحة النظام",
+    "Email Templates":         "قوالب البريد الإلكتروني",
+    "API Keys":                "مفاتيح API",
+    "Notifications":           "الإشعارات",
+    "Search query text":       "ابحث في النصوص",
+    "Create Source":           "إنشاء مصدر",
+    "Delete Source":           "حذف مصدر",
+    "Password Protection":     "حماية بكلمة مرور",
+    "Login mode":              "طريقة الدخول",
+    "Sign in":                 "تسجيل الدخول",
+    "Forgot password":         "نسيت كلمة المرور",
+}
+
+def _t(key: str) -> str:
+    """Return Arabic translation if language is Arabic, else the key itself."""
+    return _UI_AR.get(key, key) if _is_ar else key
+
+
+# ── Nav translations ───────────────────────────────────────────────────────────
+_NAV_AR: dict[str, str] = {
+    "overview":      "🏠 نظرة عامة",
+    "analytics":     "📊 التحليلات",
+    "logs":          "📋 السجلات",
+    "audit":         "🔍 سجل التدقيق",
+    "security":      "🛡️ الأمان",
+    "docs":          "📁 المستندات",
+    "add":           "🗄️ المصادر",
+    "settings":      "⚙️ الإعدادات",
+    "users":         "👥 المستخدمون",
+    "roles":         "🔐 الأدوار",
+    "features":      "🚩 ميزات النظام",
+    "syshealth":     "💻 صحة النظام",
+    "emailtmpls":    "📧 قوالب البريد",
+    "apikeys":       "🔑 مفاتيح API",
+    "notifications": "🔔 الإشعارات",
+    "account":       "🔑 الحساب",
+    "debug":         "🐛 التشخيص",
+}
+
 # ── Navigation (sidebar) ──────────────────────────────────────────────────────
 
 from core.rbac import has_permission as _hp  # noqa: E402
@@ -269,15 +329,36 @@ _TABS_DEF = [
 
 _vis_defs   = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
                if perm is None or _hp(perm)]
-_nav_labels = [lbl for lbl, _, _ in _vis_defs]
+# Use Arabic labels when language is Arabic
+_nav_labels = [(_NAV_AR.get(key, lbl) if _is_ar else lbl) for lbl, key, _ in _vis_defs]
 _nav_keys   = [key for _, key, _ in _vis_defs]
 
 with st.sidebar:
     _logged_user = st.session_state.get("admin_username", "admin")
     _logged_role = st.session_state.get("admin_role", "admin")
     _ROLE_BADGE  = {"super_admin": "🔴", "admin": "🟠", "moderator": "🟡", "user": "🟢"}
+
+    # ── Language + Theme toggles ───────────────────────────────────────────────
+    _sb_c1, _sb_c2 = st.columns(2)
+    with _sb_c1:
+        _lang_icon = "🇸🇦 AR" if not _is_ar else "🇬🇧 EN"
+        if st.button(_lang_icon, key="adm_lang_btn", use_container_width=True,
+                     help="تبديل اللغة / Switch language"):
+            st.session_state.adm_lang = "en" if _is_ar else "ar"
+            st.rerun()
+    with _sb_c2:
+        _adm_theme_tmp = st.session_state.get("adm_theme", "light")
+        _sb_theme_icon = "☀️" if _adm_theme_tmp == "dark" else "🌙"
+        if st.button(_sb_theme_icon, key="adm_theme_btn_sb", use_container_width=True,
+                     help="تبديل الوضع / Toggle theme"):
+            st.session_state.adm_theme = "light" if _adm_theme_tmp == "dark" else "dark"
+            st.rerun()
+    st.divider()
+
+    # ── User info ─────────────────────────────────────────────────────────────
+    _signin_txt = "مسجل الدخول بـ" if _is_ar else "Signed in as"
     st.caption(
-        f"Signed in as **{_logged_user}**  \n"
+        f"{_signin_txt} **{_logged_user}**  \n"
         f"{_ROLE_BADGE.get(_logged_role, '⚪')} `{_logged_role}`"
     )
     # Notification badge
@@ -285,9 +366,10 @@ with st.sidebar:
         from core.notifications import get_unread_count as _get_unread
         _unread_n = _get_unread()
         if _unread_n > 0:
+            _notif_txt = f"🔔 {_unread_n} إشعار غير مقروء" if _is_ar else f'🔔 {_unread_n} unread notification{"s" if _unread_n != 1 else ""}'
             st.markdown(
                 f'<span class="adm-badge adm-badge-red" style="margin:.2rem 0;display:inline-block">'
-                f'🔔 {_unread_n} unread notification{"s" if _unread_n != 1 else ""}</span>',
+                f'{_notif_txt}</span>',
                 unsafe_allow_html=True,
             )
     except Exception:
@@ -308,7 +390,8 @@ with st.sidebar:
     else:
         _sel_nav = ""
     st.divider()
-    if st.button("🚪 Logout", use_container_width=True, key="logout_btn"):
+    _logout_txt = "🚪 تسجيل الخروج" if _is_ar else "🚪 Logout"
+    if st.button(_logout_txt, use_container_width=True, key="logout_btn"):
         from core.auth import invalidate_session
         invalidate_session(st.session_state.get("admin_session_token", ""))
         _delete_session_cookie()
@@ -459,19 +542,24 @@ p, li {{ color: var(--adm-ink2) !important; }}
 [data-testid="stActionButton"],
 .stDeployButton, footer, #MainMenu {{ display:none !important; }}
 
-/* ── Theme toggle button ── */
-.st-key-adm_theme_btn button {{
+/* ── Sidebar control buttons (lang + theme) ── */
+.st-key-adm_lang_btn button,
+.st-key-adm_theme_btn button,
+.st-key-adm_theme_btn_sb button {{
   background: var(--adm-surface) !important;
   border: 1.5px solid var(--adm-border) !important;
   border-radius: 999px !important;
   color: var(--adm-ink2) !important;
   -webkit-text-fill-color: var(--adm-ink2) !important;
-  font-size: .9rem !important;
-  padding: .3rem 1rem !important;
-  height: 2.2rem !important;
+  font-size: .82rem !important;
+  padding: .25rem .6rem !important;
+  height: 2rem !important;
   box-shadow: var(--adm-sh) !important;
+  font-family: 'Cairo','Inter',sans-serif !important;
 }}
-.st-key-adm_theme_btn button:hover {{
+.st-key-adm_lang_btn button:hover,
+.st-key-adm_theme_btn button:hover,
+.st-key-adm_theme_btn_sb button:hover {{
   border-color: var(--adm-brand) !important;
   color: var(--adm-ink) !important;
   -webkit-text-fill-color: var(--adm-ink) !important;
@@ -531,6 +619,24 @@ if _adm_theme == "dark":
     from ui.styles import inject_dark_mode as _adm_dark
     _adm_dark()
 
+# Apply RTL when Arabic
+if _is_ar:
+    st.markdown("""
+<style>
+html, body, [data-testid="stApp"], .main, .block-container,
+[data-testid="stSidebar"] { direction: rtl !important; text-align: right !important; }
+[data-testid="stSidebar"] { border-right: none !important; border-left: 1px solid var(--adm-border) !important; }
+.adm-activity-row { flex-direction: row-reverse; border-left: none !important; border-right: 3px solid var(--adm-border); }
+.adm-log-unanswered { border-right-color:#f59e0b !important; border-left:none !important; }
+.adm-log-feedback   { border-right-color:#3b82f6 !important; border-left:none !important; }
+.adm-log-admin      { border-right-color:#8b5cf6 !important; border-left:none !important; }
+.adm-log-error      { border-right-color:#ef4444 !important; border-left:none !important; }
+[data-testid="stRadio"] label { text-align: right !important; }
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea { direction: rtl; text-align: right; }
+</style>
+""", unsafe_allow_html=True)
+
 
 def _actor() -> str:
     """Return the currently logged-in admin's username for audit logging."""
@@ -538,17 +644,12 @@ def _actor() -> str:
 
 
 # ── Main admin UI ──────────────────────────────────────────────────────────────
-# Theme toggle — top right, always visible
-with st.container(key="adm_theme_bar"):
-    _t_spacer, _t_btn_col = st.columns([8, 1])
-    with _t_btn_col:
-        _t_icon = "☀️" if _adm_theme == "dark" else "🌙"
-        if st.button(_t_icon, key="adm_theme_btn", use_container_width=True):
-            st.session_state.adm_theme = "light" if _adm_theme == "dark" else "dark"
-            st.rerun()
+_dash_title = "لوحة تحكم المدير" if _is_ar else "Admin Dashboard"
+_dash_sub   = "مساعد سياسات الموارد البشرية · لوحة التحكم" if _is_ar else "HR Policy Assistant · Control Panel"
 
-st.markdown("""
-<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+st.markdown(f"""
+<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;
+            {'flex-direction:row-reverse' if _is_ar else ''}">
   <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#C0392B,#E74C3C);
        display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(192,57,43,.3)">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
@@ -556,9 +657,9 @@ st.markdown("""
       <rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
       <rect x="14" y="14" width="7" height="7" rx="1"/></svg>
   </div>
-  <div>
-    <h2 style="margin:0;font-size:1.35rem;font-weight:800;color:var(--adm-ink)">Admin Dashboard</h2>
-    <p style="margin:0;font-size:.75rem;color:var(--adm-ink3)">HR Policy Assistant · Control Panel</p>
+  <div style="{'text-align:right' if _is_ar else ''}">
+    <h2 style="margin:0;font-size:1.35rem;font-weight:800;color:var(--adm-ink)">{_dash_title}</h2>
+    <p style="margin:0;font-size:.75rem;color:var(--adm-ink3)">{_dash_sub}</p>
   </div>
 </div>
 """, unsafe_allow_html=True)
