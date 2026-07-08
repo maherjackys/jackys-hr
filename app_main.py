@@ -189,23 +189,6 @@ else:
     )
 
 # ── Control bar ───────────────────────────────────────────────────────────────
-with st.container(key="ctrl_bar"):
-    _c1, _c2 = st.columns(2)
-    with _c1:
-        _theme_icon = "☀️" if _theme == "dark" else "🌙"
-        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
-            st.session_state.theme = "light" if _theme == "dark" else "dark"
-            st.rerun()
-    with _c2:
-        _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
-        if st.button(_lang_label, key="btn_lang", use_container_width=True):
-            st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
-            st.session_state["_lang_manual"] = True
-            st.rerun()
-
-# ── Page header ───────────────────────────────────────────────────────────────
-# All text is rendered server-side using t() so language switches take effect
-# immediately on rerun — no client-side JS translation needed.
 import html as _html_esc
 _h_title    = _html_esc.escape(t("app_title",    _ui_lang))
 _h_subtitle = _html_esc.escape(t("app_subtitle", _ui_lang))
@@ -246,6 +229,20 @@ st.markdown(f"""
 </script>
 """, unsafe_allow_html=True)
 
+
+with st.container(key="ctrl_bar"):
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        _theme_icon = "☀️" if _theme == "dark" else "🌙"
+        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
+            st.session_state.theme = "light" if _theme == "dark" else "dark"
+            st.rerun()
+    with _c2:
+        _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
+        if st.button(_lang_label, key="btn_lang", use_container_width=True):
+            st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
+            st.session_state["_lang_manual"] = True
+            st.rerun()
 # ── Stats bar ─────────────────────────────────────────────────────────────────
 _s_ml_t  = _html_esc.escape(t("stat_ml_t",  _ui_lang))
 _s_ml_d  = _html_esc.escape(t("stat_ml_d",  _ui_lang))
@@ -662,7 +659,7 @@ st.markdown(f"""
     <span class="hr-footer-dot">·</span>
     <span>Powered by <strong>Groq</strong> + <strong>LangChain</strong></span>
     <span class="hr-footer-dot">·</span>
-    <span>v7.4 · logs: {_logging_mode()}</span>
+    <span>v7.5 · logs: {_logging_mode()}</span>
   </div>
 </div>
 """, unsafe_allow_html=True)

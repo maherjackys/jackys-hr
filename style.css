@@ -2114,3 +2114,52 @@ button[title*="sidebar" i] {
   margin: 0 !important;
   overflow: hidden !important;
 }
+
+/* v7.5: show app controls as real in-page buttons instead of clipped fixed
+   controls in the top corner. */
+.st-key-ctrl_bar {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 1 !important;
+  display: block !important;
+  width: 132px !important;
+  height: auto !important;
+  margin: 0 auto 0.75rem !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+}
+
+.st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 0.45rem !important;
+  width: 132px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.st-key-ctrl_bar [data-testid="stColumn"] {
+  width: 62px !important;
+  flex: 0 0 62px !important;
+  min-width: 62px !important;
+  padding: 0 !important;
+}
+
+.st-key-btn_theme button,
+.st-key-btn_lang button {
+  width: 62px !important;
+  min-width: 62px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.08) !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+}
