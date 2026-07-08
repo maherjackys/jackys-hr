@@ -78,16 +78,19 @@ _DARK_CSS = """
   border-color: #30363D !important;
 }
 
-/* ── Chat input outer container ── */
+/* ── Chat input outer container — aggressive override ── */
 [data-testid="stBottom"],
-[data-testid="stBottom"] > div,
-[data-testid="stBottom"] > div > div {
+[data-testid="stBottom"] > *,
+[data-testid="stBottom"] > * > *,
+[data-testid="stBottom"] > * > * > *,
+[data-testid="stBottom"] section {
   background-color: #0D1117 !important;
-  border-top: 1px solid #21262D !important;
 }
-[data-testid="stChatInput"] {
-  background-color: #0D1117 !important;
-  border-top: 1px solid #30363D !important;
+[data-testid="stChatInput"],
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] > div > div {
+  background-color: #161B22 !important;
+  border-color: #30363D !important;
 }
 [data-testid="stChatInput"] .e1vtqrcf1 {
   background-color: #161B22 !important;

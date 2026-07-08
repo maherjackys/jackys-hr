@@ -1559,13 +1559,151 @@ header[data-testid="stHeader"] {
 /* ============================================================
    25. BOTTOM CHAT INPUT CONTAINER
    Streamlit wraps st.chat_input in [data-testid="stBottom"].
-   Without this, the container keeps its own white bg in dark mode.
    ============================================================ */
 [data-testid="stBottom"],
 [data-testid="stBottom"] > div,
-[data-testid="stBottom"] > div > div {
+[data-testid="stBottom"] > div > div,
+[data-testid="stBottom"] section,
+[data-testid="stBottom"] > div > div > div {
   background: var(--bg-app) !important;
-  border-top: 1px solid var(--border-subtle) !important;
+}
+/* The pill input wrapper itself */
+[data-testid="stChatInput"],
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] > div > div {
+  background: var(--bg-input) !important;
+  border-color: var(--border-input) !important;
+}
+
+/* ============================================================
+   26. MOBILE — comprehensive fixes (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ── Kill horizontal overflow globally ── */
+  html, body,
+  [data-testid="stApp"],
+  [data-testid="stMain"],
+  [data-testid="stAppViewContainer"],
+  .main, .main .block-container,
+  [data-testid="stVerticalBlock"],
+  [data-testid="stHorizontalBlock"] {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── Container padding ── */
+  .main .block-container {
+    padding: 0.6rem 0.9rem 1rem !important;
+    width: 100% !important;
+  }
+
+  /* ── Header — compact ── */
+  .hr-header          { padding: 0.4rem 0 0.1rem !important; margin-bottom: 0.1rem !important; }
+  .hr-header-icon     { width: 36px !important; height: 36px !important; }
+  .hr-brand-pill      { font-size: 0.62rem !important; padding: 0.35rem 0.7rem !important; margin-bottom: 0.5rem !important; }
+  .main-title         { font-size: 1.3rem !important; letter-spacing: -0.5px !important; }
+  .sub-title          { font-size: 0.75rem !important; max-width: 95% !important; }
+
+  /* ── Stats bar — wrap ── */
+  .hr-stats-bar       { gap: 0.3rem !important; margin-bottom: 0.6rem !important; }
+  .hr-stat-item       { padding: 0.28rem 0.65rem !important; }
+  .hr-stat-icon       { font-size: 0.85rem !important; }
+  .hr-stat-text strong{ font-size: 0.7rem !important; }
+
+  /* ── Source label ── */
+  .source-selector-label { font-size: 0.62rem !important; margin-bottom: 0.5rem !important; }
+
+  /* ── Source picker — force single column, full-width ── */
+  .st-key-src_picker [data-testid="stHorizontalBlock"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  .st-key-src_picker [data-testid="stColumn"] {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+  }
+  /* Remove ::before click-shield on mobile — wrong tap targets on stacked layout */
+  .st-key-src_picker [data-testid="stButton"] > button::before,
+  .st-key-src_picker [data-testid="stBaseButton-primary"] > button::before,
+  .st-key-src_picker [data-testid="stBaseButton-secondary"] > button::before {
+    display: none !important;
+  }
+  .st-key-src_picker [data-testid="stButton"] > button,
+  .st-key-src_picker [data-testid="stBaseButton-primary"] > button,
+  .st-key-src_picker [data-testid="stBaseButton-secondary"] > button {
+    min-height: 46px !important;
+    touch-action: manipulation !important;
+    width: 100% !important;
+  }
+  /* Source card full width */
+  .source-card { padding: 0.8rem 0.9rem !important; }
+  .source-card-title { font-size: 0.875rem !important; }
+  .source-card-desc  { font-size: 0.7rem !important; }
+
+  /* ── Active badge + New Chat row ── */
+  .active-source-badge { font-size: 0.72rem !important; padding: 4px 12px !important; }
+
+  /* ── Ctrl bar (theme + lang) — top right, auto width ── */
+  .st-key-ctrl_bar {
+    position: sticky !important;
+    top: 0.25rem !important;
+    z-index: 99999 !important;
+    justify-content: flex-end !important;
+  }
+  .st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    gap: 0.35rem !important;
+    width: auto !important;
+  }
+  .st-key-ctrl_bar [data-testid="stColumn"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+  }
+  .st-key-btn_theme button,
+  .st-key-btn_lang  button {
+    min-width: 2.8rem !important;
+    min-height: 44px !important;
+    font-size: 0.82rem !important;
+    padding: 0 0.9rem !important;
+    touch-action: manipulation !important;
+  }
+
+  /* ── Suggestion chips row ── */
+  .suggestions-label { font-size: 0.68rem !important; margin: 0.5rem 0 0.4rem !important; }
+  [class*="st-key-sugg_row"] [data-testid="stButton"] > button {
+    font-size: 0.73rem !important;
+    padding: 5px 10px !important;
+    min-height: 32px !important;
+  }
+
+  /* ── Chat messages ── */
+  [data-testid="stChatMessage"] { padding: 0.7rem 0.85rem !important; }
+  [data-testid="stChatMessage"] p,
+  [data-testid="stChatMessage"] span { font-size: 0.88rem !important; line-height: 1.75 !important; }
+
+  /* ── Footer compact ── */
+  .hr-footer { font-size: 0.65rem !important; padding: 1rem 0 calc(0.5rem + env(safe-area-inset-bottom)) !important; }
+  .hr-footer-dot { margin: 0 0.3rem !important; }
+
+  /* ── Touch targets ── */
+  [data-testid="stBaseButton-primary"],
+  [data-testid="stBaseButton-secondary"] {
+    min-height: 44px !important;
+  }
+
+  /* ── Safe area (iPhone notch) ── */
+  [data-testid="stBottom"] {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
 }
 
 /* ── Feedback thumbs ──────────────────────────────────────────────────────── */
