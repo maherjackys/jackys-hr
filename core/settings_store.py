@@ -132,6 +132,51 @@ def set_password_protection_enabled(enabled: bool) -> str | None:
         return "Failed to save settings. Check server logs."
 
 
+_SOCIAL_KEY = "social_links"
+_SOCIAL_PLATFORMS = ["linkedin", "twitter", "instagram", "facebook", "youtube", "whatsapp"]
+_SOCIAL_SLUG_RE = re.compile(r"^https?://")
+
+
+@st.cache_data(ttl=60)
+def get_social_links() -> dict[str, str]:
+    """Return social media URLs from Supabase. Empty string means hidden."""
+    try:
+        c = _client()
+        if c is None:
+            return {p: "" for p in _SOCIAL_PLATFORMS}
+        resp = c.table("app_settings").select("value").eq("key", _SOCIAL_KEY).execute()
+        if resp.data:
+            val = resp.data[0]["value"]
+            if isinstance(val, dict):
+                return {p: str(val.get(p, "")) for p in _SOCIAL_PLATFORMS}
+    except Exception as exc:
+        logger.warning("settings_store: get_social_links failed (%s).", exc)
+    return {p: "" for p in _SOCIAL_PLATFORMS}
+
+
+def set_social_links(links: dict[str, str]) -> str | None:
+    """Persist social media URLs. Empty string is allowed (hides the icon)."""
+    sanitized = {}
+    for p in _SOCIAL_PLATFORMS:
+        url = str(links.get(p, "")).strip()
+        if url and not _SOCIAL_SLUG_RE.match(url):
+            return f"Invalid URL for {p}: must start with http:// or https://"
+        sanitized[p] = url
+    try:
+        c = _client()
+        if c is None:
+            return "Supabase not available — changes not saved."
+        c.table("app_settings").upsert(
+            {"key": _SOCIAL_KEY, "value": sanitized},
+            on_conflict="key",
+        ).execute()
+        get_social_links.clear()
+        return None
+    except Exception as exc:
+        logger.warning("settings_store: set_social_links failed (%s).", exc)
+        return "Failed to save social links. Check server logs."
+
+
 def register_source(key: str) -> str | None:
     """Append *key* to enabled_sources in Supabase (idempotent).
 

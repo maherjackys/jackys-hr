@@ -106,16 +106,12 @@ def _log_feedback(vote: str, source: str, query: str, answer: str, best_score: f
     )
 
 
-# ── Social media links ────────────────────────────────────────────────────────
-# Fill in your organization's profile URLs. Leave empty ("") to hide that icon.
-_SOCIAL: dict[str, str] = {
-    "linkedin":  "",   # https://linkedin.com/company/your-company
-    "twitter":   "",   # https://x.com/yourhandle
-    "instagram": "",   # https://instagram.com/yourhandle
-    "facebook":  "",   # https://facebook.com/yourpage
-    "youtube":   "",   # https://youtube.com/@yourchannel
-    "whatsapp":  "",   # https://wa.me/971501234567
-}
+# ── Social media links — loaded from Supabase (manage via Admin Dashboard → Settings) ──
+try:
+    from core.settings_store import get_social_links as _get_social
+    _SOCIAL: dict[str, str] = _get_social()
+except Exception:
+    _SOCIAL = {p: "" for p in ["linkedin", "twitter", "instagram", "facebook", "youtube", "whatsapp"]}
 
 def _safe_url(url: str) -> str:
     """Only allow http/https social links — prevents javascript: injection."""

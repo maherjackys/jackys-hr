@@ -537,6 +537,7 @@ p, li {{ color: var(--adm-ink2) !important; }}
 
 /* ── Hide Streamlit chrome ── */
 [data-testid="stToolbar"],
+[data-testid="stHeader"],
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
 [data-testid="stActionButton"],
@@ -1330,6 +1331,49 @@ if _sel_nav == "settings":
                                         st.rerun()
                 except Exception as exc:
                     st.error(f"Index management error: {exc}")
+
+            st.divider()
+
+            # ── Social Media Links ────────────────────────────────────────────
+            st.subheader("🌐 Social Media Links")
+            st.caption(
+                "Set the organization's social media profile URLs. "
+                "Leave a field empty to hide that icon in the employee app footer."
+            )
+            try:
+                from core.settings_store import get_social_links, set_social_links
+                _SOCIAL_META_ADM = {
+                    "linkedin":  ("LinkedIn",   "https://linkedin.com/company/…"),
+                    "twitter":   ("X (Twitter)","https://x.com/…"),
+                    "instagram": ("Instagram",  "https://instagram.com/…"),
+                    "whatsapp":  ("WhatsApp",   "https://wa.me/971501234567"),
+                    "facebook":  ("Facebook",   "https://facebook.com/…"),
+                    "youtube":   ("YouTube",    "https://youtube.com/@…"),
+                }
+                _cur_social = get_social_links()
+                _new_social: dict[str, str] = {}
+                _sc1, _sc2 = st.columns(2)
+                for _i, (_plat, (_label, _ph)) in enumerate(_SOCIAL_META_ADM.items()):
+                    _col = _sc1 if _i % 2 == 0 else _sc2
+                    with _col:
+                        _new_social[_plat] = st.text_input(
+                            _label,
+                            value=_cur_social.get(_plat, ""),
+                            placeholder=_ph,
+                            key=f"social_{_plat}",
+                            disabled=not _hp("settings.edit"),
+                        )
+                if _hp("settings.edit"):
+                    if st.button("💾 Save Social Links", type="primary", key="save_social_btn"):
+                        _soc_err = set_social_links(_new_social)
+                        if _soc_err:
+                            st.error(f"Error: {_soc_err}")
+                        else:
+                            st.success("✅ Social media links saved.")
+                else:
+                    st.caption("⚠️ You have view-only access to settings.")
+            except Exception as _soc_exc:
+                st.error(f"Social links error: {_soc_exc}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
