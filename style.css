@@ -2057,3 +2057,32 @@ header[data-testid="stHeader"] {
     line-height: 1.35 !important;
   }
 }
+
+/* Source selector v7.3: remove the old card click-shield that caused clipped
+   red bars and invisible overlays near the fixed header. */
+[data-testid="stColumn"] [data-testid="stBaseButton-primary"] > button::before,
+[data-testid="stColumn"] [data-testid="stBaseButton-secondary"] > button::before,
+[data-testid="stColumn"] [data-testid="stButton"] > button::before {
+  display: none !important;
+  content: none !important;
+}
+
+.st-key-source_selectbox {
+  max-width: 360px !important;
+  margin: 0 auto 0.85rem !important;
+}
+
+.st-key-source_selectbox [data-baseweb="select"] > div,
+.st-key-source_selectbox [data-testid="stSelectbox"] > div > div {
+  min-height: 42px !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(17, 24, 39, 0.10) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.07) !important;
+}
+
+.source-selector-label {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.45rem !important;
+  font-size: 0.68rem !important;
+}
