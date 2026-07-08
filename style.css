@@ -180,17 +180,29 @@ html, body, [class*="css"] {
   box-sizing: border-box !important;
 }
 
-/* Hide Streamlit chrome (keep stHeader for sidebar toggle) */
+/* Hide ALL Streamlit chrome — nuclear option */
 [data-testid="stToolbar"],
+[data-testid="stToolbarActions"],
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
 [data-testid="stActionButton"],
 [data-testid="stActionButtonIcon"],
+[data-testid="stStatusWidget"],
+[data-testid="stBottom"] [data-testid="stToolbar"],
 .stDeployButton, .stAppDeployButton,
+.stToolbar, .stStatusWidget,
 [class*="deployButton"], [class*="manageApp"],
-#MainMenu, footer {
+[class*="StatusWidget"], [class*="Toolbar"],
+#MainMenu, footer,
+/* Streamlit Cloud "Manage app" bottom bar */
+section[data-testid="stBottom"] > div:last-child:has(button),
+iframe[title*="Streamlit"] {
   display: none !important;
   visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Collapse stHeader to zero but keep sidebar toggle accessible */
@@ -1065,17 +1077,17 @@ span  { color: inherit !important; }
 /* Buttons — bigger pill style */
 .st-key-btn_theme button,
 .st-key-btn_lang  button {
-  padding: 0.4rem 1.25rem !important;
-  font-size: 0.95rem !important;
-  font-weight: 600 !important;
-  height: 2.5rem !important;
-  min-width: 3.2rem !important;
+  padding: 0.35rem 1rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  height: 2.1rem !important;
+  min-width: 2.8rem !important;
   border-radius: 999px !important;
   border: 1.5px solid var(--border-default) !important;
   background: var(--bg-surface) !important;
   color: var(--text-secondary) !important;
   -webkit-text-fill-color: var(--text-secondary) !important;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.12) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.14) !important;
   white-space: nowrap !important;
   transition: border-color 0.15s, color 0.15s, background 0.15s !important;
 }
