@@ -78,7 +78,13 @@ _DARK_CSS = """
   border-color: #30363D !important;
 }
 
-/* ── Chat input ── */
+/* ── Chat input outer container ── */
+[data-testid="stBottom"],
+[data-testid="stBottom"] > div,
+[data-testid="stBottom"] > div > div {
+  background-color: #0D1117 !important;
+  border-top: 1px solid #21262D !important;
+}
 [data-testid="stChatInput"] {
   background-color: #0D1117 !important;
   border-top: 1px solid #30363D !important;

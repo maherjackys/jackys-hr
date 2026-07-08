@@ -1556,6 +1556,18 @@ header[data-testid="stHeader"] {
   -webkit-text-fill-color: var(--text-brand) !important;
 }
 
+/* ============================================================
+   25. BOTTOM CHAT INPUT CONTAINER
+   Streamlit wraps st.chat_input in [data-testid="stBottom"].
+   Without this, the container keeps its own white bg in dark mode.
+   ============================================================ */
+[data-testid="stBottom"],
+[data-testid="stBottom"] > div,
+[data-testid="stBottom"] > div > div {
+  background: var(--bg-app) !important;
+  border-top: 1px solid var(--border-subtle) !important;
+}
+
 /* ── Feedback thumbs ──────────────────────────────────────────────────────── */
 [data-testid="stFeedback"] button {
   transition: color 0.15s, background 0.15s, border-color 0.15s;
