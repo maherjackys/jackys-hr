@@ -30,6 +30,7 @@ Navigation (sidebar radio — only the selected section renders):
 from __future__ import annotations
 
 import datetime
+import html as _html
 import os
 import re
 import shutil
@@ -471,8 +472,6 @@ if _sel_nav == "logs":
                         )
 
                 if _auto_refresh:
-                    import time as _time
-                    _time.sleep(15)
                     st.rerun()
 
             st.divider()
@@ -1998,11 +1997,11 @@ if _sel_nav == "overview":
                 _recent_acts, _ = _fl2_ov(log_type="admin_action", limit=10)
                 if _recent_acts:
                     for _ra in _recent_acts:
-                        _ts_ra = str(_ra.get("ts", ""))[:16]
-                        _qr    = _ra.get("query", "")
-                        _src_ra = _ra.get("source", "")
-                        _actor_ra = _ra.get("answer_preview", "") or ""
-                        _who = f"by **{_actor_ra}**" if _actor_ra else ""
+                        _ts_ra    = str(_ra.get("ts", ""))[:16]
+                        _qr       = _html.escape(str(_ra.get("query", "") or ""))
+                        _src_ra   = _html.escape(str(_ra.get("source", "") or ""))
+                        _actor_ra = _html.escape(str(_ra.get("answer_preview", "") or ""))
+                        _who      = f"by <strong>{_actor_ra}</strong>" if _actor_ra else ""
                         st.markdown(
                             f'<div class="adm-activity-row adm-log-admin">'
                             f'<span class="adm-ts">{_ts_ra}</span>'

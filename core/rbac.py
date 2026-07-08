@@ -243,6 +243,7 @@ def set_role_permissions(
     role: str,
     permissions: list[str],
     actor_role: str,
+    actor_permissions: frozenset[str] | None = None,
 ) -> str | None:
     """Replace all permissions for *role* in the database.
 
@@ -250,6 +251,8 @@ def set_role_permissions(
     - Only super_admin can modify any role's permissions.
     - super_admin permissions are immutable (protected by design).
     - All permission keys must exist in _ALL_PERM_KEYS.
+    - Non-super_admin actors cannot grant permissions they don't hold
+      (prevents privilege escalation via role editing).
 
     Returns None on success, error string on failure.
     """
@@ -260,6 +263,12 @@ def set_role_permissions(
     invalid = [p for p in permissions if p not in _ALL_PERM_KEYS]
     if invalid:
         return f"Unknown permissions: {', '.join(invalid)}"
+    # Privilege escalation guard: actor cannot grant perms they don't hold.
+    # (Redundant for super_admin since they hold all perms; kept for defence-in-depth.)
+    if actor_role != "super_admin" and actor_permissions is not None:
+        escalated = [p for p in permissions if p not in actor_permissions]
+        if escalated:
+            return f"Cannot grant permissions you do not hold: {', '.join(escalated)}"
     try:
         c = _db()
         if c is None:
