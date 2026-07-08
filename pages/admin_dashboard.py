@@ -929,6 +929,42 @@ if _sel_nav == "settings":
         if not _hp("settings.view"):
             _show_403("settings.view")
         else:
+            # ── Password Protection ────────────────────────────────────────────
+            st.subheader("🔐 Password Protection")
+            st.caption(
+                "Controls whether the employee app requires a password (APP_PASSWORD secret) "
+                "before users can access the chat interface. "
+                "Disable to allow open access without a password prompt."
+            )
+            try:
+                from core.settings_store import (
+                    get_password_protection_enabled,
+                    set_password_protection_enabled,
+                )
+                _pw_on = get_password_protection_enabled()
+                _pw_new = st.toggle(
+                    "Enable Password Protection",
+                    value=_pw_on,
+                    key="toggle_pw_protection",
+                    disabled=not _hp("settings.edit"),
+                    help="When ON, employees must enter APP_PASSWORD to open the chat app.",
+                )
+                if _hp("settings.edit"):
+                    if st.button("💾 Save Password Setting", key="save_pw_btn"):
+                        _pw_err = set_password_protection_enabled(_pw_new)
+                        if _pw_err:
+                            st.error(f"Error: {_pw_err}")
+                        else:
+                            _label = "enabled" if _pw_new else "disabled"
+                            st.success(f"Password protection {_label}.")
+                else:
+                    st.caption("⚠️ You have view-only access to settings.")
+            except Exception as _pw_exc:
+                st.error(f"Password protection settings error: {_pw_exc}")
+
+            st.divider()
+
+            # ── Source Visibility ─────────────────────────────────────────────
             st.subheader("Source Visibility")
             st.caption("Toggle which knowledge sources end users can select.")
 

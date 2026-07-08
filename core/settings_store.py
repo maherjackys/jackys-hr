@@ -11,10 +11,12 @@ Table schema (run once in Supabase SQL editor):
     ON CONFLICT DO NOTHING;
 
 Functions:
-    get_enabled_sources() -> list[str]   — cached 60 s
-    set_enabled_sources(sources)         — writes to Supabase, invalidates cache
-    register_source(key)                 — appends new source key, idempotent
-    is_valid_source_key(key)             — slug validation (lowercase, alnum, _)
+    get_enabled_sources() -> list[str]       — cached 60 s
+    set_enabled_sources(sources)             — writes to Supabase, invalidates cache
+    register_source(key)                     — appends new source key, idempotent
+    is_valid_source_key(key)                 — slug validation (lowercase, alnum, _)
+    get_password_protection_enabled() -> bool — cached 30 s; default True
+    set_password_protection_enabled(enabled) — writes to Supabase, invalidates cache
 """
 from __future__ import annotations
 
@@ -87,6 +89,47 @@ def set_enabled_sources(sources: list[str]) -> str | None:
     except Exception as exc:
         logger.warning("settings_store: set_enabled_sources failed (%s).", exc)
         return "Failed to save settings. Check server logs for details."
+
+
+_PW_PROTECTION_KEY = "password_protection_enabled"
+
+
+@st.cache_data(ttl=30)
+def get_password_protection_enabled() -> bool:
+    """Return whether the employee app password gate is active.
+
+    Defaults to True (safe) when the setting is absent or Supabase is unavailable.
+    """
+    try:
+        c = _client()
+        if c is None:
+            return True
+        resp = c.table("app_settings").select("value").eq("key", _PW_PROTECTION_KEY).execute()
+        if resp.data:
+            val = resp.data[0]["value"]
+            if isinstance(val, bool):
+                return val
+        return True
+    except Exception as exc:
+        logger.warning("settings_store: get_password_protection_enabled failed (%s).", exc)
+        return True
+
+
+def set_password_protection_enabled(enabled: bool) -> str | None:
+    """Persist the password-protection toggle. Returns error string or None on success."""
+    try:
+        c = _client()
+        if c is None:
+            return "Supabase not available — changes not saved."
+        c.table("app_settings").upsert(
+            {"key": _PW_PROTECTION_KEY, "value": enabled},
+            on_conflict="key",
+        ).execute()
+        get_password_protection_enabled.clear()
+        return None
+    except Exception as exc:
+        logger.warning("settings_store: set_password_protection_enabled failed (%s).", exc)
+        return "Failed to save settings. Check server logs."
 
 
 def register_source(key: str) -> str | None:

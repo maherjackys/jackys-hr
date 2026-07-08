@@ -170,6 +170,66 @@ STRINGS: dict[str, dict[str, str]] = {
         LANG_AR: "اختر",
         LANG_EN: "Select",
     },
+    # ── Header / hero ────────────────────────────────────────────────────────
+    "app_title": {
+        LANG_AR: "مساعد سياسات الموارد البشرية",
+        LANG_EN: "HR Policy Assistant",
+    },
+    "app_subtitle": {
+        LANG_AR: "احصل على إجابات فورية لأي سياسة — بدلاً من البحث لساعات",
+        LANG_EN: "Ask about any policy in seconds — instead of browsing for hours",
+    },
+    # ── Stats bar ────────────────────────────────────────────────────────────
+    "stat_ml_t": {
+        LANG_AR: "ثنائي اللغة",
+        LANG_EN: "Multilingual",
+    },
+    "stat_ml_d": {
+        LANG_AR: "عربي وإنجليزي",
+        LANG_EN: "Arabic & English",
+    },
+    "stat_ins_t": {
+        LANG_AR: "إجابات فورية",
+        LANG_EN: "Instant Answers",
+    },
+    "stat_ins_d": {
+        LANG_AR: "في أقل من ثانية",
+        LANG_EN: "Under a second",
+    },
+    "stat_sec_t": {
+        LANG_AR: "خاص وآمن",
+        LANG_EN: "Private & Secure",
+    },
+    "stat_sec_d": {
+        LANG_AR: "بياناتك محمية",
+        LANG_EN: "Your data is safe",
+    },
+    # ── Source picker ────────────────────────────────────────────────────────
+    "src_label": {
+        LANG_AR: "اختر مصدر المعرفة",
+        LANG_EN: "SELECT KNOWLEDGE SOURCE",
+    },
+    "src_co_t": {
+        LANG_AR: "سياسة الشركة",
+        LANG_EN: "Company Policy",
+    },
+    "src_co_d": {
+        LANG_AR: "إجابات مستندة إلى سياسات الموارد البشرية الداخلية للمؤسسة.",
+        LANG_EN: "Answers based on your organization's internal HR policies.",
+    },
+    "src_dxb_t": {
+        LANG_AR: "سياسة دبي للموارد البشرية",
+        LANG_EN: "Dubai HR Policy",
+    },
+    "src_dxb_d": {
+        LANG_AR: "إجابات مستندة إلى أنظمة العمل في دبي والإمارات.",
+        LANG_EN: "Answers based on Dubai labor regulations and UAE HR policies.",
+    },
+    # ── Chat input placeholder ────────────────────────────────────────────────
+    "chat_placeholder": {
+        LANG_AR: "اكتب سؤالك هنا…",
+        LANG_EN: "Type your question… | اكتب سؤالك هنا…",
+    },
 }
 
 

@@ -82,8 +82,17 @@ def _show_app_gate() -> None:
             st.error("Incorrect password. / كلمة المرور غير صحيحة.")
 
 
+def _is_pw_protection_on() -> bool:
+    """Check DB setting; fail-safe returns True (gate stays up) if DB is unreachable."""
+    try:
+        from core.settings_store import get_password_protection_enabled
+        return get_password_protection_enabled()
+    except Exception:
+        return True
+
+
 _app_pw = _get_app_password()
-if _app_pw and not st.session_state.get("app_authed"):
+if _app_pw and _is_pw_protection_on() and not st.session_state.get("app_authed"):
     _show_app_gate()
     st.stop()
 
@@ -165,10 +174,22 @@ if _ui_lang == LANG_AR:
         "<style>.msg-en{display:none!important}.msg-ar{display:inline!important}</style>",
         unsafe_allow_html=True,
     )
+    # Set dir="rtl" on the parent document so [dir="rtl"] CSS selectors fire.
+    # st.components.v1.html() renders in a sandboxed iframe that can reach window.parent.
+    import streamlit.components.v1 as _stc
+    _stc.html(
+        '<script>try{window.parent.document.documentElement.setAttribute("dir","rtl")}catch(e){}</script>',
+        height=0,
+    )
 else:
     st.markdown(
         "<style>.msg-ar{display:none!important}.msg-en{display:inline!important}</style>",
         unsafe_allow_html=True,
+    )
+    import streamlit.components.v1 as _stc
+    _stc.html(
+        '<script>try{window.parent.document.documentElement.setAttribute("dir","ltr")}catch(e){}</script>',
+        height=0,
     )
 
 # ── Control bar ───────────────────────────────────────────────────────────────
@@ -187,7 +208,12 @@ with st.container(key="ctrl_bar"):
             st.rerun()
 
 # ── Page header ───────────────────────────────────────────────────────────────
-st.markdown("""
+# All text is rendered server-side using t() so language switches take effect
+# immediately on rerun — no client-side JS translation needed.
+import html as _html_esc
+_h_title    = _html_esc.escape(t("app_title",    _ui_lang))
+_h_subtitle = _html_esc.escape(t("app_subtitle", _ui_lang))
+st.markdown(f"""
 <div class="hr-header">
   <div class="hr-header-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52" fill="none">
@@ -203,35 +229,41 @@ st.markdown("""
     </svg>
   </div>
   <div class="hr-brand-pill">HR Policy Assistant</div>
-  <h1 class="main-title" data-i18n="app_title">HR Policy Assistant</h1>
-  <p class="sub-title" data-i18n="app_subtitle">Ask about any policy in seconds — instead of browsing for hours</p>
+  <h1 class="main-title">{_h_title}</h1>
+  <p class="sub-title">{_h_subtitle}</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ── Stats bar ─────────────────────────────────────────────────────────────────
-st.markdown("""
+_s_ml_t  = _html_esc.escape(t("stat_ml_t",  _ui_lang))
+_s_ml_d  = _html_esc.escape(t("stat_ml_d",  _ui_lang))
+_s_ins_t = _html_esc.escape(t("stat_ins_t", _ui_lang))
+_s_ins_d = _html_esc.escape(t("stat_ins_d", _ui_lang))
+_s_sec_t = _html_esc.escape(t("stat_sec_t", _ui_lang))
+_s_sec_d = _html_esc.escape(t("stat_sec_d", _ui_lang))
+st.markdown(f"""
 <div class="hr-stats-bar">
   <div class="hr-stat-item">
     <span class="hr-stat-icon">🌐</span>
     <div class="hr-stat-text">
-      <strong data-i18n="stat_ml_t">Multilingual</strong>
-      <span data-i18n="stat_ml_d">Arabic &amp; English</span>
+      <strong>{_s_ml_t}</strong>
+      <span>{_s_ml_d}</span>
     </div>
   </div>
   <div class="hr-stat-divider"></div>
   <div class="hr-stat-item">
     <span class="hr-stat-icon">⚡</span>
     <div class="hr-stat-text">
-      <strong data-i18n="stat_ins_t">Instant Answers</strong>
-      <span data-i18n="stat_ins_d">Under a second</span>
+      <strong>{_s_ins_t}</strong>
+      <span>{_s_ins_d}</span>
     </div>
   </div>
   <div class="hr-stat-divider"></div>
   <div class="hr-stat-item">
     <span class="hr-stat-icon">🔒</span>
     <div class="hr-stat-text">
-      <strong data-i18n="stat_sec_t">Private &amp; Secure</strong>
-      <span data-i18n="stat_sec_d">Your data is safe</span>
+      <strong>{_s_sec_t}</strong>
+      <span>{_s_sec_d}</span>
     </div>
   </div>
 </div>
@@ -276,8 +308,9 @@ def _confirm_switch(target_source: str) -> None:
 
 
 if len(_enabled_sources) > 1:
+    _src_picker_label = _html_esc.escape(t("src_label", _ui_lang))
     st.markdown(
-        '<p class="source-selector-label" data-i18n="src_label">SELECT KNOWLEDGE SOURCE</p>',
+        f'<p class="source-selector-label">{_src_picker_label}</p>',
         unsafe_allow_html=True,
     )
 
@@ -330,14 +363,16 @@ if len(_enabled_sources) > 1:
             _title_safe = _html_mod.escape(_cd["title"])
             _desc_safe  = _html_mod.escape(_cd["desc"])
             with _col:
+                _t_title = _html_esc.escape(t(_cd["title_i18n"], _ui_lang) or _cd["title"])
+                _t_desc  = _html_esc.escape(t(_cd["desc_i18n"],  _ui_lang) or _cd["desc"])
                 st.markdown(f"""
 <div class="source-card {_cd['css_class']} {_sel}" data-cr="1" aria-label="{_aria_safe}">
   <div class="source-card-header">
     <span class="source-card-icon">{_cd['icon']}</span>
     <div class="source-card-check">&#x2713;</div>
   </div>
-  <div class="source-card-title" data-i18n="{_cd['title_i18n']}">{_title_safe}</div>
-  <div class="source-card-desc" data-i18n="{_cd['desc_i18n']}">{_desc_safe}</div>
+  <div class="source-card-title">{_t_title}</div>
+  <div class="source-card-desc">{_t_desc}</div>
 </div>""", unsafe_allow_html=True)
                 if st.button(
                     t("card_active", _ui_lang) if current_source == _src else t("card_select", _ui_lang),
