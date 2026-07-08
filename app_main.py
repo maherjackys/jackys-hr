@@ -228,6 +228,22 @@ st.markdown(f"""
   <h1 class="main-title">{_h_title}</h1>
   <p class="sub-title">{_h_subtitle}</p>
 </div>
+<script>
+(function() {{
+  function syncHeaderHeight() {{
+    var h = document.querySelector('.hr-header');
+    if (h) {{
+      var height = h.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--header-h', height + 'px');
+    }}
+  }}
+  // Run once after paint + observe resizes (font load, rerun)
+  requestAnimationFrame(syncHeaderHeight);
+  if (window.ResizeObserver) {{
+    new ResizeObserver(syncHeaderHeight).observe(document.documentElement);
+  }}
+}})();
+</script>
 """, unsafe_allow_html=True)
 
 # ── Stats bar ─────────────────────────────────────────────────────────────────

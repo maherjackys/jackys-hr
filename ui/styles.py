@@ -54,10 +54,11 @@ _DARK_CSS = """
   color: #E6EDF3 !important;
 }
 
-/* ── Sticky header dark background ── */
+/* ── Fixed header dark background ── */
 .hr-header {
-  background: rgba(13,17,23,0.88) !important;
+  background: rgba(13,17,23,0.95) !important;
   border-bottom-color: #21262D !important;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.35) !important;
 }
 
 /* ── Chat bubbles — explicit overrides (Streamlit injects its own bg) ── */

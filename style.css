@@ -15,8 +15,10 @@
 
   /* App Backgrounds */
   --bg-app:               #F4F5F7;
-  --bg-app-rgb:           244,245,247;  /* for rgba() in sticky header */
+  --bg-app-rgb:           244,245,247;
   --bg-surface:           #FFFFFF;
+  /* Fixed header height — must match .hr-header actual rendered height */
+  --header-h:             210px;
   --bg-surface-2:         #F8F9FA;
   --bg-surface-hover:     #F0F2F5;
 
@@ -159,12 +161,18 @@ html, body, [class*="css"] {
 [data-testid="stAppViewContainer"],
 [data-testid="stMain"],
 .main {
-  overflow-x: clip !important;   /* clip ≠ hidden — doesn't break position:sticky */
+  overflow-x: clip !important;
   max-width: 100% !important;
 }
 
+/* Sidebar above the fixed header */
+[data-testid="stSidebar"] {
+  z-index: 1000 !important;
+}
+
 .main .block-container {
-  padding-top: 0 !important;     /* header handles its own top padding */
+  /* padding-top compensates for the fixed header height */
+  padding-top: var(--header-h, 210px) !important;
   padding-bottom: 5rem !important;
   max-width: 860px !important;
   overflow-x: clip !important;
@@ -258,18 +266,21 @@ span  { color: inherit !important; }
 /* ============================================================
    6. HEADER
    ============================================================ */
+/* ── Fixed header: always pinned to viewport top regardless of scroll container ── */
 .hr-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 200;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 999;
   text-align: center;
   padding: 0.85rem 1rem 0.65rem;
-  margin: 0 -1rem 0.75rem;      /* bleed to container edges */
-  background: rgba(var(--bg-app-rgb, 250,250,250), 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(var(--bg-app-rgb, 244,245,247), 0.95);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid var(--border-subtle);
-  box-shadow: 0 1px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07);
 }
 
 /* Brand pill — text badge with gradient background */
@@ -1671,6 +1682,9 @@ header[data-testid="stHeader"] {
    ============================================================ */
 @media (max-width: 768px) {
 
+  /* Adjust header height token for mobile (header is taller with smaller fonts stacked) */
+  :root { --header-h: 185px; }
+
   /* ── Kill horizontal overflow globally ── */
   html, body,
   [data-testid="stApp"],
@@ -1684,9 +1698,9 @@ header[data-testid="stHeader"] {
     box-sizing: border-box !important;
   }
 
-  /* ── Container padding ── */
+  /* ── Container padding — fixed header + sides ── */
   .main .block-container {
-    padding: 0.6rem 0.9rem 1rem !important;
+    padding: var(--header-h, 185px) 0.9rem 1rem !important;
     width: 100% !important;
   }
 
