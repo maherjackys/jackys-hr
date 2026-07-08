@@ -413,17 +413,23 @@ st.markdown("""
 # ── Admin CSS — unified with main app tokens ──────────────────────────────────
 _ADM_LIGHT = """
 :root {
-  --adm-bg:       #F4F5F7;
+  --adm-bg:       #F0F2F5;
   --adm-surface:  #FFFFFF;
-  --adm-sf2:      #F8F9FA;
-  --adm-border:   #E5E7EB;
+  --adm-sf2:      #F7F8FA;
+  --adm-border:   #D1D5DB;
   --adm-ink:      #111827;
-  --adm-ink2:     #4B5563;
-  --adm-ink3:     #9CA3AF;
+  --adm-ink2:     #374151;
+  --adm-ink3:     #6B7280;
   --adm-brand:    #C0392B;
   --adm-brand-l:  #E74C3C;
-  --adm-sh:       0 1px 4px rgba(0,0,0,.06);
-  --adm-sh2:      0 4px 16px rgba(0,0,0,.09);
+  --adm-sh:       0 1px 6px rgba(0,0,0,.08);
+  --adm-sh2:      0 4px 20px rgba(0,0,0,.12);
+  --adm-sidebar:  #1F2937;
+  --adm-sidebar-ink: #F9FAFB;
+  --adm-sidebar-ink2: #D1D5DB;
+  --adm-sidebar-border: #374151;
+  --adm-sidebar-hover: rgba(255,255,255,.07);
+  --adm-sidebar-active: rgba(192,57,43,.18);
 }
 """
 _ADM_DARK = """
@@ -460,19 +466,41 @@ html, body, [class*="css"] {{
 }}
 .main .block-container {{ max-width: 960px !important; padding-top:.5rem !important; }}
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {{
-  background: var(--adm-surface) !important;
-  border-right: 1px solid var(--adm-border) !important;
+/* ── Sidebar — always dark ── */
+[data-testid="stSidebar"],
+[data-testid="stSidebarContent"] {{
+  background: var(--adm-sidebar, #1F2937) !important;
+  border-right: 1px solid var(--adm-sidebar-border, #374151) !important;
 }}
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
 [data-testid="stSidebar"] label,
-[data-testid="stSidebar"] .stRadio label {{
-  color: var(--adm-ink2) !important;
-  -webkit-text-fill-color: var(--adm-ink2) !important;
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] .stMarkdown p {{
+  color: var(--adm-sidebar-ink2, #D1D5DB) !important;
+  -webkit-text-fill-color: var(--adm-sidebar-ink2, #D1D5DB) !important;
 }}
-[data-testid="stSidebar"] strong {{ color: var(--adm-ink) !important; -webkit-text-fill-color: var(--adm-ink) !important; }}
+[data-testid="stSidebar"] strong {{
+  color: var(--adm-sidebar-ink, #F9FAFB) !important;
+  -webkit-text-fill-color: var(--adm-sidebar-ink, #F9FAFB) !important;
+}}
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {{
+  background: var(--adm-sidebar-hover, rgba(255,255,255,.07)) !important;
+  border-radius: 6px;
+}}
+[data-testid="stSidebar"] hr {{ border-color: var(--adm-sidebar-border, #374151) !important; opacity:.5; }}
+
+/* ── Sidebar collapse/expand toggle — always visible ── */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+button[kind="header"] {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #374151 !important;
+  color: #F9FAFB !important;
+  border-radius: 0 8px 8px 0 !important;
+}}
 
 /* ── Typography ── */
 h1,h2,h3,h4 {{ color: var(--adm-ink) !important; font-family:'Cairo','Inter',sans-serif !important; }}
@@ -541,29 +569,75 @@ p, li {{ color: var(--adm-ink2) !important; }}
 [data-testid="manage-app-button"],
 [data-testid="stAppDeployButton"],
 [data-testid="stActionButton"],
-.stDeployButton, footer, #MainMenu {{ display:none !important; }}
+[data-testid="stActionButtonIcon"],
+.stDeployButton, .stAppDeployButton,
+footer, #MainMenu,
+[class*="deployButton"],
+[class*="manageApp"] {{ display:none !important; visibility:hidden !important; }}
 
-/* ── Sidebar control buttons (lang + theme) ── */
+/* ── Main content card-feel ── */
+.main .block-container {{
+  background: var(--adm-bg) !important;
+}}
+[data-testid="stMetric"] {{
+  background: var(--adm-surface) !important;
+  border: 1px solid var(--adm-border) !important;
+  border-radius: 12px !important;
+  padding: .75rem 1rem !important;
+  box-shadow: var(--adm-sh) !important;
+}}
+[data-testid="stMetricValue"] {{
+  color: var(--adm-ink) !important;
+  -webkit-text-fill-color: var(--adm-ink) !important;
+  font-size: 1.9rem !important;
+  font-weight: 800 !important;
+}}
+[data-testid="stMetricLabel"] {{
+  color: var(--adm-ink3) !important;
+  -webkit-text-fill-color: var(--adm-ink3) !important;
+  font-size: .72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  font-weight: 700 !important;
+}}
+
+/* ── Sidebar control buttons (lang + theme) — dark sidebar base ── */
 .st-key-adm_lang_btn button,
 .st-key-adm_theme_btn button,
 .st-key-adm_theme_btn_sb button {{
-  background: var(--adm-surface) !important;
-  border: 1.5px solid var(--adm-border) !important;
+  background: rgba(255,255,255,.08) !important;
+  border: 1.5px solid rgba(255,255,255,.18) !important;
   border-radius: 999px !important;
-  color: var(--adm-ink2) !important;
-  -webkit-text-fill-color: var(--adm-ink2) !important;
+  color: #D1D5DB !important;
+  -webkit-text-fill-color: #D1D5DB !important;
   font-size: .82rem !important;
   padding: .25rem .6rem !important;
   height: 2rem !important;
-  box-shadow: var(--adm-sh) !important;
+  box-shadow: none !important;
   font-family: 'Cairo','Inter',sans-serif !important;
 }}
 .st-key-adm_lang_btn button:hover,
 .st-key-adm_theme_btn button:hover,
 .st-key-adm_theme_btn_sb button:hover {{
+  background: rgba(255,255,255,.15) !important;
   border-color: var(--adm-brand) !important;
-  color: var(--adm-ink) !important;
-  -webkit-text-fill-color: var(--adm-ink) !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}}
+
+/* ── Sidebar logout button ── */
+[data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {{
+  background: rgba(255,255,255,.06) !important;
+  border: 1.5px solid rgba(255,255,255,.15) !important;
+  color: #D1D5DB !important;
+  -webkit-text-fill-color: #D1D5DB !important;
+  border-radius: 10px !important;
+}}
+[data-testid="stSidebar"] [data-testid="stBaseButton-secondary"]:hover {{
+  background: rgba(192,57,43,.25) !important;
+  border-color: var(--adm-brand) !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
 }}
 
 /* ── KPI cards ── */
