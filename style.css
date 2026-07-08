@@ -1921,3 +1921,139 @@ header[data-testid="stHeader"] {
   background: rgba(192,57,43,0.12) !important;
   border-color: rgba(192,57,43,0.5) !important;
 }
+
+/* ==========================================================================
+   29. VISUAL REFRESH v7.2
+   Clearer first viewport, tighter header, and stronger app-like controls.
+   ========================================================================== */
+:root {
+  --header-h: 138px;
+  --bg-app: #F7F8FA;
+}
+
+.main .block-container {
+  max-width: 760px !important;
+  padding-top: calc(var(--header-h, 138px) + 1rem) !important;
+}
+
+.hr-header {
+  padding: 0.45rem 1rem 0.5rem !important;
+  background: rgba(247, 248, 250, 0.97) !important;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.06) !important;
+  box-shadow: 0 8px 28px rgba(17, 24, 39, 0.06) !important;
+}
+
+.hr-header-icon {
+  width: 38px !important;
+  height: 38px !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.hr-brand-pill {
+  margin-bottom: 0.55rem !important;
+  padding: 0.48rem 0.95rem !important;
+  font-size: 0.7rem !important;
+  box-shadow: 0 10px 24px rgba(192, 57, 43, 0.18) !important;
+}
+
+.main-title {
+  font-size: 1.78rem !important;
+  line-height: 1.05 !important;
+  margin-bottom: 0.2rem !important;
+  text-shadow: none !important;
+}
+
+.sub-title {
+  max-width: 520px !important;
+  font-size: 0.92rem !important;
+  line-height: 1.45 !important;
+}
+
+.active-source-badge {
+  padding: 0.42rem 0.85rem !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(192, 57, 43, 0.22) !important;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.05) !important;
+}
+
+[data-testid="stChatMessage"] {
+  border-radius: 8px !important;
+  border: 1px solid rgba(17, 24, 39, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06) !important;
+}
+
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+  background: #FFFFFF !important;
+  border-left: 4px solid rgba(192, 57, 43, 0.28) !important;
+}
+
+[data-testid="chatAvatarIcon-assistant"] {
+  background: #C0392B !important;
+  color: #FFFFFF !important;
+}
+
+.suggestions-label {
+  margin-top: 1.35rem !important;
+  color: #7A8699 !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button {
+  min-height: 40px !important;
+  padding: 0.62rem 0.95rem !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(17, 24, 39, 0.10) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.07) !important;
+}
+
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button:hover {
+  background: #FFF7F6 !important;
+  border-color: rgba(192, 57, 43, 0.5) !important;
+  box-shadow: 0 12px 26px rgba(192, 57, 43, 0.12) !important;
+}
+
+[data-testid="stChatInput"] {
+  max-width: 760px !important;
+  margin-inline: auto !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  box-shadow: 0 14px 34px rgba(17, 24, 39, 0.14) !important;
+}
+
+[data-testid="stChatInput"]:focus-within {
+  border-color: rgba(192, 57, 43, 0.55) !important;
+  box-shadow: 0 0 0 4px rgba(192, 57, 43, 0.10), 0 16px 38px rgba(17, 24, 39, 0.15) !important;
+}
+
+.hr-footer {
+  margin-top: 1.8rem !important;
+  padding-bottom: 0.55rem !important;
+}
+
+@media (max-width: 768px) {
+  :root { --header-h: 124px; }
+  .main .block-container {
+    padding-top: calc(var(--header-h, 124px) + 0.8rem) !important;
+  }
+  .hr-header {
+    padding: 0.35rem 0.75rem 0.42rem !important;
+  }
+  .hr-header-icon {
+    width: 30px !important;
+    height: 30px !important;
+    margin-bottom: 0.25rem !important;
+  }
+  .hr-brand-pill {
+    font-size: 0.6rem !important;
+    padding: 0.35rem 0.7rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+  .main-title {
+    font-size: 1.22rem !important;
+  }
+  .sub-title {
+    font-size: 0.72rem !important;
+    line-height: 1.35 !important;
+  }
+}

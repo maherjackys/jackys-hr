@@ -212,7 +212,7 @@ _h_subtitle = _html_esc.escape(t("app_subtitle", _ui_lang))
 st.markdown(f"""
 <div class="hr-header">
   <div class="hr-header-icon">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52" fill="none">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38" fill="none">
       <circle cx="32" cy="18" r="8" fill="#C0392B"/>
       <path d="M18 46c0-7.732 6.268-14 14-14s14 6.268 14 14"
             stroke="#C0392B" stroke-width="4" stroke-linecap="round" fill="none"/>
@@ -710,7 +710,7 @@ st.markdown(f"""
     <span class="hr-footer-dot">·</span>
     <span>Powered by <strong>Groq</strong> + <strong>LangChain</strong></span>
     <span class="hr-footer-dot">·</span>
-    <span>v7.0 · logs: {_logging_mode()}</span>
+    <span>v7.2 · logs: {_logging_mode()}</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
