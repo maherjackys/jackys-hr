@@ -43,6 +43,13 @@ _SESSION_COOKIE        = "admin_session"
 _SESSION_TTL_DAYS      = 1
 _SESSION_TTL_DAYS_LONG = 30
 
+st.set_page_config(
+    page_title="Admin Dashboard",
+    page_icon="▦",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 # ── RBAC level map (kept for user hierarchy checks — who can manage whom) ─────
 _RLEVEL = {"super_admin": 4, "admin": 3, "moderator": 2, "user": 1}
 
@@ -631,17 +638,29 @@ footer, #MainMenu,
   background: transparent !important;
   border-bottom: none !important;
   box-shadow: none !important;
-  min-height: 0 !important;
+  min-height: 2.75rem !important;
+  height: 2.75rem !important;
   padding: 0 !important;
   overflow: visible !important;
   z-index: 9000 !important;
+  pointer-events: none !important;
 }}
 /* Hide only the toolbar/app-menu children, NOT the sidebar toggle wrapper */
 [data-testid="stHeader"] [data-testid="stToolbar"],
-[data-testid="stHeader"] [data-testid="stHeaderActionElements"],
 [data-testid="stHeader"] [data-testid="stAppViewBlockContainer"],
 [data-testid="stHeader"] .stAppToolbar {{
   display: none !important;
+}}
+
+[data-testid="stHeader"] [data-testid="stHeaderActionElements"],
+[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"],
+[data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"] {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }}
 
 /* ── Main content card-feel ── */
