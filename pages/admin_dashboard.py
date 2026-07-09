@@ -409,6 +409,23 @@ if "adm_theme" not in st.session_state:
     st.session_state.adm_theme = "light"
 _adm_theme = st.session_state.adm_theme
 
+# Auto-expand sidebar on first admin visit (app.py forces collapsed for main app).
+# Uses sessionStorage so it only fires once per browser session, not on every rerun.
+st.markdown("""
+<script>
+(function() {
+  if (sessionStorage.getItem('adm_sb_opened')) return;
+  sessionStorage.setItem('adm_sb_opened', '1');
+  function tryOpen(tries) {
+    var btn = document.querySelector('[data-testid="stSidebarCollapsedControl"]');
+    if (btn) { btn.click(); return; }
+    if (tries > 0) setTimeout(function(){ tryOpen(tries - 1); }, 300);
+  }
+  setTimeout(function(){ tryOpen(10); }, 400);
+})();
+</script>
+""", unsafe_allow_html=True)
+
 # ── Cairo font + shared design tokens ─────────────────────────────────────────
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
