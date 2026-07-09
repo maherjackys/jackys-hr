@@ -1058,6 +1058,20 @@ html, body, [data-testid="stApp"], .main, .block-container,
 </style>
 """, unsafe_allow_html=True)
 
+if _nav_labels:
+    _current_top_idx = _nav_keys.index(_sel_nav) if _sel_nav in _nav_keys else 0
+    _top_nav_lbl = st.selectbox(
+        "Admin section",
+        options=_nav_labels,
+        index=_current_top_idx,
+        key="admin_top_nav",
+        label_visibility="collapsed",
+    )
+    _top_nav_key = _nav_keys[_nav_labels.index(_top_nav_lbl)]
+    if _top_nav_key != _sel_nav:
+        st.session_state["_qa_nav_pending"] = _top_nav_key
+        st.rerun()
+
 
 def _actor() -> str:
     """Return the currently logged-in admin's username for audit logging."""
