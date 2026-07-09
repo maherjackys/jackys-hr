@@ -1,43 +1,53 @@
-# HR Policy Assistant — jackys-hr
+# HR Policy Assistant - jackys-hr
 
-Bilingual (Arabic / English) HR Policy chatbot built with Streamlit, LangChain, FAISS, and Groq.
+Bilingual Arabic/English HR policy assistant built with Streamlit, LangChain,
+FAISS, FastEmbed, Groq, and Supabase.
 
-## First launch / cold start
+## First Launch / Cold Start
 
-The embedding model (`intfloat/multilingual-e5-small`, ~470 MB) is downloaded from
-Hugging Face on the very first boot. On Streamlit Community Cloud this takes
-**2–4 minutes** before the app becomes interactive. Subsequent launches load the
-cached model from disk in seconds.
+The embedding model (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`)
+is downloaded from Hugging Face on the first boot. On Streamlit Community Cloud
+this can take a few minutes before the app becomes interactive. Subsequent
+launches load the cached model from disk.
 
-Both FAISS indexes also rebuild on first launch (or whenever `index_version.txt`
-is missing or outdated). Index build time depends on PDF count — typically under
-60 seconds for the bundled documents.
+FAISS indexes rebuild on first launch, when `index_version.txt` is missing or
+outdated, or when source documents change.
 
-## Knowledge sources
+## Knowledge Sources
 
 | Source | Documents folder | FAISS index |
 |---|---|---|
 | Company Policy | `hr_documents/` | `faiss_db/` |
 | Dubai HR Policy | `dubai_hr_documents/` | `dubai_faiss_db/` |
 
-Drop PDF files into the appropriate folder and redeploy — the index rebuilds automatically.
+Drop PDF, DOCX, TXT, or MD files into the appropriate folder and redeploy. The
+index rebuilds automatically.
 
-## Embedding model
+## Embedding Model
 
-`intfloat/multilingual-e5-small` — chosen for strong Arabic + English retrieval
-within Streamlit Cloud's 1 GB RAM limit. e5 models require `"passage: "` prefix
-on indexed text and `"query: "` prefix on search queries; both are applied
-automatically in `core/rag_engine.py`.
+`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` is used through
+FastEmbed for Arabic and English retrieval within Streamlit Cloud's 1 GB RAM
+limit. It does not require e5-style `passage:` or `query:` prefixes.
 
-## Secrets required (Streamlit Cloud)
+## Secrets Required
+
+For Streamlit Cloud, configure:
 
 ```toml
-GROQ_API_KEY    = "gsk_..."
-SUPABASE_URL    = "https://xxxx.supabase.co"
-SUPABASE_KEY    = "sb_secret_..."
+GROQ_API_KEY = "gsk_..."
+SUPABASE_URL = "https://xxxx.supabase.co"
+SUPABASE_KEY = "sb_secret_..."
 ```
 
-## Running locally
+Optional secrets:
+
+```toml
+APP_PASSWORD = "employee-app-password"
+ADMIN_PASSWORD = "initial-admin-password"
+ADMIN_RESET_CODE = "recovery-code"
+```
+
+## Running Locally
 
 ```bash
 pip install -r requirements.txt

@@ -251,22 +251,24 @@ _GREETING_PHRASES = (
 
 
 def is_greeting(text: str) -> bool:
-    """Return True only when the entire message is a greeting.
-
-    Uses word-boundary matching for short English words ("hi", "hello") to
-    avoid false-positives on substrings like "history", "achieve", "vehicle".
-    Arabic greetings are matched as whole-message substrings (no embedding risk).
-    """
+    """Return True only when the entire message is a short greeting."""
     import re as _re
-    stripped = text.strip()
-    lowered  = stripped.lower()
 
-    # If the whole message is just a greeting word (after stripping punctuation)
+    stripped = text.strip()
+    lowered = stripped.lower()
+
     clean = _re.sub(r"[^\w\s]", "", lowered).strip()
     if clean in _GREETING_EXACT:
         return True
 
-    # Multi-word greeting phrases — match as full message or clear prefix
+    clean_words = clean.split()
+    if (
+        1 < len(clean_words) <= 3
+        and clean_words[0] in _GREETING_EXACT
+        and "?" not in stripped
+    ):
+        return True
+
     for phrase in _GREETING_PHRASES:
         if lowered == phrase or lowered.startswith(phrase + " ") or lowered.startswith(phrase + "،"):
             return True

@@ -582,3 +582,7 @@ class RagEngine:
                 yield t("rate_limit_error", lang).replace("{wait}", _wait_str)
             else:
                 yield t("system_error", lang)
+
+
+# Backwards-compatible alias for older admin/debug code paths.
+RAGEngine = RagEngine

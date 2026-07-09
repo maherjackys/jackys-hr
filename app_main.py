@@ -189,30 +189,13 @@ else:
     )
 
 # ── Control bar ───────────────────────────────────────────────────────────────
-with st.container(key="ctrl_bar"):
-    _c1, _c2 = st.columns(2)
-    with _c1:
-        _theme_icon = "☀️" if _theme == "dark" else "🌙"
-        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
-            st.session_state.theme = "light" if _theme == "dark" else "dark"
-            st.rerun()
-    with _c2:
-        _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
-        if st.button(_lang_label, key="btn_lang", use_container_width=True):
-            st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
-            st.session_state["_lang_manual"] = True
-            st.rerun()
-
-# ── Page header ───────────────────────────────────────────────────────────────
-# All text is rendered server-side using t() so language switches take effect
-# immediately on rerun — no client-side JS translation needed.
 import html as _html_esc
 _h_title    = _html_esc.escape(t("app_title",    _ui_lang))
 _h_subtitle = _html_esc.escape(t("app_subtitle", _ui_lang))
 st.markdown(f"""
 <div class="hr-header">
   <div class="hr-header-icon">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="52" height="52" fill="none">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38" fill="none">
       <circle cx="32" cy="18" r="8" fill="#C0392B"/>
       <path d="M18 46c0-7.732 6.268-14 14-14s14 6.268 14 14"
             stroke="#C0392B" stroke-width="4" stroke-linecap="round" fill="none"/>
@@ -246,6 +229,20 @@ st.markdown(f"""
 </script>
 """, unsafe_allow_html=True)
 
+
+with st.container(key="ctrl_bar"):
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        _theme_icon = "☀️" if _theme == "dark" else "🌙"
+        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
+            st.session_state.theme = "light" if _theme == "dark" else "dark"
+            st.rerun()
+    with _c2:
+        _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
+        if st.button(_lang_label, key="btn_lang", use_container_width=True):
+            st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
+            st.session_state["_lang_manual"] = True
+            st.rerun()
 # ── Stats bar ─────────────────────────────────────────────────────────────────
 _s_ml_t  = _html_esc.escape(t("stat_ml_t",  _ui_lang))
 _s_ml_d  = _html_esc.escape(t("stat_ml_d",  _ui_lang))
@@ -326,83 +323,35 @@ if len(_enabled_sources) > 1:
         unsafe_allow_html=True,
     )
 
-    # Built-in source card definitions
-    _CARD_DEFS: dict[str, dict] = {
-        "company": {
-            "css_class": "company",
-            "aria": "Company Policy",
-            "icon": "🏢",
-            "title_i18n": "src_co_t",
-            "title": "Company Policy",
-            "desc_i18n": "src_co_d",
-            "desc": "Answers based on your organization's internal HR policies.",
-            "welcome": "welcome_company",
-        },
-        "dubai_hr": {
-            "css_class": "dubai",
-            "aria": "Dubai HR Policy",
-            "icon": '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="20" viewBox="0 0 6 4" style="border-radius:2px;display:block"><rect width="2" height="4" fill="#CE1126"/><rect x="2" width="4" height="1.33" fill="#00732F"/><rect x="2" y="1.33" width="4" height="1.34" fill="#fff"/><rect x="2" y="2.67" width="4" height="1.33" fill="#000"/></svg>',
-            "title_i18n": "src_dxb_t",
-            "title": "Dubai HR Policy",
-            "desc_i18n": "src_dxb_d",
-            "desc": "Answers based on Dubai labor regulations and UAE HR policies.",
-            "welcome": "welcome_dubai",
-        },
+    _source_labels = {
+        "company": t("src_co_t", _ui_lang) or "Company Policy",
+        "dubai_hr": t("src_dxb_t", _ui_lang) or "Dubai HR Policy",
     }
+    _source_welcome = {
+        "company": "welcome_company",
+        "dubai_hr": "welcome_dubai",
+    }
+    _source_options = list(_enabled_sources)
+    _selected_source = st.selectbox(
+        "Knowledge source",
+        options=_source_options,
+        index=_source_options.index(current_source) if current_source in _source_options else 0,
+        format_func=lambda src: _source_labels.get(src, src.replace("_", " ").title()),
+        label_visibility="collapsed",
+        key="source_selectbox",
+    )
+    if _selected_source != current_source:
+        st.session_state.knowledge_source = _selected_source
+        st.session_state.messages = [
+            {
+                "role": "assistant",
+                "content": _welcome(_source_welcome.get(_selected_source, "welcome_company")),
+                "is_welcome": True,
+            }
+        ]
+        st.rerun()
 
-    def _get_card_def(src: str) -> dict:
-        if src in _CARD_DEFS:
-            return _CARD_DEFS[src]
-        _label = src.replace("_", " ").title()
-        return {
-            "css_class": "company",
-            "aria": _label,
-            "icon": "📋",
-            "title_i18n": f"src_{src}_t",
-            "title": _label,
-            "desc_i18n": f"src_{src}_d",
-            "desc": f"{_label} knowledge base.",
-            "welcome": "welcome_company",
-        }
-
-    import html as _html_mod
-    with st.container(key="src_picker"):
-        _card_cols = st.columns(len(_enabled_sources))
-        for _col, _src in zip(_card_cols, _enabled_sources):
-            _cd = _get_card_def(_src)
-            _sel = "selected" if current_source == _src else ""
-            _aria_safe  = _html_mod.escape(_cd["aria"])
-            _title_safe = _html_mod.escape(_cd["title"])
-            _desc_safe  = _html_mod.escape(_cd["desc"])
-            with _col:
-                _t_title = _html_esc.escape(t(_cd["title_i18n"], _ui_lang) or _cd["title"])
-                _t_desc  = _html_esc.escape(t(_cd["desc_i18n"],  _ui_lang) or _cd["desc"])
-                st.markdown(f"""
-<div class="source-card {_cd['css_class']} {_sel}" data-cr="1" aria-label="{_aria_safe}">
-  <div class="source-card-header">
-    <span class="source-card-icon">{_cd['icon']}</span>
-    <div class="source-card-check">&#x2713;</div>
-  </div>
-  <div class="source-card-title">{_t_title}</div>
-  <div class="source-card-desc">{_t_desc}</div>
-</div>""", unsafe_allow_html=True)
-                if st.button(
-                    t("card_active", _ui_lang) if current_source == _src else t("card_select", _ui_lang),
-                    key=f"btn_{_src}",
-                    use_container_width=True,
-                    type="primary" if current_source == _src else "secondary",
-                ):
-                    if current_source != _src:
-                        if len(st.session_state.get("messages", [])) > 1:
-                            _confirm_switch(_src)
-                        else:
-                            st.session_state.knowledge_source = _src
-                            st.session_state.messages = [
-                                {"role": "assistant", "content": _welcome(_cd["welcome"]), "is_welcome": True}
-                            ]
-                            st.rerun()
-
-# ── Directories — create for all enabled sources ──────────────────────────────
+# Create directories for all enabled sources.
 for _src_key in _enabled_sources:
     settings.docs_dir_for(_src_key).mkdir(parents=True, exist_ok=True)
 
@@ -727,7 +676,7 @@ st.markdown(f"""
     <span class="hr-footer-dot">·</span>
     <span>Powered by <strong>Groq</strong> + <strong>LangChain</strong></span>
     <span class="hr-footer-dot">·</span>
-    <span>v7.0 · logs: {_logging_mode()}</span>
+    <span>v7.6 · logs: {_logging_mode()}</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
