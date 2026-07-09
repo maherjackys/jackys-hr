@@ -1097,6 +1097,11 @@ span  { color: inherit !important; }
   white-space: nowrap !important;
   transition: border-color 0.15s, color 0.15s, background 0.15s !important;
 }
+.st-key-btn_theme button *,
+.st-key-btn_lang  button * {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
 .st-key-btn_theme button:hover,
 .st-key-btn_lang  button:hover {
   border-color: var(--border-focus) !important;
@@ -1688,6 +1693,12 @@ header[data-testid="stHeader"] {
   min-height: 36px !important;
   width: max-content !important;
   transform: none !important;
+}
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button *,
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button p,
+[class*="st-key-sugg_row"] [data-testid="stButton"] > button span {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
 }
 [class*="st-key-sugg_row"] [data-testid="stButton"] > button:hover {
   background: var(--bg-card-selected) !important;

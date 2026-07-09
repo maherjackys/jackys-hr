@@ -564,6 +564,23 @@ sugg_lang = st.session_state.ui_lang
 sugg_list = _normalize_suggestions(_SUGGESTIONS.get(current_source, {}).get(sugg_lang, []))
 has_history = len(st.session_state.messages) > 1
 
+print(
+    f"[DEBUG suggestions] current_source={current_source} ui_lang={sugg_lang} "
+    f"raw={_SUGGESTIONS.get(current_source, {}).get(sugg_lang, [])} "
+    f"normalized={sugg_list} has_history={has_history}",
+    flush=True,
+)
+st.write(
+    "DEBUG suggestions",
+    {
+        "current_source": current_source,
+        "ui_lang": sugg_lang,
+        "raw": _SUGGESTIONS.get(current_source, {}).get(sugg_lang, []),
+        "normalized": sugg_list,
+        "has_history": has_history,
+    },
+)
+
 
 def _render_suggestions(sugg_list: list, key_prefix: str) -> None:
     row1, row2 = sugg_list[:3], sugg_list[3:6]
