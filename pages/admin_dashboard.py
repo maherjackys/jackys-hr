@@ -329,6 +329,15 @@ _vis_defs   = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
 _nav_labels = [(_NAV_AR.get(key, lbl) if _is_ar else lbl) for lbl, key, _ in _vis_defs]
 _nav_keys   = [key for _, key, _ in _vis_defs]
 
+# Process any pending Quick Action navigation BEFORE the sidebar radio renders.
+# We cannot touch the radio's session-state key ("admin_nav") after it renders,
+# so we use a separate staging key and apply it here while the widget is still unborn.
+if "_qa_nav_pending" in st.session_state:
+    _pending = st.session_state.pop("_qa_nav_pending")
+    if _pending in _nav_keys:
+        st.session_state["admin_nav_key"] = _pending
+        st.session_state.pop("admin_nav", None)  # safe: radio not yet rendered
+
 with st.sidebar:
     _logged_user = st.session_state.get("admin_username", "admin")
     _logged_role = st.session_state.get("admin_role", "admin")
@@ -2803,10 +2812,10 @@ if _sel_nav == "overview":
             ("🛡️ Security", "security"),
         ]
         def _qa_nav(key: str) -> None:
-            st.session_state["admin_nav_key"] = key
-            # Delete the radio's own key so on next render it falls back to
-            # the `index` param (setting it directly raises StreamlitAPIException).
-            st.session_state.pop("admin_nav", None)
+            # Use a staging key — the radio key ("admin_nav") can't be
+            # touched after it has rendered; the staging key is processed
+            # before the sidebar runs on the next rerun.
+            st.session_state["_qa_nav_pending"] = key
             st.rerun()
 
         _qa_top = st.columns(3)
