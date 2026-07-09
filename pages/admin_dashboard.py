@@ -2802,22 +2802,22 @@ if _sel_nav == "overview":
             ("🔐 Roles",     "roles"),
             ("🛡️ Security", "security"),
         ]
+        def _qa_nav(key: str) -> None:
+            st.session_state["admin_nav_key"] = key
+            if key in _nav_keys:
+                st.session_state["admin_nav"] = _nav_labels[_nav_keys.index(key)]
+            st.rerun()
+
         _qa_top = st.columns(3)
         for _qai, (_qa_lbl, _qa_key) in enumerate(_qa_items[:3]):
             with _qa_top[_qai]:
                 if st.button(_qa_lbl, use_container_width=True, key=f"qa_{_qa_key}"):
-                    st.session_state["admin_nav_key"] = _qa_key
-                    st.rerun()
+                    _qa_nav(_qa_key)
         _qa_bottom = st.columns(2)
         for _qai, (_qa_lbl, _qa_key) in enumerate(_qa_items[3:]):
             with _qa_bottom[_qai]:
                 if st.button(_qa_lbl, use_container_width=True, key=f"qa_{_qa_key}"):
-                    st.session_state["admin_nav_key"] = _qa_key
-                    # Sync the radio widget's own state; otherwise Streamlit
-                    # ignores `index` and keeps the old selection on rerun.
-                    if _qa_key in _nav_keys:
-                        st.session_state["admin_nav"] = _nav_labels[_nav_keys.index(_qa_key)]
-                    st.rerun()
+                    _qa_nav(_qa_key)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
