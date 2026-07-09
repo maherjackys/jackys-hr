@@ -493,16 +493,34 @@ html, body, [class*="css"] {{
 }}
 [data-testid="stSidebar"] hr {{ border-color: var(--adm-sidebar-border, #374151) !important; opacity:.5; }}
 
-/* ── Sidebar collapse/expand toggle — always visible ── */
-[data-testid="stSidebarCollapsedControl"],
+/* ── Sidebar collapse button (inside open sidebar) ── */
 [data-testid="stSidebarCollapseButton"] {{
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   background: #374151 !important;
   color: #F9FAFB !important;
-  border-radius: 0 8px 8px 0 !important;
   z-index: 9999 !important;
+}}
+/* ── Sidebar expand button (shown when sidebar is CLOSED) — pin to left edge ── */
+[data-testid="stSidebarCollapsedControl"] {{
+  position: fixed !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #374151 !important;
+  color: #F9FAFB !important;
+  border-radius: 0 8px 8px 0 !important;
+  z-index: 99999 !important;
+  width: 28px !important;
+  min-height: 48px !important;
+  cursor: pointer !important;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.3) !important;
 }}
 [data-testid="stSidebarCollapsedControl"] svg,
 [data-testid="stSidebarCollapseButton"] svg {{
@@ -2550,6 +2568,10 @@ if _sel_nav == "overview":
             with _qa_cols[_qai]:
                 if st.button(_qa_lbl, use_container_width=True, key=f"qa_{_qa_key}"):
                     st.session_state["admin_nav_key"] = _qa_key
+                    # Sync the radio widget's own state; otherwise Streamlit
+                    # ignores `index` and keeps the old selection on rerun.
+                    if _qa_key in _nav_keys:
+                        st.session_state["admin_nav"] = _nav_labels[_nav_keys.index(_qa_key)]
                     st.rerun()
 
 
