@@ -426,30 +426,6 @@ if "adm_theme" not in st.session_state:
     st.session_state.adm_theme = "light"
 _adm_theme = st.session_state.adm_theme
 
-# Auto-expand sidebar on first admin visit (app.py forces collapsed for main app).
-# Uses sessionStorage so it only fires once per browser session, not on every rerun.
-st.markdown("""
-<script>
-(function() {
-  if (sessionStorage.getItem('adm_sb_opened')) return;
-  function tryOpen(tries) {
-    var btn = document.querySelector('[data-testid="stSidebarCollapsedControl"], button[aria-label*="sidebar" i], button[title*="sidebar" i]');
-    if (btn) {
-      btn.click();
-      sessionStorage.setItem('adm_sb_opened', '1');
-      return;
-    }
-    if (document.querySelector('[data-testid="stSidebar"]')) {
-      sessionStorage.setItem('adm_sb_opened', '1');
-      return;
-    }
-    if (tries > 0) setTimeout(function(){ tryOpen(tries - 1); }, 300);
-  }
-  setTimeout(function(){ tryOpen(10); }, 400);
-})();
-</script>
-""", unsafe_allow_html=True)
-
 # ── Cairo font + shared design tokens ─────────────────────────────────────────
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -519,15 +495,24 @@ html, body, [class*="css"] {{
 }}
 .main .block-container {{ max-width: 960px !important; padding-top:.5rem !important; }}
 
-/* ── Sidebar — always dark, always visible ── */
-section[data-testid="stSidebar"],
-[data-testid="stSidebar"],
-[data-testid="stSidebarContent"] {{
+/* ── Sidebar — always dark, always visible.
+   Uses html+body prefix for higher specificity than style.css hide rules. ── */
+html body section[data-testid="stSidebar"],
+html body [data-testid="stSidebar"],
+html body [data-testid="stSidebarContent"] {{
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
+  pointer-events: auto !important;
   background: var(--adm-sidebar, #1F2937) !important;
   border-right: 1px solid var(--adm-sidebar-border, #374151) !important;
+}}
+html body [data-testid="stSidebarCollapsedControl"],
+html body [data-testid="stSidebarCollapseButton"] {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }}
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,

@@ -165,9 +165,12 @@ html, body, [class*="css"] {
   max-width: 100% !important;
 }
 
-/* Sidebar above the fixed header */
-[data-testid="stSidebar"] {
-  z-index: 1000 !important;
+/* Main chat app has no st.sidebar content — hide any empty sidebar shell.
+   Admin dashboard overrides this with display:flex in its own injected CSS. */
+section[data-testid="stSidebar"],
+[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"] {
+  display: none !important;
 }
 
 .main .block-container {

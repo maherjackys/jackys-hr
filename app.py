@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="HR Policy Assistant | المساعد المعرفي للموارد البشرية",
     page_icon="🏢",
     layout="centered",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
     menu_items={"About": "HR Policy Assistant — Powered by Groq + LangChain"},
 )
 
