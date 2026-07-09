@@ -2590,7 +2590,12 @@ if _sel_nav == "account":
         st.subheader("Change Password")
         st.caption("Update the admin password stored in the database (bcrypt-hashed).")
 
-        from core.auth import check_login as _check_login, update_password, validate_new_password
+        from core.auth import (
+            check_login as _check_login,
+            get_user_sessions as _get_user_sessions,
+            update_password,
+            validate_new_password,
+        )
 
         _acct_user = st.session_state.get("admin_username", "admin")
 
@@ -2622,40 +2627,69 @@ if _sel_nav == "account":
 
         st.divider()
         st.subheader("Active Sessions")
-        if st.button("🔍 Show My Sessions", key="show_sessions_btn"):
-            try:
-                from core.db_logger import _get_client
-                c = _get_client()
-                if c:
-                    resp = (
-                        c.table("admin_sessions")
-                        .select("id,username,created_at,expires_at")
-                        .eq("username", _acct_user)
-                        .order("created_at", desc=True)
-                        .execute()
-                    )
-                    if resp.data:
-                        import pandas as pd
-                        df = pd.DataFrame(resp.data)
-                        df["id"] = df["id"].str[:8] + "…"
-                        st.dataframe(df, use_container_width=True, hide_index=True)
-                    else:
-                        st.info("No active sessions found.")
-                else:
-                    st.warning("Database not available.")
-            except Exception as exc:
-                st.error(f"Error: {exc}")
+        st.caption("Review active sessions for your account and revoke other devices.")
 
-        if st.button("🚫 Revoke All Other Sessions", key="revoke_others_btn"):
-            try:
-                from core.db_logger import _get_client
-                c = _get_client()
-                if c:
+        _sess_show_key = "acct_show_sessions"
+        _sess_msg_key = "acct_sessions_msg"
+        _sess_c1, _sess_c2, _sess_c3 = st.columns([1.2, 1.45, 3])
+        with _sess_c1:
+            if st.button("Show My Sessions", key="show_sessions_btn", use_container_width=True):
+                st.session_state[_sess_show_key] = True
+        with _sess_c2:
+            if st.button("Revoke All Other Sessions", key="revoke_others_btn", use_container_width=True):
+                st.session_state[_sess_show_key] = True
+                try:
+                    from core.db_logger import _get_client
+
                     _current = st.session_state.get("admin_session_token", "")
-                    c.table("admin_sessions").delete().eq(
-                        "username", _acct_user
-                    ).neq("id", _current).execute()
-                    st.success("All other sessions revoked.")
+                    if not _current:
+                        st.session_state[_sess_msg_key] = ("error", "Current session token is missing.")
+                    else:
+                        _before = _get_user_sessions(_acct_user)
+                        _other_count = sum(1 for _row in _before if _row.get("id") != _current)
+                        _c = _get_client()
+                        if _c is None:
+                            st.session_state[_sess_msg_key] = ("warning", "Database not available.")
+                        else:
+                            (
+                                _c.table("admin_sessions")
+                                .delete()
+                                .eq("username", _acct_user)
+                                .neq("id", _current)
+                                .execute()
+                            )
+                            st.session_state[_sess_msg_key] = (
+                                "success",
+                                f"Revoked {_other_count} other session(s).",
+                            )
+                except Exception as exc:
+                    st.session_state[_sess_msg_key] = ("error", f"Error: {exc}")
+
+        _sess_msg = st.session_state.pop(_sess_msg_key, None)
+        if _sess_msg:
+            _kind, _text = _sess_msg
+            getattr(st, _kind)(_text)
+
+        if st.session_state.get(_sess_show_key):
+            try:
+                _rows = _get_user_sessions(_acct_user)
+                if _rows:
+                    import pandas as pd
+
+                    _current = st.session_state.get("admin_session_token", "")
+                    _df = pd.DataFrame(_rows)
+                    if "id" in _df.columns:
+                        _df["session"] = _df["id"].astype(str).str[:8] + "..."
+                        _df["device"] = _df["id"].apply(
+                            lambda _sid: "This device" if _sid == _current else "Other device"
+                        )
+                    _cols = [
+                        c for c in ["device", "session", "username", "created_at", "expires_at"]
+                        if c in _df.columns
+                    ]
+                    st.dataframe(_df[_cols], use_container_width=True, hide_index=True)
+                else:
+                    st.info("No active sessions found.")
             except Exception as exc:
                 st.error(f"Error: {exc}")
 
