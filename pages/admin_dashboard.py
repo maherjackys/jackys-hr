@@ -582,6 +582,34 @@ p, li {{ color: var(--adm-ink2) !important; }}
   -webkit-text-fill-color: var(--adm-ink) !important;
 }}
 
+/* Top navigation fallback */
+[class*="st-key-top_nav_"] {{
+  margin-bottom: 0.35rem !important;
+}}
+[class*="st-key-top_nav_"] button {{
+  min-height: 40px !important;
+  padding: 0.45rem 0.65rem !important;
+  border-radius: 999px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}}
+[class*="st-key-top_nav_"] [data-testid="stBaseButton-primary"] {{
+  border: 1px solid var(--adm-brand) !important;
+  box-shadow: 0 8px 18px rgba(192,57,43,.16) !important;
+}}
+[class*="st-key-top_nav_"] [data-testid="stBaseButton-secondary"] {{
+  background: rgba(255,255,255,.72) !important;
+  border-color: rgba(17,24,39,.10) !important;
+}}
+[class*="st-key-top_nav_"] [data-testid="stBaseButton-secondary"]:hover {{
+  background: var(--adm-surface) !important;
+  border-color: rgba(192,57,43,.38) !important;
+  transform: translateY(-1px);
+}}
+
 /* ── Inputs ── */
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea,
@@ -999,6 +1027,11 @@ button[title*="sidebar" i] {{
   .main .block-container {{
     padding: 1.25rem 1rem 3rem !important;
   }}
+  [class*="st-key-top_nav_"] button {{
+    min-height: 38px !important;
+    padding: 0.42rem 0.5rem !important;
+    font-size: 0.74rem !important;
+  }}
   .adm-metric-row {{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }}
@@ -1020,6 +1053,11 @@ button[title*="sidebar" i] {{
   }}
   .adm-page-title {{
     font-size: 1.35rem;
+  }}
+  [class*="st-key-top_nav_"] button {{
+    min-height: 36px !important;
+    font-size: 0.7rem !important;
+    white-space: normal !important;
   }}
   .adm-metric-row {{
     grid-template-columns: 1fr;
@@ -1058,21 +1096,6 @@ html, body, [data-testid="stApp"], .main, .block-container,
 </style>
 """, unsafe_allow_html=True)
 
-if _nav_labels:
-    _current_top_idx = _nav_keys.index(_sel_nav) if _sel_nav in _nav_keys else 0
-    _top_nav_lbl = st.selectbox(
-        "Admin section",
-        options=_nav_labels,
-        index=_current_top_idx,
-        key="admin_top_nav",
-        label_visibility="collapsed",
-    )
-    _top_nav_key = _nav_keys[_nav_labels.index(_top_nav_lbl)]
-    if _top_nav_key != _sel_nav:
-        st.session_state["_qa_nav_pending"] = _top_nav_key
-        st.rerun()
-
-
 def _actor() -> str:
     """Return the currently logged-in admin's username for audit logging."""
     return st.session_state.get("admin_username", "")
@@ -1099,6 +1122,26 @@ st.markdown(f"""
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+if _nav_labels:
+    st.markdown('<div class="adm-top-nav-wrap">', unsafe_allow_html=True)
+    _nav_items = list(zip(_nav_labels, _nav_keys))
+    for _row_start in range(0, len(_nav_items), 6):
+        _row_items = _nav_items[_row_start:_row_start + 6]
+        _nav_cols = st.columns(len(_row_items))
+        for _nav_col, (_nav_lbl, _nav_key) in zip(_nav_cols, _row_items):
+            with _nav_col:
+                if st.button(
+                    _nav_lbl,
+                    key=f"top_nav_{_nav_key}",
+                    type="primary" if _nav_key == _sel_nav else "secondary",
+                    use_container_width=True,
+                ):
+                    if _nav_key != _sel_nav:
+                        st.session_state["_qa_nav_pending"] = _nav_key
+                        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
 # TAB: Logs
 # ─────────────────────────────────────────────────────────────────────────────
 if _sel_nav == "logs":
