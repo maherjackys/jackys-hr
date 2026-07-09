@@ -420,12 +420,12 @@ _ADM_LIGHT = """
   --adm-brand-l:  #E74C3C;
   --adm-sh:       0 1px 6px rgba(0,0,0,.08);
   --adm-sh2:      0 4px 20px rgba(0,0,0,.12);
-  --adm-sidebar:  #1F2937;
+  --adm-sidebar:  #263241;
   --adm-sidebar-ink: #F9FAFB;
   --adm-sidebar-ink2: #D1D5DB;
-  --adm-sidebar-border: #374151;
-  --adm-sidebar-hover: rgba(255,255,255,.07);
-  --adm-sidebar-active: rgba(192,57,43,.18);
+  --adm-sidebar-border: rgba(255,255,255,.10);
+  --adm-sidebar-hover: rgba(255,255,255,.08);
+  --adm-sidebar-active: rgba(231,76,60,.18);
 }
 """
 _ADM_DARK = """
@@ -442,10 +442,10 @@ _ADM_DARK = """
   --adm-sh:             0 1px 4px rgba(0,0,0,.3);
   --adm-sh2:            0 4px 16px rgba(0,0,0,.5);
   /* Sidebar tokens — kept identical (sidebar is always dark) */
-  --adm-sidebar:        #1F2937;
+  --adm-sidebar:        #263241;
   --adm-sidebar-ink:    #F9FAFB;
   --adm-sidebar-ink2:   #D1D5DB;
-  --adm-sidebar-border: #374151;
+  --adm-sidebar-border: rgba(255,255,255,.10);
   --adm-sidebar-hover:  rgba(255,255,255,.07);
   --adm-sidebar-active: rgba(255,112,96,.18);
 }
@@ -741,6 +741,229 @@ footer, #MainMenu,
   outline: 2px solid var(--adm-brand) !important;
   outline-offset: 2px !important;
 }}
+
+/* v7.7 Admin dashboard polish */
+.main .block-container {{
+  max-width: 1080px !important;
+  padding: 2rem 2.25rem 4rem !important;
+}}
+
+[data-testid="stSidebar"] {{
+  min-width: 250px !important;
+  max-width: 250px !important;
+}}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label {{
+  min-height: 34px !important;
+  padding: 0.35rem 0.55rem !important;
+  border-radius: 8px !important;
+  gap: 0.45rem !important;
+  font-size: 0.88rem !important;
+}}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label [data-testid="stMarkdownContainer"] p {{
+  font-size: 0.88rem !important;
+  line-height: 1.2 !important;
+}}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radio"] {{
+  width: 0 !important;
+  min-width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
+}}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has([aria-checked="true"]) {{
+  background: var(--adm-sidebar-active) !important;
+  box-shadow: inset 3px 0 0 var(--adm-brand);
+}}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has([aria-checked="true"]) p {{
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  font-weight: 700 !important;
+}}
+
+.st-key-adm_lang_btn button,
+.st-key-adm_theme_btn_sb button {{
+  height: 2.2rem !important;
+  border-radius: 8px !important;
+  background: rgba(255,255,255,.10) !important;
+  border-color: rgba(255,255,255,.22) !important;
+  font-weight: 700 !important;
+}}
+
+.adm-dashboard-header {{
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 1.6rem;
+}}
+
+.adm-dashboard-icon {{
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#C0392B,#E74C3C);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(192,57,43,.22);
+  flex: 0 0 auto;
+}}
+
+.adm-dashboard-title {{
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--adm-ink);
+}}
+
+.adm-dashboard-sub {{
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--adm-ink3);
+}}
+
+.adm-page-title {{
+  margin: 0 0 1rem;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--adm-ink);
+}}
+
+.adm-metric-row {{
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0 0 1.6rem;
+}}
+
+.adm-kpi {{
+  min-width: 0 !important;
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 8px;
+}}
+
+.adm-kpi-label {{
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+}}
+
+.adm-kpi-value {{
+  margin-top: 0.75rem;
+  font-size: 1.85rem;
+}}
+
+.adm-overview-grid {{
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, .9fr);
+  gap: 1.3rem;
+  margin-top: 1.25rem;
+}}
+
+.adm-panel {{
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: var(--adm-sh);
+}}
+
+.adm-panel-title {{
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--adm-ink);
+}}
+
+.adm-activity-row {{
+  display: grid !important;
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+  padding: 0.7rem 0.8rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--adm-brand);
+  background: transparent;
+}}
+
+.adm-activity-main {{
+  min-width: 0;
+  color: var(--adm-ink2);
+  overflow-wrap: anywhere;
+}}
+
+.adm-source-card {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--adm-border);
+}}
+
+.adm-source-card:last-child {{ border-bottom: none; }}
+.adm-source-card > div:first-child {{ min-width: 0; }}
+.adm-source-name {{ font-weight: 800; color: var(--adm-ink); }}
+.adm-source-detail {{ font-size: 0.75rem; color: var(--adm-ink3); margin-top: 0.12rem; overflow-wrap: anywhere; }}
+.adm-source-card .adm-badge {{ flex: 0 0 auto; }}
+
+[data-testid="stTabs"] button {{
+  border-radius: 8px 8px 0 0 !important;
+  font-weight: 700 !important;
+}}
+
+[data-testid="stDataFrame"] {{
+  border: 1px solid var(--adm-border) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}}
+
+@media (max-width: 900px) {{
+  .main .block-container {{
+    padding: 1.25rem 1rem 3rem !important;
+  }}
+  .adm-metric-row {{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }}
+  .adm-overview-grid {{
+    grid-template-columns: 1fr;
+  }}
+}}
+
+@media (max-width: 520px) {{
+  [data-testid="stSidebar"] {{
+    min-width: min(86vw, 250px) !important;
+    max-width: min(86vw, 250px) !important;
+  }}
+  .adm-dashboard-header {{
+    align-items: flex-start;
+  }}
+  .adm-dashboard-title {{
+    font-size: 1.2rem;
+  }}
+  .adm-page-title {{
+    font-size: 1.35rem;
+  }}
+  .adm-metric-row {{
+    grid-template-columns: 1fr;
+  }}
+  .adm-activity-row {{
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }}
+  .adm-ts {{
+    min-width: 0 !important;
+  }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -778,18 +1001,16 @@ _dash_title = "لوحة تحكم المدير" if _is_ar else "Admin Dashboard"
 _dash_sub   = "مساعد سياسات الموارد البشرية · لوحة التحكم" if _is_ar else "HR Policy Assistant · Control Panel"
 
 st.markdown(f"""
-<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;
-            {'flex-direction:row-reverse' if _is_ar else ''}">
-  <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#C0392B,#E74C3C);
-       display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(192,57,43,.3)">
+<div class="adm-dashboard-header" style="{'flex-direction:row-reverse' if _is_ar else ''}">
+  <div class="adm-dashboard-icon">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"
          stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/>
       <rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
       <rect x="14" y="14" width="7" height="7" rx="1"/></svg>
   </div>
   <div style="{'text-align:right' if _is_ar else ''}">
-    <h2 style="margin:0;font-size:1.35rem;font-weight:800;color:var(--adm-ink)">{_dash_title}</h2>
-    <p style="margin:0;font-size:.75rem;color:var(--adm-ink3)">{_dash_sub}</p>
+    <h2 class="adm-dashboard-title">{_dash_title}</h2>
+    <p class="adm-dashboard-sub">{_dash_sub}</p>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -2434,7 +2655,7 @@ if _sel_nav == "overview":
     if not _hp("dashboard.view"):
         _show_403("dashboard.view")
     else:
-        st.subheader("System Overview")
+        st.markdown('<h1 class="adm-page-title">System Overview</h1>', unsafe_allow_html=True)
 
         # ── Metrics ───────────────────────────────────────────────────────────
         try:
@@ -2480,65 +2701,82 @@ if _sel_nav == "overview":
                 ("Documents",      _total_docs_ov,          "across all sources",      "adm-badge-blue"),
                 ("Queries 24 h",   _queries_today,          "last 24 hours",           "adm-badge-yellow"),
             ]
-            _kpi_cols = st.columns(len(_kpi_data))
-            for _ki, (_klbl, _kval, _ksub, _kbadge) in enumerate(_kpi_data):
-                with _kpi_cols[_ki]:
-                    st.metric(_klbl, _kval, delta=None)
+            _kpi_html = ['<div class="adm-metric-row">']
+            for _klbl, _kval, _ksub, _kbadge in _kpi_data:
+                _kpi_html.append(
+                    '<div class="adm-kpi">'
+                    f'<span class="adm-kpi-label">{_html.escape(str(_klbl))}</span>'
+                    f'<div class="adm-kpi-value">{_html.escape(str(_kval))}</div>'
+                    f'<div class="adm-kpi-sub">{_html.escape(str(_ksub))}</div>'
+                    '</div>'
+                )
+            _kpi_html.append('</div>')
+            st.markdown("".join(_kpi_html), unsafe_allow_html=True)
 
         except Exception as _exc_ov:
             st.warning(f"Could not load metrics: {_exc_ov}")
 
-        st.divider()
-
-        # ── Source health + Recent activity ────────────────────────────────────
-        _ov_left, _ov_right = st.columns([3, 2])
-
-        with _ov_left:
-            st.markdown("**Recent Activity**")
-            try:
-                from core.db_logger import fetch_logs as _fl2_ov
-                _recent_acts, _ = _fl2_ov(log_type="admin_action", limit=10)
-                if _recent_acts:
-                    for _ra in _recent_acts:
-                        _ts_ra    = str(_ra.get("ts", ""))[:16]
-                        _qr       = _html.escape(str(_ra.get("query", "") or ""))
-                        _src_ra   = _html.escape(str(_ra.get("source", "") or ""))
-                        _actor_ra = _html.escape(str(_ra.get("answer_preview", "") or ""))
-                        _who      = f"by <strong>{_actor_ra}</strong>" if _actor_ra else ""
-                        st.markdown(
-                            f'<div class="adm-activity-row adm-log-admin">'
-                            f'<span class="adm-ts">{_ts_ra}</span>'
-                            f'<span>{_qr}</span>&nbsp;{_who}'
-                            f'{"&nbsp;<em>" + _src_ra + "</em>" if _src_ra else ""}'
-                            f"</div>",
-                            unsafe_allow_html=True,
-                        )
-                else:
-                    st.info("No admin actions recorded yet.")
-            except Exception as _exc2_ov:
-                st.caption(f"Activity unavailable: {_exc2_ov}")
-
-        with _ov_right:
-            st.markdown("**Source Health**")
-            try:
-                for _src_ov2 in _srcs_ov:
-                    _idir_ov = _cfg_ov.db_dir_for(_src_ov2)
-                    _ddir_ov2 = _cfg_ov.docs_dir_for(_src_ov2)
-                    _em_ov, _det_ov = _index_status(_idir_ov, _ddir_ov2)
-                    _dc_ov = _src_doc_counts.get(_src_ov2, 0)
-                    st.markdown(
-                        f'{_em_ov} **{_src_ov2}** &nbsp; '
-                        f'<span class="adm-badge adm-badge-gray">{_dc_ov} docs</span>',
-                        unsafe_allow_html=True,
+        # Overview panels
+        _activity_html = ['<div class="adm-panel"><div class="adm-panel-title">Recent Activity</div>']
+        try:
+            from core.db_logger import fetch_logs as _fl2_ov
+            _recent_acts, _ = _fl2_ov(log_type="admin_action", limit=10)
+            if _recent_acts:
+                for _ra in _recent_acts:
+                    _ts_ra    = _html.escape(str(_ra.get("ts", ""))[:16])
+                    _qr       = _html.escape(str(_ra.get("query", "") or "Admin action"))
+                    _src_ra   = _html.escape(str(_ra.get("source", "") or ""))
+                    _actor_ra = _html.escape(str(_ra.get("answer_preview", "") or ""))
+                    _who      = f'<strong>{_actor_ra}</strong>' if _actor_ra else "System"
+                    _activity_html.append(
+                        '<div class="adm-activity-row adm-log-admin">'
+                        f'<span class="adm-ts">{_ts_ra}</span>'
+                        '<div class="adm-activity-main">'
+                        f'<div>{_qr}</div>'
+                        f'<div class="adm-kpi-sub">by {_who}{" · " + _src_ra if _src_ra else ""}</div>'
+                        '</div></div>'
                     )
-            except Exception:
-                st.caption("Status unavailable")
+            else:
+                _activity_html.append('<div class="adm-kpi-sub">No admin actions recorded yet.</div>')
+        except Exception as _exc2_ov:
+            _activity_html.append(f'<div class="adm-kpi-sub">Activity unavailable: {_html.escape(str(_exc2_ov))}</div>')
+        _activity_html.append('</div>')
 
-        st.divider()
+        _source_html = ['<div class="adm-panel"><div class="adm-panel-title">Source Health</div>']
+        try:
+            for _src_ov2 in _srcs_ov:
+                _idir_ov = _cfg_ov.db_dir_for(_src_ov2)
+                _ddir_ov2 = _cfg_ov.docs_dir_for(_src_ov2)
+                _em_ov, _det_ov = _index_status(_idir_ov, _ddir_ov2)
+                _dc_ov = _src_doc_counts.get(_src_ov2, 0)
+                _needs_attention = any(
+                    _frag in str(_det_ov).lower()
+                    for _frag in ("missing", "not built", "no supported", "empty")
+                )
+                _status_class = "adm-badge-yellow" if _needs_attention else "adm-badge-green"
+                _status_text = "Needs attention" if _needs_attention else "Ready"
+                _source_html.append(
+                    '<div class="adm-source-card">'
+                    '<div>'
+                    f'<div class="adm-source-name">{_html.escape(str(_src_ov2))}</div>'
+                    f'<div class="adm-source-detail">{_html.escape(str(_dc_ov))} documents · {_html.escape(str(_det_ov))}</div>'
+                    '</div>'
+                    f'<span class="adm-badge {_status_class}">{_status_text}</span>'
+                    '</div>'
+                )
+        except Exception:
+            _source_html.append('<div class="adm-kpi-sub">Status unavailable</div>')
+        _source_html.append('</div>')
 
+        st.markdown(
+            '<div class="adm-overview-grid">'
+            + "".join(_activity_html)
+            + "".join(_source_html)
+            + '</div>',
+            unsafe_allow_html=True,
+        )
         # ── Quick Actions ──────────────────────────────────────────────────────
-        st.markdown("**Quick Actions**")
-        _qa_cols = st.columns(5)
+        st.markdown('<div class="adm-section-header">Quick Actions</div>', unsafe_allow_html=True)
         _qa_items = [
             ("📋 Logs",      "logs"),
             ("👥 Users",     "users"),
@@ -2546,8 +2784,15 @@ if _sel_nav == "overview":
             ("🔐 Roles",     "roles"),
             ("🛡️ Security", "security"),
         ]
-        for _qai, (_qa_lbl, _qa_key) in enumerate(_qa_items):
-            with _qa_cols[_qai]:
+        _qa_top = st.columns(3)
+        for _qai, (_qa_lbl, _qa_key) in enumerate(_qa_items[:3]):
+            with _qa_top[_qai]:
+                if st.button(_qa_lbl, use_container_width=True, key=f"qa_{_qa_key}"):
+                    st.session_state["admin_nav_key"] = _qa_key
+                    st.rerun()
+        _qa_bottom = st.columns(2)
+        for _qai, (_qa_lbl, _qa_key) in enumerate(_qa_items[3:]):
+            with _qa_bottom[_qai]:
                 if st.button(_qa_lbl, use_container_width=True, key=f"qa_{_qa_key}"):
                     st.session_state["admin_nav_key"] = _qa_key
                     st.rerun()
