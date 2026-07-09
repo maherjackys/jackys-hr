@@ -330,8 +330,18 @@ _TABS_DEF = [
     ("🐛 Debug",           "debug",        "dashboard.debug"),
 ]
 
-_vis_defs   = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
-               if perm is None or _hp(perm)]
+_vis_defs = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
+             if perm is None or _hp(perm)]
+
+# Safety net: if user_permissions is absent/empty (e.g. DB error on a fresh
+# session), _vis_defs ends up with only perm-None tabs.  Backfill permissions
+# from the stored role so the nav is never blank for an authenticated user.
+if len(_vis_defs) <= 1 and st.session_state.get("admin_authed"):
+    from core.rbac import load_session_permissions as _lsp_nav
+    _lsp_nav(st.session_state.get("admin_role", "admin"))
+    _vis_defs = [(lbl, key, perm) for lbl, key, perm in _TABS_DEF
+                 if perm is None or _hp(perm)]
+
 # Use Arabic labels when language is Arabic
 _nav_labels = [(_NAV_AR.get(key, lbl) if _is_ar else lbl) for lbl, key, _ in _vis_defs]
 _nav_keys   = [key for _, key, _ in _vis_defs]
@@ -509,9 +519,13 @@ html, body, [class*="css"] {{
 }}
 .main .block-container {{ max-width: 960px !important; padding-top:.5rem !important; }}
 
-/* ── Sidebar — always dark ── */
+/* ── Sidebar — always dark, always visible ── */
+section[data-testid="stSidebar"],
 [data-testid="stSidebar"],
 [data-testid="stSidebarContent"] {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   background: var(--adm-sidebar, #1F2937) !important;
   border-right: 1px solid var(--adm-sidebar-border, #374151) !important;
 }}
@@ -533,39 +547,25 @@ html, body, [class*="css"] {{
 }}
 [data-testid="stSidebar"] hr {{ border-color: var(--adm-sidebar-border, #374151) !important; opacity:.5; }}
 
-/* ── Sidebar collapse button (inside open sidebar) ── */
-[data-testid="stSidebarCollapseButton"] {{
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: #374151 !important;
-  color: #F9FAFB !important;
-  z-index: 9999 !important;
-}}
-/* ── Sidebar expand button (shown when sidebar is CLOSED) — pin to left edge ── */
+/* ── Sidebar toggle buttons — global style.css no longer hides these,
+   but we keep explicit rules here as a safety net and for styling. ── */
+[data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapsedControl"] {{
-  position: fixed !important;
-  left: 0 !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
   display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
   visibility: visible !important;
   opacity: 1 !important;
-  background: #374151 !important;
-  color: #F9FAFB !important;
-  border-radius: 0 8px 8px 0 !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
   z-index: 99999 !important;
-  width: 28px !important;
-  min-height: 48px !important;
   cursor: pointer !important;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.3) !important;
 }}
-[data-testid="stSidebarCollapsedControl"] svg,
-[data-testid="stSidebarCollapseButton"] svg {{
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="stSidebarCollapsedControl"] svg {{
+  display: block !important;
   stroke: #F9FAFB !important;
   fill: #F9FAFB !important;
+  width: 16px !important;
+  height: 16px !important;
 }}
 
 /* ── Typography ── */

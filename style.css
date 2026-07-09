@@ -205,16 +205,27 @@ iframe[title*="Streamlit"] {
   overflow: hidden !important;
 }
 
-/* Collapse stHeader to zero but keep sidebar toggle accessible */
+/* Collapse stHeader to zero — hide specific chrome children, not everything.
+   Using targeted selectors instead of wildcard "* :not(...)" avoids hiding
+   wrapper divs that might contain stSidebarCollapsedControl. */
 [data-testid="stHeader"] {
-  background: var(--bg-app) !important;
+  background: transparent !important;
   border-bottom: none !important;
+  box-shadow: none !important;
   min-height: 0 !important;
-  height: auto !important;
+  height: 0 !important;
   padding: 0 !important;
-  overflow: visible !important;
+  overflow: visible !important;  /* children can still be visible outside zero-height parent */
 }
-[data-testid="stHeader"] > *:not([data-testid="stSidebarCollapsedControl"]):not([data-testid="stSidebarCollapseButton"]) {
+[data-testid="stHeader"] [data-testid="stToolbar"],
+[data-testid="stHeader"] [data-testid="stToolbarActions"],
+[data-testid="stHeader"] [data-testid="stHeaderActionElements"],
+[data-testid="stHeader"] [data-testid="stAppDeployButton"],
+[data-testid="stHeader"] [data-testid="stActionButton"],
+[data-testid="stHeader"] [data-testid="stBaseButton-header"],
+[data-testid="stHeader"] [data-testid="stBaseButton-headerNoPadding"],
+[data-testid="stHeader"] #MainMenu,
+[data-testid="stHeader"] .stAppToolbar {
   display: none !important;
 }
 
@@ -1143,12 +1154,9 @@ div[aria-live="polite"] > div {
 }
 
 /* ============================================================
-   SIDEBAR — hide completely including all toggle/header controls
+   SIDEBAR — hide header chrome (NOT sidebar toggle/control;
+   admin dashboard needs those). main app has no st.sidebar content.
    ============================================================ */
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarUserContent"],
-[data-testid="collapsedControl"],
-section[data-testid="stSidebar"],
 [data-testid="stHeader"],
 [data-testid="stHeaderActionElements"],
 [data-testid="stBaseButton-headerNoPadding"],
@@ -2098,21 +2106,16 @@ header[data-testid="stHeader"] {
   font-size: 0.68rem !important;
 }
 
-/* v7.4: hide Streamlit's floating header/sidebar controls that can appear as
-   clipped white pills in the top-left corner on Cloud deployments. */
-header[data-testid="stHeader"],
-header[data-testid="stHeader"] *,
-[data-testid="stHeader"],
-[data-testid="stHeader"] *,
+/* v7.4 revised: hide specific Streamlit header chrome elements that appear
+   as floating white pills on Cloud deployments.
+   DO NOT use wildcard "header *" — it hides stSidebarCollapsedControl too.
+   DO NOT add stSidebarCollapsedControl/stSidebarCollapseButton here —
+   the admin dashboard needs those buttons. The main chat app has no
+   st.sidebar content, so those buttons are naturally absent there. */
 [data-testid="stHeaderActionElements"],
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"],
-[data-testid="collapsedControl"],
 [data-testid="stBaseButton-header"],
 [data-testid="stBaseButton-headerNoPadding"],
-button[kind="header"],
-button[aria-label*="sidebar" i],
-button[title*="sidebar" i] {
+button[kind="header"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
