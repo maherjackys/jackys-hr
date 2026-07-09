@@ -422,10 +422,17 @@ st.markdown("""
 <script>
 (function() {
   if (sessionStorage.getItem('adm_sb_opened')) return;
-  sessionStorage.setItem('adm_sb_opened', '1');
   function tryOpen(tries) {
-    var btn = document.querySelector('[data-testid="stSidebarCollapsedControl"]');
-    if (btn) { btn.click(); return; }
+    var btn = document.querySelector('[data-testid="stSidebarCollapsedControl"], button[aria-label*="sidebar" i], button[title*="sidebar" i]');
+    if (btn) {
+      btn.click();
+      sessionStorage.setItem('adm_sb_opened', '1');
+      return;
+    }
+    if (document.querySelector('[data-testid="stSidebar"]')) {
+      sessionStorage.setItem('adm_sb_opened', '1');
+      return;
+    }
     if (tries > 0) setTimeout(function(){ tryOpen(tries - 1); }, 300);
   }
   setTimeout(function(){ tryOpen(10); }, 400);
@@ -633,8 +640,12 @@ footer, #MainMenu,
 [class*="deployButton"],
 [class*="manageApp"] {{ display:none !important; visibility:hidden !important; }}
 
-/* stHeader: transparent shell — do NOT display:none it (sidebar toggle lives inside) */
+/* stHeader: transparent shell — keep sidebar toggle visible and clickable */
+header[data-testid="stHeader"],
 [data-testid="stHeader"] {{
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   background: transparent !important;
   border-bottom: none !important;
   box-shadow: none !important;
@@ -652,15 +663,24 @@ footer, #MainMenu,
   display: none !important;
 }}
 
-[data-testid="stHeader"] [data-testid="stHeaderActionElements"],
+[data-testid="stHeader"] [data-testid="stHeaderActionElements"] {{
+  display: contents !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}}
+
 [data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"],
 [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"] {{
+[data-testid="stSidebarCollapseButton"],
+button[aria-label*="sidebar" i],
+button[title*="sidebar" i] {{
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+  z-index: 2147483647 !important;
 }}
 
 /* ── Main content card-feel ── */
