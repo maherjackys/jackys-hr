@@ -2804,8 +2804,9 @@ if _sel_nav == "overview":
         ]
         def _qa_nav(key: str) -> None:
             st.session_state["admin_nav_key"] = key
-            if key in _nav_keys:
-                st.session_state["admin_nav"] = _nav_labels[_nav_keys.index(key)]
+            # Delete the radio's own key so on next render it falls back to
+            # the `index` param (setting it directly raises StreamlitAPIException).
+            st.session_state.pop("admin_nav", None)
             st.rerun()
 
         _qa_top = st.columns(3)
