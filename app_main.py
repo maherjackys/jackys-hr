@@ -5,6 +5,7 @@ Streaming responses | Thinking animation | Source citations
 """
 from __future__ import annotations
 
+from dataclasses import replace
 import hmac
 import logging
 import os
@@ -143,6 +144,17 @@ def _welcome(key: str) -> str:
 
 
 settings = get_settings()
+try:
+    from core.settings_store import get_retrieval_settings
+
+    _retrieval_settings = get_retrieval_settings()
+    settings = replace(
+        settings,
+        similarity_threshold=float(_retrieval_settings["similarity_threshold"]),
+        min_score_to_show_source=float(_retrieval_settings["min_score_to_show_source"]),
+    )
+except Exception:
+    logger.exception("Failed to load retrieval settings; using config defaults.")
 
 # ── Fonts ─────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -365,7 +377,12 @@ if not api_key:
 
 # ── Engine ────────────────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="⏳ Loading knowledge base…")
-def load_engine(_api_key: str, source: str) -> RagEngine | None:
+def load_engine(
+    _api_key: str,
+    source: str,
+    similarity_threshold: float,
+    min_score_to_show_source: float,
+) -> RagEngine | None:
     try:
         return RagEngine(settings, _api_key, source=source)
     except Exception:
@@ -376,7 +393,12 @@ def load_engine(_api_key: str, source: str) -> RagEngine | None:
 # Warm up all enabled sources at page load so indexes are built before
 # the first query — also ensures the debug tab shows correct index status.
 for _src_key in _enabled_sources:
-    load_engine(api_key, _src_key)
+    load_engine(
+        api_key,
+        _src_key,
+        settings.similarity_threshold,
+        settings.min_score_to_show_source,
+    )
 
 engine: RagEngine | None = None
 
@@ -587,7 +609,12 @@ if user_query and clean_query:
             response    = ""
             source_docs = []
 
-            engine = load_engine(api_key, current_source)
+            engine = load_engine(
+                api_key,
+                current_source,
+                settings.similarity_threshold,
+                settings.min_score_to_show_source,
+            )
 
             if engine is None:
                 response = t("init_error", lang)

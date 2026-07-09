@@ -17,6 +17,8 @@ Functions:
     is_valid_source_key(key)                 — slug validation (lowercase, alnum, _)
     get_password_protection_enabled() -> bool — cached 30 s; default True
     set_password_protection_enabled(enabled) — writes to Supabase, invalidates cache
+    get_retrieval_settings() -> dict       — cached 30 s; default config values
+    set_retrieval_settings(settings)       — writes retrieval tuning values
 """
 from __future__ import annotations
 
@@ -130,6 +132,72 @@ def set_password_protection_enabled(enabled: bool) -> str | None:
     except Exception as exc:
         logger.warning("settings_store: set_password_protection_enabled failed (%s).", exc)
         return "Failed to save settings. Check server logs."
+
+
+_RETRIEVAL_KEY = "retrieval_settings"
+
+
+def _default_retrieval_settings() -> dict[str, float]:
+    from config import get_settings
+
+    cfg = get_settings()
+    return {
+        "similarity_threshold": float(cfg.similarity_threshold),
+        "min_score_to_show_source": float(cfg.min_score_to_show_source),
+    }
+
+
+def _sanitize_retrieval_settings(value: dict | None) -> dict[str, float]:
+    defaults = _default_retrieval_settings()
+    if not isinstance(value, dict):
+        return defaults
+
+    def _num(key: str, low: float, high: float) -> float:
+        try:
+            raw = float(value.get(key, defaults[key]))
+        except (TypeError, ValueError):
+            raw = defaults[key]
+        return max(low, min(high, raw))
+
+    similarity_threshold = _num("similarity_threshold", 5.0, 45.0)
+    min_score_to_show_source = _num("min_score_to_show_source", 0.0, similarity_threshold)
+    return {
+        "similarity_threshold": similarity_threshold,
+        "min_score_to_show_source": min_score_to_show_source,
+    }
+
+
+@st.cache_data(ttl=30)
+def get_retrieval_settings() -> dict[str, float]:
+    """Return retrieval tuning values from Supabase, or config defaults."""
+    try:
+        c = _client()
+        if c is None:
+            return _default_retrieval_settings()
+        resp = c.table("app_settings").select("value").eq("key", _RETRIEVAL_KEY).execute()
+        if resp.data:
+            return _sanitize_retrieval_settings(resp.data[0]["value"])
+    except Exception as exc:
+        logger.warning("settings_store: get_retrieval_settings failed (%s).", exc)
+    return _default_retrieval_settings()
+
+
+def set_retrieval_settings(settings: dict[str, float]) -> str | None:
+    """Persist retrieval tuning values. Returns error string or None on success."""
+    payload = _sanitize_retrieval_settings(settings)
+    try:
+        c = _client()
+        if c is None:
+            return "Supabase not available — changes not saved."
+        c.table("app_settings").upsert(
+            {"key": _RETRIEVAL_KEY, "value": payload},
+            on_conflict="key",
+        ).execute()
+        get_retrieval_settings.clear()
+        return None
+    except Exception as exc:
+        logger.warning("settings_store: set_retrieval_settings failed (%s).", exc)
+        return "Failed to save retrieval settings. Check server logs."
 
 
 _SOCIAL_KEY = "social_links"

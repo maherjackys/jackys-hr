@@ -1677,6 +1677,58 @@ if _sel_nav == "settings":
 
             st.divider()
 
+            # ── Retrieval Tuning ──────────────────────────────────────────────
+            st.subheader("Retrieval Tuning")
+            st.caption(
+                "Tune how strict document matching should be. Lower scores are more similar; "
+                "higher thresholds allow more borderline matches."
+            )
+            try:
+                from core.settings_store import get_retrieval_settings, set_retrieval_settings
+
+                _retrieval = get_retrieval_settings()
+                _similarity_threshold = st.slider(
+                    "Similarity threshold",
+                    min_value=5.0,
+                    max_value=45.0,
+                    value=float(_retrieval["similarity_threshold"]),
+                    step=0.5,
+                    key="slider_similarity_threshold",
+                    disabled=not _hp("settings.edit"),
+                    help="Reject retrieved document chunks with an L2 score above this value.",
+                )
+                _source_badge_threshold = st.slider(
+                    "Inline source badge threshold",
+                    min_value=0.0,
+                    max_value=float(_similarity_threshold),
+                    value=min(
+                        float(_retrieval["min_score_to_show_source"]),
+                        float(_similarity_threshold),
+                    ),
+                    step=0.5,
+                    key="slider_source_badge_threshold",
+                    disabled=not _hp("settings.edit"),
+                    help="Show citations inline when the best score is at or below this value.",
+                )
+                if _hp("settings.edit"):
+                    if st.button("💾 Save Retrieval Settings", key="save_retrieval_btn"):
+                        _ret_err = set_retrieval_settings(
+                            {
+                                "similarity_threshold": _similarity_threshold,
+                                "min_score_to_show_source": _source_badge_threshold,
+                            }
+                        )
+                        if _ret_err:
+                            st.error(f"Error: {_ret_err}")
+                        else:
+                            st.success("Retrieval settings saved.")
+                else:
+                    st.caption("⚠️ You have view-only access to settings.")
+            except Exception as _ret_exc:
+                st.error(f"Retrieval settings error: {_ret_exc}")
+
+            st.divider()
+
             # ── Source Visibility ─────────────────────────────────────────────
             st.subheader("Source Visibility")
             st.caption("Toggle which knowledge sources end users can select.")
