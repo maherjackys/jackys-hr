@@ -1,15 +1,19 @@
-streamlit>=1.40
-langchain-groq>=0.2
-langchain-community>=0.2
-langchain-text-splitters>=0.2
-langchain-core>=0.2
-fastembed>=0.3.0
-faiss-cpu>=1.7
-pypdf>=4.0
-supabase>=2.0.0
-groq>=0.9
-docx2txt>=0.8
-pandas>=2.0
-bcrypt>=4.0.0
-extra-streamlit-components>=0.1.60
-psutil>=5.9
+# Requirements pinned to exact versions from the working deployment.
+# Frozen so a redeploy can never silently pull a breaking release.
+# To upgrade: test in a branch, update versions here, and redeploy.
+streamlit==1.58.0
+langchain-groq==1.1.3
+langchain-community==0.4.2
+langchain-text-splitters==1.1.2
+langchain-core==1.4.2
+fastembed==0.8.0
+faiss-cpu==1.14.3
+pypdf==6.13.1
+supabase==2.16.0
+groq==0.37.1
+docx2txt==0.8
+pandas==3.0.3
+bcrypt==5.0.0
+extra-streamlit-components==0.1.71
+psutil==5.9.8
+sentry-sdk==2.64.0
