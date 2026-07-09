@@ -7,6 +7,9 @@ page too, creating a widget-tree conflict that spins in an infinite rerun.
 
 Fix: app.py is now a 3-line hub.  Each page gets its own clean script.
 """
+from core.monitoring import init_sentry
+init_sentry()
+
 import streamlit as st
 
 st.set_page_config(
