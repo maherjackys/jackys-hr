@@ -254,31 +254,31 @@ section[data-testid="stSidebar"],
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0 6px;
+  padding: 18px 0 14px;
   border-bottom: 1px solid var(--border-default);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .hr-topbar-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .hr-topbar-name {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary) !important;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .hr-topbar-dot {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .hr-topbar-sub {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   font-weight: 400;
 }

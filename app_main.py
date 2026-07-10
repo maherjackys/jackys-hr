@@ -199,7 +199,7 @@ _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
 st.markdown("""
 <div class="hr-topbar">
   <div class="hr-topbar-brand">
-    <svg width="20" height="20" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="18" r="8" fill="#C0392B"/>
       <path d="M18 46c0-7.732 6.268-14 14-14s14 6.268 14 14" stroke="#C0392B" stroke-width="4" stroke-linecap="round"/>
       <circle cx="14" cy="22" r="6" fill="#E74C3C" opacity="0.7"/>
