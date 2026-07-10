@@ -183,23 +183,13 @@ if _ui_lang == LANG_AR:
         "<style>.msg-en{display:none!important}.msg-ar{display:inline!important}</style>",
         unsafe_allow_html=True,
     )
-    # Set dir="rtl" on the parent document so [dir="rtl"] CSS selectors fire.
-    # st.components.v1.html() renders in a sandboxed iframe that can reach window.parent.
-    import streamlit.components.v1 as _stc
-    _stc.html(
-        '<script>try{window.parent.document.documentElement.setAttribute("dir","rtl")}catch(e){}</script>',
-        height=0,
-    )
+    st.html('<script>try{document.documentElement.setAttribute("dir","rtl")}catch(e){}</script>')
 else:
     st.markdown(
         "<style>.msg-ar{display:none!important}.msg-en{display:inline!important}</style>",
         unsafe_allow_html=True,
     )
-    import streamlit.components.v1 as _stc
-    _stc.html(
-        '<script>try{window.parent.document.documentElement.setAttribute("dir","ltr")}catch(e){}</script>',
-        height=0,
-    )
+    st.html('<script>try{document.documentElement.setAttribute("dir","ltr")}catch(e){}</script>')
 
 # ── Control bar ───────────────────────────────────────────────────────────────
 import html as _html_esc
@@ -233,10 +223,14 @@ st.markdown(f"""
       document.documentElement.style.setProperty('--header-h', height + 'px');
     }}
   }}
-  // Run once after paint + observe resizes (font load, rerun)
   requestAnimationFrame(syncHeaderHeight);
   if (window.ResizeObserver) {{
     new ResizeObserver(syncHeaderHeight).observe(document.documentElement);
+  }}
+  // Prevent Streamlit's auto-scroll to chat_input on first load
+  if (!sessionStorage.getItem('_hr_loaded')) {{
+    sessionStorage.setItem('_hr_loaded', '1');
+    requestAnimationFrame(function() {{ window.scrollTo(0, 0); }});
   }}
 }})();
 </script>
