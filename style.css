@@ -247,7 +247,71 @@ section[data-testid="stSidebar"],
 }
 
 /* ==========================================================================
-   APP HEADER
+   TOPBAR
+   ========================================================================== */
+
+.hr-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 4px;
+}
+
+.hr-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hr-topbar-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.01em;
+}
+
+.hr-topbar-dot {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.hr-topbar-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ctrl bar sits flush under topbar, buttons compact */
+div[data-key="hr_ctrl_bar"] {
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+}
+div[data-key="hr_ctrl_bar"] [data-testid="stHorizontalBlock"] {
+  gap: 6px !important;
+}
+div[data-key="hr_ctrl_bar"] button {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-full) !important;
+  border: 1px solid var(--border-default) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: var(--shadow-xs) !important;
+  transition: all 0.15s ease !important;
+}
+div[data-key="hr_ctrl_bar"] button:hover {
+  border-color: var(--brand-primary) !important;
+  color: var(--brand-primary) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ==========================================================================
+   APP HEADER (legacy — kept for fallback)
    ========================================================================== */
 
 .hr-header {

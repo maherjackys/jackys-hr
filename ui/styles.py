@@ -365,6 +365,11 @@ code, pre { background: #252840 !important; border-color: #2D3561 !important; co
   -webkit-text-fill-color: #FFFFFF !important;
 }
 
+/* ── Topbar (dark) ── */
+.hr-topbar { border-bottom-color: #1F2547 !important; }
+.hr-topbar-name { color: #F7FAFC !important; -webkit-text-fill-color: #F7FAFC !important; }
+.hr-topbar-dot, .hr-topbar-sub { color: #4A5568 !important; -webkit-text-fill-color: #4A5568 !important; }
+
 /* ── Control bar (dark) ── */
 .st-key-ctrl_bar [data-testid="stHorizontalBlock"] {
   background: transparent !important;

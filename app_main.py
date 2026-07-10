@@ -191,43 +191,29 @@ else:
     )
     st.html('<script>try{document.documentElement.setAttribute("dir","ltr")}catch(e){}</script>')
 
-# ── Header ────────────────────────────────────────────────────────────────────
+# ── Topbar ───────────────────────────────────────────────────────────────────
 import html as _html_esc
-_h_title    = _html_esc.escape(t("app_title",    _ui_lang))
-_h_subtitle = _html_esc.escape(t("app_subtitle", _ui_lang))
 _theme_icon = "☀️" if _theme == "dark" else "🌙"
 _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
 
-st.markdown(f"""
-<div class="hr-header">
-  <div class="hr-header-icon">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38" fill="none">
+st.markdown("""
+<div class="hr-topbar">
+  <div class="hr-topbar-brand">
+    <svg width="20" height="20" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="18" r="8" fill="#C0392B"/>
-      <path d="M18 46c0-7.732 6.268-14 14-14s14 6.268 14 14"
-            stroke="#C0392B" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <path d="M18 46c0-7.732 6.268-14 14-14s14 6.268 14 14" stroke="#C0392B" stroke-width="4" stroke-linecap="round"/>
       <circle cx="14" cy="22" r="6" fill="#E74C3C" opacity="0.7"/>
-      <path d="M4 46c0-5.523 4.477-10 10-10s10 4.477 10 10"
-            stroke="#E74C3C" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <path d="M4 46c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="#E74C3C" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
       <circle cx="50" cy="22" r="6" fill="#E74C3C" opacity="0.7"/>
-      <path d="M40 46c0-5.523 4.477-10 10-10s10 4.477 10 10"
-            stroke="#E74C3C" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+      <path d="M40 46c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="#E74C3C" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
     </svg>
+    <span class="hr-topbar-name">HR Policy Assistant</span>
+    <span class="hr-topbar-dot">·</span>
+    <span class="hr-topbar-sub">Powered by AI</span>
   </div>
-  <div class="hr-brand-pill">HR Policy Assistant</div>
-  <h1 class="main-title">{_h_title}</h1>
-  <p class="sub-title">{_h_subtitle}</p>
 </div>
-<script>
-(function() {{
-  if (!sessionStorage.getItem('_hr_loaded')) {{
-    sessionStorage.setItem('_hr_loaded', '1');
-    requestAnimationFrame(function() {{ window.scrollTo(0, 0); }});
-  }}
-}})();
-</script>
 """, unsafe_allow_html=True)
 
-# ── Controls ──────────────────────────────────────────────────────────────────
 with st.container(key="hr_ctrl_bar"):
     _c1, _c2 = st.columns(2)
     with _c1:
@@ -239,40 +225,6 @@ with st.container(key="hr_ctrl_bar"):
             st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
             st.session_state["_lang_manual"] = True
             st.rerun()
-# ── Stats bar ─────────────────────────────────────────────────────────────────
-_s_ml_t  = _html_esc.escape(t("stat_ml_t",  _ui_lang))
-_s_ml_d  = _html_esc.escape(t("stat_ml_d",  _ui_lang))
-_s_ins_t = _html_esc.escape(t("stat_ins_t", _ui_lang))
-_s_ins_d = _html_esc.escape(t("stat_ins_d", _ui_lang))
-_s_sec_t = _html_esc.escape(t("stat_sec_t", _ui_lang))
-_s_sec_d = _html_esc.escape(t("stat_sec_d", _ui_lang))
-st.markdown(f"""
-<div class="hr-stats-bar">
-  <div class="hr-stat-item">
-    <span class="hr-stat-icon">🌐</span>
-    <div class="hr-stat-text">
-      <strong>{_s_ml_t}</strong>
-      <span>{_s_ml_d}</span>
-    </div>
-  </div>
-  <div class="hr-stat-divider"></div>
-  <div class="hr-stat-item">
-    <span class="hr-stat-icon">⚡</span>
-    <div class="hr-stat-text">
-      <strong>{_s_ins_t}</strong>
-      <span>{_s_ins_d}</span>
-    </div>
-  </div>
-  <div class="hr-stat-divider"></div>
-  <div class="hr-stat-item">
-    <span class="hr-stat-icon">🔒</span>
-    <div class="hr-stat-text">
-      <strong>{_s_sec_t}</strong>
-      <span>{_s_sec_d}</span>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
 
 # ── Source visibility (admin-controlled) ──────────────────────────────────────
 try:
