@@ -1096,6 +1096,32 @@ html, body, [data-testid="stApp"], .main, .block-container,
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<script>
+(function expandSidebar() {
+    function tryExpand() {
+        var sidebar = document.querySelector('[data-testid="stSidebar"]');
+        if (!sidebar) { setTimeout(tryExpand, 100); return; }
+        var collapsed = sidebar.getAttribute('aria-expanded') === 'false'
+            || sidebar.classList.contains('st-emotion-cache-collapsed')
+            || getComputedStyle(sidebar).width === '0px'
+            || parseInt(getComputedStyle(sidebar).width || '1') < 50;
+        if (collapsed) {
+            var btn = document.querySelector('[data-testid="stSidebarCollapsedControl"] button')
+                   || document.querySelector('[data-testid="stSidebarCollapseButton"]');
+            if (btn) { btn.click(); }
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tryExpand);
+    } else {
+        tryExpand();
+    }
+})();
+</script>
+""", unsafe_allow_html=True)
+
+
 def _actor() -> str:
     """Return the currently logged-in admin's username for audit logging."""
     return st.session_state.get("admin_username", "")
