@@ -498,14 +498,24 @@ html, body, [class*="css"] {{
 /* ── Sidebar — always dark, always visible.
    Uses html+body prefix for higher specificity than style.css hide rules. ── */
 html body section[data-testid="stSidebar"],
-html body [data-testid="stSidebar"],
-html body [data-testid="stSidebarContent"] {{
+html body [data-testid="stSidebar"] {{
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
   background: var(--adm-sidebar, #1F2937) !important;
   border-right: 1px solid var(--adm-sidebar-border, #374151) !important;
+  transform: none !important;
+  width: 244px !important;
+  min-width: 244px !important;
+  left: 0 !important;
+  position: relative !important;
+}}
+html body [data-testid="stSidebarContent"] {{
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
 }}
 html body [data-testid="stSidebarCollapsedControl"],
 html body [data-testid="stSidebarCollapseButton"] {{
@@ -1095,32 +1105,6 @@ html, body, [data-testid="stApp"], .main, .block-container,
 [data-testid="stTextArea"] textarea { direction: rtl; text-align: right; }
 </style>
 """, unsafe_allow_html=True)
-
-st.markdown("""
-<script>
-(function expandSidebar() {
-    function tryExpand() {
-        var sidebar = document.querySelector('[data-testid="stSidebar"]');
-        if (!sidebar) { setTimeout(tryExpand, 100); return; }
-        var collapsed = sidebar.getAttribute('aria-expanded') === 'false'
-            || sidebar.classList.contains('st-emotion-cache-collapsed')
-            || getComputedStyle(sidebar).width === '0px'
-            || parseInt(getComputedStyle(sidebar).width || '1') < 50;
-        if (collapsed) {
-            var btn = document.querySelector('[data-testid="stSidebarCollapsedControl"] button')
-                   || document.querySelector('[data-testid="stSidebarCollapseButton"]');
-            if (btn) { btn.click(); }
-        }
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', tryExpand);
-    } else {
-        tryExpand();
-    }
-})();
-</script>
-""", unsafe_allow_html=True)
-
 
 def _actor() -> str:
     """Return the currently logged-in admin's username for audit logging."""
