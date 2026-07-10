@@ -45,6 +45,11 @@ _DARK_CSS = """
   --border-chat-user:     rgba(255,112,96,0.22);
 }
 
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 /* ── App & page background ── */
 [data-testid="stApp"],
 [data-testid="stMain"],
@@ -62,13 +67,31 @@ _DARK_CSS = """
 }
 
 /* ── Chat bubbles — explicit overrides (Streamlit injects its own bg) ── */
+[data-testid="stChatMessage"] {
+  background: #161B22 !important;
+  border-color: #30363D !important;
+}
+[data-testid="stChatMessage"] > div,
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+  background-color: transparent !important;
+}
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
   background: #2D1B18 !important;
   border-color: rgba(255,112,96,0.22) !important;
 }
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]),
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) > div,
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) [data-testid="stMarkdownContainer"] {
+  background-color: #2D1B18 !important;
+}
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
   background: #161B22 !important;
   border-color: #30363D !important;
+}
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]),
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) > div,
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) [data-testid="stMarkdownContainer"] {
+  background-color: #161B22 !important;
 }
 [data-testid="stChatMessage"] p,
 [data-testid="stChatMessage"] span,
@@ -97,24 +120,43 @@ _DARK_CSS = """
 [data-testid="stChatInput"],
 [data-testid="stChatInput"] > div,
 [data-testid="stChatInput"] > div > div {
-  background-color: #161B22 !important;
+  background-color: #111821 !important;
   border-color: #30363D !important;
+  color: #E6EDF3 !important;
 }
 [data-testid="stChatInput"] .e1vtqrcf1 {
-  background-color: #161B22 !important;
+  background-color: #111821 !important;
   border-color: #30363D !important;
 }
-[data-testid="stChatInputTextArea"] {
-  background-color: transparent !important;
+[data-testid="stChatInputTextArea"],
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] input,
+[data-testid="stChatInput"] [contenteditable="true"] {
+  background-color: #111821 !important;
   color: #E6EDF3 !important;
   -webkit-text-fill-color: #E6EDF3 !important;
   caret-color: #E6EDF3 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
-[data-testid="stChatInputTextArea"]::placeholder {
+[data-testid="stChatInputTextArea"]::placeholder,
+[data-testid="stChatInput"] textarea::placeholder,
+[data-testid="stChatInput"] input::placeholder {
   color: #8B949E !important;
+  -webkit-text-fill-color: #8B949E !important;
   opacity: 1 !important;
 }
-[data-testid="stChatInput"] button { background: #E74C3C !important; }
+[data-testid="stChatInput"]:focus-within,
+[data-testid="stChatInput"]:focus-within > div,
+[data-testid="stChatInput"]:focus-within > div > div {
+  border-color: rgba(255,112,96,0.62) !important;
+  box-shadow: 0 0 0 3px rgba(255,112,96,0.16), 0 16px 40px rgba(0,0,0,0.45) !important;
+}
+[data-testid="stChatInput"] button {
+  background: #E74C3C !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
 [data-testid="stChatInput"] button:hover { background: #C0392B !important; }
 
 /* ── Expanders (source + suggestions) ── */
@@ -127,21 +169,23 @@ _DARK_CSS = """
 [data-testid="stExpander"] summary,
 [data-testid="stExpander"] p,
 [data-testid="stExpander"] span {
-  color: #8B949E !important;
-  -webkit-text-fill-color: #8B949E !important;
+  color: #C9D1D9 !important;
+  -webkit-text-fill-color: #C9D1D9 !important;
 }
 [data-testid="stExpander"] svg { fill: #8B949E !important; }
 
 /* ── Buttons (secondary) ── */
 [data-testid="stBaseButton-secondary"] {
-  background: #1C2128 !important;
-  color: #8B949E !important;
+  background: #161B22 !important;
+  color: #C9D1D9 !important;
   border-color: #30363D !important;
+  -webkit-text-fill-color: #C9D1D9 !important;
 }
 [data-testid="stBaseButton-secondary"]:hover {
   background: #21262D !important;
   border-color: #FF7060 !important;
   color: #E6EDF3 !important;
+  -webkit-text-fill-color: #E6EDF3 !important;
 }
 
 /* ── Source badge & active pill ── */
@@ -188,8 +232,8 @@ _DARK_CSS = """
 .suggestion-chip {
   background: #1C2128 !important;
   border-color: #30363D !important;
-  color: #8B949E !important;
-  -webkit-text-fill-color: #8B949E !important;
+  color: #C9D1D9 !important;
+  -webkit-text-fill-color: #C9D1D9 !important;
 }
 .suggestion-chip:hover {
   background: #2D1B18 !important;
@@ -205,9 +249,10 @@ _DARK_CSS = """
 }
 .hr-footer { border-top-color: #21262D !important; }
 .source-citation {
-  color: #7D8590 !important;
-  -webkit-text-fill-color: #7D8590 !important;
-  border-color: #21262D !important;
+  background: #161B22 !important;
+  color: #C9D1D9 !important;
+  -webkit-text-fill-color: #C9D1D9 !important;
+  border-color: #30363D !important;
 }
 
 /* ── Typography ── */
