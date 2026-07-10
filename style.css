@@ -252,37 +252,6 @@ section[data-testid="stSidebar"],
   animation: fadeInUp .3s ease;
 }
 
-/* ctrl bar — pulled up over the header via negative margin */
-[data-testid="stVerticalBlock"]:has(> div > [data-testid="stHorizontalBlock"] > [data-testid="column"]:first-child:empty),
-div[data-key="hr_ctrl_bar"] {
-  position: relative;
-  margin-top: -56px !important;
-  z-index: 200;
-  pointer-events: none;
-}
-div[data-key="hr_ctrl_bar"] [data-testid="column"]:nth-child(3),
-div[data-key="hr_ctrl_bar"] [data-testid="column"]:nth-child(4) {
-  pointer-events: auto;
-}
-div[data-key="hr_ctrl_bar"] button {
-  height: 34px !important;
-  min-height: 34px !important;
-  padding: 0 10px !important;
-  border-radius: var(--radius-full) !important;
-  border: 1px solid var(--border-default) !important;
-  background: var(--bg-surface) !important;
-  color: var(--text-secondary) !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  box-shadow: var(--shadow-xs) !important;
-  transition: all 0.18s ease !important;
-}
-div[data-key="hr_ctrl_bar"] button:hover {
-  border-color: var(--brand-primary) !important;
-  color: var(--brand-primary) !important;
-  box-shadow: var(--shadow-sm) !important;
-  transform: translateY(-1px) !important;
-}
 
 .hr-header-icon {
   display: inline-flex;

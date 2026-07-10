@@ -227,15 +227,15 @@ st.markdown(f"""
 </script>
 """, unsafe_allow_html=True)
 
-# ── Controls — rendered as Streamlit buttons, CSS floats them top-right ───────
+# ── Controls ──────────────────────────────────────────────────────────────────
 with st.container(key="hr_ctrl_bar"):
-    _c1, _spacer, _c2, _c3 = st.columns([6, 0.01, 1, 1])
-    with _c2:
-        if st.button(_theme_icon, key="btn_theme", help="Toggle dark/light mode", use_container_width=True):
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
             st.session_state.theme = "light" if _theme == "dark" else "dark"
             st.rerun()
-    with _c3:
-        if st.button(_lang_label, key="btn_lang", help="Switch language", use_container_width=True):
+    with _c2:
+        if st.button(_lang_label, key="btn_lang", use_container_width=True):
             st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
             st.session_state["_lang_manual"] = True
             st.rerun()
