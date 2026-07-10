@@ -252,41 +252,36 @@ section[data-testid="stSidebar"],
   animation: fadeInUp .3s ease;
 }
 
-.hr-header-controls {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  display: flex;
-  gap: 6px;
-  z-index: 10;
+/* ctrl bar — pulled up over the header via negative margin */
+[data-testid="stVerticalBlock"]:has(> div > [data-testid="stHorizontalBlock"] > [data-testid="column"]:first-child:empty),
+div[data-key="hr_ctrl_bar"] {
+  position: relative;
+  margin-top: -56px !important;
+  z-index: 200;
+  pointer-events: none;
 }
-
-.hr-ctrl-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-default);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  box-shadow: var(--shadow-xs);
-  font-family: inherit;
-  text-decoration: none !important;
-  line-height: 1;
+div[data-key="hr_ctrl_bar"] [data-testid="column"]:nth-child(3),
+div[data-key="hr_ctrl_bar"] [data-testid="column"]:nth-child(4) {
+  pointer-events: auto;
 }
-.hr-ctrl-btn:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--brand-primary);
+div[data-key="hr_ctrl_bar"] button {
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: var(--radius-full) !important;
+  border: 1px solid var(--border-default) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  box-shadow: var(--shadow-xs) !important;
+  transition: all 0.18s ease !important;
+}
+div[data-key="hr_ctrl_bar"] button:hover {
+  border-color: var(--brand-primary) !important;
   color: var(--brand-primary) !important;
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
-  text-decoration: none !important;
+  box-shadow: var(--shadow-sm) !important;
+  transform: translateY(-1px) !important;
 }
 
 .hr-header-icon {
