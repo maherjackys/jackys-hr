@@ -438,43 +438,49 @@ _ADM_LIGHT = """
 :root {
   --adm-bg:       #F0F2F5;
   --adm-surface:  #FFFFFF;
-  --adm-sf2:      #F7F8FA;
-  --adm-border:   #D1D5DB;
-  --adm-ink:      #111827;
-  --adm-ink2:     #374151;
-  --adm-ink3:     #6B7280;
+  --adm-sf2:      #F8F9FA;
+  --adm-border:   #E2E8F0;
+  --adm-ink:      #1A202C;
+  --adm-ink2:     #4A5568;
+  --adm-ink3:     #718096;
   --adm-brand:    #C0392B;
   --adm-brand-l:  #E74C3C;
-  --adm-sh:       0 1px 6px rgba(0,0,0,.08);
-  --adm-sh2:      0 4px 20px rgba(0,0,0,.12);
-  --adm-sidebar:  #263241;
-  --adm-sidebar-ink: #F9FAFB;
-  --adm-sidebar-ink2: #D1D5DB;
+  --adm-sh:       0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --adm-sh2:      0 4px 6px rgba(0,0,0,0.07), 0 10px 20px rgba(0,0,0,0.06);
+  --adm-sidebar:  #1F2D3D;
+  --adm-sidebar-ink:    #F9FAFB;
+  --adm-sidebar-ink2:   #CBD5E0;
   --adm-sidebar-border: rgba(255,255,255,.10);
-  --adm-sidebar-hover: rgba(255,255,255,.08);
-  --adm-sidebar-active: rgba(231,76,60,.18);
+  --adm-sidebar-hover:  rgba(255,255,255,.08);
+  --adm-sidebar-active: rgba(231,76,60,.20);
+  --adm-radius-sm: 6px;
+  --adm-radius-md: 10px;
+  --adm-radius-lg: 14px;
 }
 """
 _ADM_DARK = """
 :root {
-  --adm-bg:             #0D1117;
-  --adm-surface:        #161B22;
-  --adm-sf2:            #1C2128;
-  --adm-border:         #30363D;
-  --adm-ink:            #E6EDF3;
-  --adm-ink2:           #8B949E;
-  --adm-ink3:           #7D8590;
+  --adm-bg:             #0F1117;
+  --adm-surface:        #1A1D2E;
+  --adm-sf2:            #252840;
+  --adm-border:         #2D3561;
+  --adm-ink:            #F7FAFC;
+  --adm-ink2:           #CBD5E0;
+  --adm-ink3:           #718096;
   --adm-brand:          #FF7060;
   --adm-brand-l:        #FF9080;
-  --adm-sh:             0 1px 4px rgba(0,0,0,.3);
-  --adm-sh2:            0 4px 16px rgba(0,0,0,.5);
-  /* Sidebar tokens — kept identical (sidebar is always dark) */
-  --adm-sidebar:        #263241;
+  --adm-sh:             0 1px 4px rgba(0,0,0,0.30);
+  --adm-sh2:            0 4px 20px rgba(0,0,0,0.50);
+  /* Sidebar tokens — always dark regardless of page theme */
+  --adm-sidebar:        #1F2D3D;
   --adm-sidebar-ink:    #F9FAFB;
-  --adm-sidebar-ink2:   #D1D5DB;
+  --adm-sidebar-ink2:   #CBD5E0;
   --adm-sidebar-border: rgba(255,255,255,.10);
   --adm-sidebar-hover:  rgba(255,255,255,.07);
-  --adm-sidebar-active: rgba(255,112,96,.18);
+  --adm-sidebar-active: rgba(255,112,96,.20);
+  --adm-radius-sm: 6px;
+  --adm-radius-md: 10px;
+  --adm-radius-lg: 14px;
 }
 """
 _adm_token_css = _ADM_DARK if _adm_theme == "dark" else _ADM_LIGHT
@@ -572,25 +578,34 @@ p, li {{ color: var(--adm-ink2) !important; }}
 [data-testid="stBaseButton-primary"] {{
   background: var(--adm-brand) !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: var(--adm-radius-md, 10px) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
   font-weight: 600 !important;
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 2px 8px rgba(192,57,43,0.22) !important;
+  transition: all 0.15s ease !important;
 }}
-[data-testid="stBaseButton-primary"]:hover {{ background: var(--adm-brand-l) !important; }}
+[data-testid="stBaseButton-primary"]:hover {{
+  background: #96281B !important;
+  box-shadow: 0 4px 14px rgba(192,57,43,0.35) !important;
+  transform: translateY(-1px) !important;
+}}
 [data-testid="stBaseButton-secondary"] {{
   background: var(--adm-surface) !important;
   border: 1.5px solid var(--adm-border) !important;
-  border-radius: 10px !important;
+  border-radius: var(--adm-radius-md, 10px) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
   color: var(--adm-ink2) !important;
   -webkit-text-fill-color: var(--adm-ink2) !important;
+  box-shadow: var(--adm-sh) !important;
+  transition: all 0.15s ease !important;
 }}
 [data-testid="stBaseButton-secondary"]:hover {{
   border-color: var(--adm-brand) !important;
   color: var(--adm-ink) !important;
   -webkit-text-fill-color: var(--adm-ink) !important;
+  transform: translateY(-1px) !important;
 }}
 
 /* Top navigation fallback */
@@ -627,15 +642,23 @@ p, li {{ color: var(--adm-ink2) !important; }}
 [data-testid="stSelectbox"] select {{
   background: var(--adm-surface) !important;
   color: var(--adm-ink) !important;
-  border-color: var(--adm-border) !important;
-  border-radius: 8px !important;
+  border: 1.5px solid var(--adm-border) !important;
+  border-radius: var(--adm-radius-sm, 6px) !important;
   font-family: 'Cairo','Inter',sans-serif !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stTextArea"] textarea:focus {{
+  border-color: var(--adm-brand) !important;
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.15) !important;
+  outline: none !important;
 }}
 
 /* ── Expanders ── */
 [data-testid="stExpander"] {{
   background: var(--adm-surface) !important;
-  border-color: var(--adm-border) !important;
+  border: 1px solid var(--adm-border) !important;
+  border-radius: var(--adm-radius-md, 10px) !important;
 }}
 
 /* ── Alerts ── */
@@ -714,9 +737,14 @@ button[title*="sidebar" i] {{
 [data-testid="stMetric"] {{
   background: var(--adm-surface) !important;
   border: 1px solid var(--adm-border) !important;
-  border-radius: 12px !important;
+  border-radius: var(--adm-radius-md, 10px) !important;
   padding: .75rem 1rem !important;
   box-shadow: var(--adm-sh) !important;
+  transition: box-shadow 0.18s ease, transform 0.18s ease !important;
+}}
+[data-testid="stMetric"]:hover {{
+  box-shadow: var(--adm-sh2) !important;
+  transform: translateY(-1px) !important;
 }}
 [data-testid="stMetricValue"] {{
   color: var(--adm-ink) !important;
@@ -776,13 +804,23 @@ button[title*="sidebar" i] {{
 .adm-kpi {{
   background: var(--adm-surface);
   border: 1px solid var(--adm-border);
-  border-radius: 12px;
+  border-radius: var(--adm-radius-md, 10px);
   padding: 1rem 1.25rem;
   box-shadow: var(--adm-sh);
   flex: 1; min-width: 130px;
-  transition: box-shadow .18s, transform .18s;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  position: relative;
+  overflow: hidden;
 }}
-.adm-kpi:hover {{ box-shadow: var(--adm-sh2); transform: translateY(-1px); }}
+.adm-kpi::before {{
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--adm-brand), var(--adm-brand-l));
+  border-radius: var(--adm-radius-md, 10px) var(--adm-radius-md, 10px) 0 0;
+}}
+.adm-kpi:hover {{ box-shadow: var(--adm-sh2); transform: translateY(-2px); }}
 .adm-metric-row {{
   display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0;
 }}
@@ -798,18 +836,19 @@ button[title*="sidebar" i] {{
 }}
 .adm-kpi-sub   {{ font-size:.75rem; color:var(--adm-ink3); margin-top:.15rem; }}
 
-/* ── Badges — radius unified with card system ── */
+/* ── Badges — pill-shaped, better color coding ── */
 .adm-badge {{
-  display: inline-flex; align-items: center;
-  padding: 3px 10px; border-radius: 8px;
-  font-size: .73rem; font-weight: 600;
-  letter-spacing: .01em;
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 10px; border-radius: 9999px;
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .02em;
+  line-height: 1.4;
 }}
-.adm-badge-green  {{ background:#dcfce7; color:#166534; }}
-.adm-badge-red    {{ background:#fee2e2; color:#991b1b; }}
-.adm-badge-yellow {{ background:#fef9c3; color:#854d0e; }}
-.adm-badge-blue   {{ background:#dbeafe; color:#1e40af; }}
-.adm-badge-gray   {{ background:#f3f4f6; color:#374151; }}
+.adm-badge-green  {{ background:#dcfce7; color:#166534; border: 1px solid rgba(22,101,52,.15); }}
+.adm-badge-red    {{ background:#fee2e2; color:#991b1b; border: 1px solid rgba(153,27,27,.15); }}
+.adm-badge-yellow {{ background:#fef9c3; color:#854d0e; border: 1px solid rgba(133,77,14,.15); }}
+.adm-badge-blue   {{ background:#dbeafe; color:#1e40af; border: 1px solid rgba(30,64,175,.15); }}
+.adm-badge-gray   {{ background:#f3f4f6; color:#374151; border: 1px solid rgba(55,65,81,.12); }}
 
 /* Dark badge overrides */
 {''.join([
@@ -952,8 +991,8 @@ button[title*="sidebar" i] {{
 
 .adm-kpi {{
   min-width: 0 !important;
-  padding: 1rem 1rem 0.95rem;
-  border-radius: 8px;
+  padding: 1.1rem 1rem 1rem;
+  border-radius: var(--adm-radius-md, 10px);
 }}
 
 .adm-kpi-label {{
@@ -979,10 +1018,12 @@ button[title*="sidebar" i] {{
 .adm-panel {{
   background: var(--adm-surface);
   border: 1px solid var(--adm-border);
-  border-radius: 8px;
-  padding: 1rem;
+  border-radius: var(--adm-radius-md, 10px);
+  padding: 1.1rem;
   box-shadow: var(--adm-sh);
+  transition: box-shadow 0.18s ease;
 }}
+.adm-panel:hover {{ box-shadow: var(--adm-sh2); }}
 
 .adm-panel-title {{
   margin: 0 0 0.85rem;
@@ -996,11 +1037,13 @@ button[title*="sidebar" i] {{
   grid-template-columns: 118px minmax(0, 1fr);
   gap: 0.8rem;
   align-items: start;
-  padding: 0.7rem 0.8rem;
-  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--adm-radius-sm, 6px);
   border-left: 3px solid var(--adm-brand);
   background: transparent;
+  transition: background 0.15s ease;
 }}
+.adm-activity-row:hover {{ background: var(--adm-sf2); }}
 
 .adm-activity-main {{
   min-width: 0;
@@ -1030,8 +1073,9 @@ button[title*="sidebar" i] {{
 
 [data-testid="stDataFrame"] {{
   border: 1px solid var(--adm-border) !important;
-  border-radius: 8px !important;
+  border-radius: var(--adm-radius-md, 10px) !important;
   overflow: hidden !important;
+  box-shadow: var(--adm-sh) !important;
 }}
 
 @media (max-width: 900px) {{
