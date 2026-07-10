@@ -660,6 +660,15 @@ if user_query and clean_query:
             st.session_state.messages[:1]
             + st.session_state.messages[-(settings.max_history_messages - 1):]
         )
+        # Evict stale feedback-logged flags for message indices that no longer exist.
+        _max_idx = len(st.session_state.messages) - 1
+        for _fbk in [k for k in list(st.session_state.keys())
+                     if k.startswith("fb_logged_")]:
+            try:
+                if int(_fbk.split("_")[-1]) > _max_idx:
+                    del st.session_state[_fbk]
+            except (ValueError, KeyError):
+                pass
 
     st.session_state.scroll_to_bottom = True
     st.rerun()

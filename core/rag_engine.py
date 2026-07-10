@@ -14,6 +14,7 @@ and general HR expertise instead of refusing to respond.
 from __future__ import annotations
 
 import functools
+import gc
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -124,7 +125,11 @@ def build_source_index(settings, source: str) -> tuple[bool, str]:
         if not docs:
             return False, f"No supported documents found in {docs_dir.resolve()}"
 
+        chunk_count = len(docs)
         index = FAISS.from_documents(docs, embeddings)
+        del docs
+        gc.collect()
+
         db_dir.mkdir(parents=True, exist_ok=True)
         index.save_local(str(db_dir))
         (db_dir / "pdf_count.txt").write_text(
@@ -132,7 +137,7 @@ def build_source_index(settings, source: str) -> tuple[bool, str]:
         )
         (db_dir / "index_version.txt").write_text(str(RagEngine._INDEX_VERSION))
 
-        return True, f"Built {len(docs)} chunks from {docs_dir.name}/ → {db_dir.name}/"
+        return True, f"Built {chunk_count} chunks from {docs_dir.name}/ → {db_dir.name}/"
 
     except Exception as exc:
         logger.exception("build_source_index failed for source=%s", source)
@@ -402,6 +407,12 @@ class RagEngine:
                 return
 
             self._index = FAISS.from_documents(docs, embeddings)
+            # Free the raw document list immediately after indexing — it can be
+            # several hundred MB for large corpora and is no longer needed.
+            chunk_count = len(docs)
+            del docs
+            gc.collect()
+
             self._db_dir.mkdir(parents=True, exist_ok=True)
             self._index.save_local(str(self._db_dir))
             count_file.write_text(str(doc_count))
@@ -409,7 +420,7 @@ class RagEngine:
             self._is_ready = True
             logger.info(
                 "[%s] FAISS index built and saved (%d chunks, %d docs, v%d).",
-                self._source, len(docs), doc_count, self._INDEX_VERSION,
+                self._source, chunk_count, doc_count, self._INDEX_VERSION,
             )
 
         except Exception as _exc:

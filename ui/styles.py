@@ -385,14 +385,23 @@ div[aria-live="polite"] > div {
 """
 
 
+_CSS_CACHE: dict[str, str] = {}
+
+
 def inject_css(css_path: Path) -> None:
-    """Inject the main stylesheet into Streamlit."""
-    try:
-        css = css_path.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        st.warning("⚠️ style.css not found — the app will render without custom styling.")
-        return
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    """Inject the main stylesheet into Streamlit.
+
+    Caches the file read in a module-level dict (process-scoped) so repeated
+    calls across reruns pay only a dict lookup instead of a disk read.
+    """
+    key = str(css_path)
+    if key not in _CSS_CACHE:
+        try:
+            _CSS_CACHE[key] = css_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            st.warning("⚠️ style.css not found — the app will render without custom styling.")
+            return
+    st.markdown(f"<style>{_CSS_CACHE[key]}</style>", unsafe_allow_html=True)
 
 
 def inject_dark_mode() -> None:
