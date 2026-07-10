@@ -196,6 +196,8 @@ import html as _html_esc
 _theme_icon = "☀️" if _theme == "dark" else "🌙"
 _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
 
+st.html('<script>window.scrollTo(0,0);</script>')
+
 st.markdown("""
 <div class="hr-topbar">
   <div class="hr-topbar-brand">
