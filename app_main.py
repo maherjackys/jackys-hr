@@ -167,6 +167,18 @@ st.markdown("""
 inject_css(settings.css_path)
 
 # ── Theme & Language state ────────────────────────────────────────────────────
+# Read toggle signals from query_params (set by inline HTML buttons in header)
+_qp = st.query_params
+if "toggle_theme" in _qp:
+    st.session_state.theme = "dark" if _qp["toggle_theme"] == "dark" else "light"
+    st.query_params.clear()
+    st.rerun()
+if "toggle_lang" in _qp:
+    st.session_state.ui_lang = LANG_AR if _qp["toggle_lang"] == "ar" else LANG_EN
+    st.session_state["_lang_manual"] = True
+    st.query_params.clear()
+    st.rerun()
+
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 if "ui_lang" not in st.session_state:
@@ -191,12 +203,29 @@ else:
     )
     st.html('<script>try{document.documentElement.setAttribute("dir","ltr")}catch(e){}</script>')
 
-# ── Control bar ───────────────────────────────────────────────────────────────
+# ── Header with inline controls ───────────────────────────────────────────────
 import html as _html_esc
 _h_title    = _html_esc.escape(t("app_title",    _ui_lang))
 _h_subtitle = _html_esc.escape(t("app_subtitle", _ui_lang))
+_theme_icon  = "☀️" if _theme == "dark" else "🌙"
+_next_theme  = "light" if _theme == "dark" else "dark"
+_lang_label  = "AR" if _ui_lang == LANG_EN else "EN"
+_next_lang   = "ar" if _ui_lang == LANG_EN else "en"
+
 st.markdown(f"""
 <div class="hr-header">
+  <div class="hr-header-controls">
+    <button class="hr-ctrl-btn" onclick="(function(){{
+      var u=new URL(window.location.href);
+      u.searchParams.set('toggle_theme','{_next_theme}');
+      window.location.href=u.toString();
+    }})()" title="Toggle theme">{_theme_icon}</button>
+    <button class="hr-ctrl-btn" onclick="(function(){{
+      var u=new URL(window.location.href);
+      u.searchParams.set('toggle_lang','{_next_lang}');
+      window.location.href=u.toString();
+    }})()" title="Switch language">{_lang_label}</button>
+  </div>
   <div class="hr-header-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38" fill="none">
       <circle cx="32" cy="18" r="8" fill="#C0392B"/>
@@ -216,18 +245,6 @@ st.markdown(f"""
 </div>
 <script>
 (function() {{
-  function syncHeaderHeight() {{
-    var h = document.querySelector('.hr-header');
-    if (h) {{
-      var height = h.getBoundingClientRect().height;
-      document.documentElement.style.setProperty('--header-h', height + 'px');
-    }}
-  }}
-  requestAnimationFrame(syncHeaderHeight);
-  if (window.ResizeObserver) {{
-    new ResizeObserver(syncHeaderHeight).observe(document.documentElement);
-  }}
-  // Prevent Streamlit's auto-scroll to chat_input on first load
   if (!sessionStorage.getItem('_hr_loaded')) {{
     sessionStorage.setItem('_hr_loaded', '1');
     requestAnimationFrame(function() {{ window.scrollTo(0, 0); }});
@@ -235,21 +252,6 @@ st.markdown(f"""
 }})();
 </script>
 """, unsafe_allow_html=True)
-
-
-with st.container(key="ctrl_bar"):
-    _c1, _c2 = st.columns(2)
-    with _c1:
-        _theme_icon = "☀️" if _theme == "dark" else "🌙"
-        if st.button(_theme_icon, key="btn_theme", use_container_width=True):
-            st.session_state.theme = "light" if _theme == "dark" else "dark"
-            st.rerun()
-    with _c2:
-        _lang_label = "AR" if _ui_lang == LANG_EN else "EN"
-        if st.button(_lang_label, key="btn_lang", use_container_width=True):
-            st.session_state.ui_lang = LANG_EN if _ui_lang == LANG_AR else LANG_AR
-            st.session_state["_lang_manual"] = True
-            st.rerun()
 # ── Stats bar ─────────────────────────────────────────────────────────────────
 _s_ml_t  = _html_esc.escape(t("stat_ml_t",  _ui_lang))
 _s_ml_d  = _html_esc.escape(t("stat_ml_d",  _ui_lang))
