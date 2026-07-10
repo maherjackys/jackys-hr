@@ -54,10 +54,20 @@ _DARK_CSS = """
 /* ── App & page background ── */
 [data-testid="stApp"],
 [data-testid="stMain"],
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stAppToolbar"],
+[data-testid="stDecoration"],
 .main, section.main, .block-container,
-[data-testid="stAppViewContainer"] {
+[data-testid="stAppViewContainer"],
+[data-testid="stVerticalBlock"],
+[data-testid="stMainBlockContainer"] {
   background-color: #0F1117 !important;
   color: #F7FAFC !important;
+}
+[data-testid="stHeader"] {
+  background: #0F1117 !important;
+  border-bottom: none !important;
 }
 
 /* ── Fixed header dark background ── */

@@ -131,6 +131,9 @@
 html, body,
 [data-testid="stApp"],
 [data-testid="stMain"],
+[data-testid="stHeader"],
+[data-testid="stDecoration"],
+[data-testid="stMainBlockContainer"],
 .main, section.main,
 [data-testid="stAppViewContainer"] {
   font-family: var(--font-sans) !important;
@@ -138,6 +141,15 @@ html, body,
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-app) !important;
   color: var(--text-primary) !important;
+}
+
+/* Hide Streamlit chrome (toolbar, deploy button, hamburger) */
+[data-testid="stHeader"] {
+  height: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border: none !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
