@@ -60,10 +60,13 @@ def _client_key() -> str:
     except Exception:
         pass
     try:
-        from streamlit.runtime.scriptrunner import get_script_run_ctx
-        ctx = get_script_run_ctx()
-        if ctx and ctx.session_id:
-            return "sess:" + ctx.session_id
+        import streamlit as st
+        sid = st.session_state.get("_session_id")
+        if not sid:
+            import uuid
+            sid = uuid.uuid4().hex
+            st.session_state["_session_id"] = sid
+        return "sess:" + sid
     except Exception:
         pass
     return "anon:unknown"
