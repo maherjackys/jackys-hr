@@ -71,7 +71,8 @@ def _write_session_cookie(token: str, remember: bool = False) -> None:
 (function(){{
   var d=new Date();
   d.setTime(d.getTime()+({days}*24*60*60*1000));
-  document.cookie="{_SESSION_COOKIE}={token};expires="+d.toUTCString()+";path=/;SameSite=Lax";
+  var secure=(location.protocol==="https:")?"Secure;":"";
+  document.cookie="{_SESSION_COOKIE}={token};expires="+d.toUTCString()+";path=/;SameSite=Strict;"+secure;
 }})();
 </script>""",
         unsafe_allow_html=True,
