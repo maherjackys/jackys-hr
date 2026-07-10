@@ -659,6 +659,9 @@ div[data-key="hr_ctrl_bar"] button:hover {
 [data-testid="stBottom"] > * > * > *,
 [data-testid="stBottom"] section {
   background-color: var(--bg-app) !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 [data-testid="stChatInput"],
