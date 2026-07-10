@@ -215,16 +215,8 @@ _next_lang   = "ar" if _ui_lang == LANG_EN else "en"
 st.markdown(f"""
 <div class="hr-header">
   <div class="hr-header-controls">
-    <button class="hr-ctrl-btn" onclick="(function(){{
-      var u=new URL(window.location.href);
-      u.searchParams.set('toggle_theme','{_next_theme}');
-      window.location.href=u.toString();
-    }})()" title="Toggle theme">{_theme_icon}</button>
-    <button class="hr-ctrl-btn" onclick="(function(){{
-      var u=new URL(window.location.href);
-      u.searchParams.set('toggle_lang','{_next_lang}');
-      window.location.href=u.toString();
-    }})()" title="Switch language">{_lang_label}</button>
+    <a class="hr-ctrl-btn" href="?toggle_theme={_next_theme}" title="Toggle theme">{_theme_icon}</a>
+    <a class="hr-ctrl-btn" href="?toggle_lang={_next_lang}" title="Switch language">{_lang_label}</a>
   </div>
   <div class="hr-header-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38" fill="none">

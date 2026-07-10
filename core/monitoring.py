@@ -57,18 +57,17 @@ def init_sentry() -> None:
             return
         try:
             import sentry_sdk
-            from sentry_sdk.integrations.threading import ThreadingIntegration
             sentry_sdk.init(
                 dsn=dsn,
                 traces_sample_rate=0.0,
                 send_default_pii=False,
                 environment=os.environ.get("SENTRY_ENV", "production"),
                 before_send=_before_send,
-                # Disable threading integration — it wraps Thread.run() in a way
-                # that conflicts with Streamlit's add_script_run_ctx on Python 3.14.
-                # propagate_hub=False prevents the thread-wrapping that causes:
+                # default_integrations=False disables ALL auto-integrations including
+                # ThreadingIntegration, which wraps Thread.run() in a way incompatible
+                # with Streamlit's add_script_run_ctx on Python 3.14:
                 # TypeError: _run_with_thread_state() takes 0 positional arguments but 1 was given
-                integrations=[ThreadingIntegration(propagate_hub=False)],
+                integrations=[],
                 default_integrations=False,
             )
             _initialized = True

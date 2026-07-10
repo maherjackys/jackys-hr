@@ -277,13 +277,16 @@ section[data-testid="stSidebar"],
   transition: all 0.18s ease;
   box-shadow: var(--shadow-xs);
   font-family: inherit;
+  text-decoration: none !important;
+  line-height: 1;
 }
 .hr-ctrl-btn:hover {
   background: var(--bg-surface-hover);
   border-color: var(--brand-primary);
-  color: var(--brand-primary);
+  color: var(--brand-primary) !important;
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+  text-decoration: none !important;
 }
 
 .hr-header-icon {
